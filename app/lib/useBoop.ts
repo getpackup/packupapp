@@ -1,6 +1,8 @@
 import React from 'react'
 import { useSpring } from 'react-spring'
 
+import { usePrefersReducedMotion } from './usePrefersReducedMotion'
+
 function useBoop({
   x = 0,
   y = 0,
@@ -12,8 +14,8 @@ function useBoop({
     friction: 10,
   },
 }) {
-  const prefersReducedMotion =
-    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const prefersReducedMotion = usePrefersReducedMotion()
+
   const [isBooped, setIsBooped] = React.useState(false)
   const style = useSpring({
     transform: isBooped

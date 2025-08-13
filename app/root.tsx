@@ -1,6 +1,6 @@
 import './app.css'
 
-import {QueryClient, QueryClientProvider} from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   data,
   isRouteErrorResponse,
@@ -12,15 +12,15 @@ import {
   ScrollRestoration,
   useLoaderData,
 } from 'react-router'
-import {z} from 'zod'
+import { z } from 'zod'
 
-import type {Route} from './+types/root'
-import {gdprConsent, themePreferenceCookie} from './cookies.server'
-import {getBodyClassNames} from './lib/getBodyClassNames'
-import {cn} from './lib/utils'
+import type { Route } from './+types/root'
+import { gdprConsent, themePreferenceCookie } from './cookies.server'
+import { getBodyClassNames } from './lib/getBodyClassNames'
+import { cn } from './lib/utils'
 
 export const links: Route.LinksFunction = () => [
-  {rel: 'preconnect', href: 'https://fonts.googleapis.com'},
+  { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
     rel: 'preconnect',
     href: 'https://fonts.gstatic.com',
@@ -38,7 +38,7 @@ export type RootLoaderData = {
   themePreference: string | undefined
 }
 
-export const loader: LoaderFunction = async ({request}) => {
+export const loader: LoaderFunction = async ({ request }) => {
   const cookieHeader = request.headers.get('Cookie')
 
   const themeCookie = (await themePreferenceCookie.parse(cookieHeader)) || {}
@@ -60,11 +60,11 @@ export const loader: LoaderFunction = async ({request}) => {
 
 const queryClient = new QueryClient()
 
-export function Layout({children}: {children: React.ReactNode}) {
+export function Layout({ children }: { children: React.ReactNode }) {
   const loaderData = useLoaderData<RootLoaderData>()
 
   const bodyClassNames = cn(
-    `transition-colors duration-500 ease-in-out min-h-screen font-sans-serif min-h-screen grid grid-rows-[auto_1fr_auto] relative`,
+    `transition-colors duration-500 ease-in-out min-h-screen font-sans-serif min-h-screen relative`,
     loaderData?.bodyClassNames ?? 'bg-white text-gray-900'
   )
 
@@ -75,11 +75,23 @@ export function Layout({children}: {children: React.ReactNode}) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        <link
+          rel="preload"
+          href="/fonts/packup-bold-webfont.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/packup-regular-webfont.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className={bodyClassNames}>
-        <QueryClientProvider client={queryClient}>
-          {children}
-        </QueryClientProvider>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 
         <ScrollRestoration />
         <Scripts />
@@ -92,7 +104,7 @@ export default function App() {
   return <Outlet />
 }
 
-export function ErrorBoundary({error}: Route.ErrorBoundaryProps) {
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let message = 'Oops!'
   let details = 'An unexpected error occurred.'
   let stack: string | undefined
@@ -100,20 +112,18 @@ export function ErrorBoundary({error}: Route.ErrorBoundaryProps) {
   if (isRouteErrorResponse(error)) {
     message = error.status === 404 ? '404' : 'Error'
     details =
-      error.status === 404
-        ? 'The requested page could not be found.'
-        : error.statusText || details
+      error.status === 404 ? 'The requested page could not be found.' : error.statusText || details
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = error.message
     stack = error.stack
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto">
+    <main className="container mx-auto p-4 pt-16">
       <h1>{message}</h1>
       <p>{details}</p>
       {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
+        <pre className="w-full overflow-x-auto p-4">
           <code>{stack}</code>
         </pre>
       )}
@@ -123,8 +133,8 @@ export function ErrorBoundary({error}: Route.ErrorBoundaryProps) {
 
 export function HydrateFallback() {
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="w-10 h-10 border-4 border-gray-300 border-t-4 border-t-blue-500 rounded-full animate-spin"></div>
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-t-4 border-gray-300 border-t-blue-500"></div>
 
       <style>{`
         @keyframes spin {

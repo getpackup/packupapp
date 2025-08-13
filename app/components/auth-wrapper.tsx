@@ -30,10 +30,13 @@ export default function AuthWrapper({ children }: { children: ReactNode }) {
 
   return (
     <AuthProvider>
-      <div className="flex justify-end">
+      <div className="absolute top-4 right-4">
         <ThemeToggle />
+      </div>
+      <div className="absolute top-4 left-4">
         <Logout />
       </div>
+
       <Outlet />
 
       {children}

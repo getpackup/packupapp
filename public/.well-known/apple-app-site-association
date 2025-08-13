@@ -1,0 +1,18 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "5J68R87TBG.com.packupapp",
+        "paths": [
+          "*"
+        ]
+      }
+    ],
+    "webcredentials": {
+      "apps": [
+        "5J68R87TBG.com.packupapp"
+      ]
+    }
+  }
+}

@@ -12,8 +12,15 @@ import offSound from '../../sounds/switch-off.mp3'
 import onSound from '../../sounds/switch-on.mp3'
 
 export function ThemeToggle() {
-  const [switchOn] = useSound(onSound)
-  const [switchOff] = useSound(offSound)
+  const [switchOn] = useSound(onSound, {
+    interrupt: true,
+    soundEnabled: true,
+  })
+  const [switchOff] = useSound(offSound, {
+    interrupt: true,
+    soundEnabled: true,
+  })
+
   const [style, trigger] = useBoop({ scale: 1.1, rotation: 10 })
 
   const { themePreference } = useRootLoaderData()

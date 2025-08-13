@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.packupapp.twa",
+      "sha256_cert_fingerprints": [
+        "A4:F3:50:AB:60:60:B9:33:F2:D4:CA:7A:5F:5B:53:90:F8:DE:70:77:E0:40:E6:4B:1C:FF:8D:2F:29:A9:27:75",
+        "74:23:A6:64:9C:27:A5:33:E5:8A:6E:6D:2F:97:09:6A:F2:86:D0:7E:A7:5A:A8:5D:05:DF:6B:20:DF:6A:A8:36"
+      ]
+    }
+  }
+]

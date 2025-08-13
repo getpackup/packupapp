@@ -1,16 +1,24 @@
 import { onAuthStateChanged } from 'firebase/auth'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 
 import { Login } from '~/components/login'
+import { Logo } from '~/components/Logo'
+import { ThemeToggle } from '~/components/ThemeToggle'
+import { Button } from '~/components/ui/button'
+import { Separator } from '~/components/ui/separator'
 import { firebaseAuth } from '~/firebase/config'
 
 import type { Route } from './+types/home'
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: 'New React Router App' },
-    { name: 'description', content: 'Welcome to React Router!' },
+    { title: 'Log In | Packup' },
+    {
+      name: 'description',
+      content:
+        'Adventure made easy. Pack with confidence with a trip generator for any occasion, create and share collaborative packing lists, and learn from others and view the trips they packed for.',
+    },
   ]
 }
 
@@ -21,14 +29,11 @@ export default function Home() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
       if (user) {
-        console.log('User is authenticated, preparing to redirect to trips')
         // Add a small delay to ensure the component has fully rendered
         setTimeout(() => {
-          console.log('Executing navigation to trips')
           navigate('/trips', { replace: true })
         }, 100)
       } else {
-        console.log('User is not authenticated, showing login form')
         setIsLoading(false)
       }
     })
@@ -38,17 +43,32 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h1 className="text-3xl font-bold mb-4 text-center">Loading...</h1>
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <h1 className="mb-4 text-center text-3xl font-bold">Loading...</h1>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="text-3xl font-bold mb-4 text-center">Login</h1>
-      <div className="mt-4 w-full max-w-md">
-        <Login />
+    <div>
+      <div className="absolute top-4 left-4">
+        <ThemeToggle />
+      </div>
+      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center space-y-8 px-8">
+        <Logo />
+        <h1 className="text-2xl font-bold">Sign in to Packup</h1>
+        <div className="rounded border bg-gray-100/50 p-8 dark:bg-gray-800">
+          <Login />
+          <Separator className="my-6" />
+          <div className="space-y-2 text-center">
+            <p>
+              Don't have an account yet?{' '}
+              <Link to="/signup" className="text-accent hover:underline">
+                Sign up
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )
