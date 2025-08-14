@@ -27,21 +27,28 @@ function useBoop({
          scale(1)`,
     config: springConfig,
   })
+
   React.useEffect(() => {
     if (!isBooped) {
       return
     }
-    const timeoutId = window.setTimeout(() => {
+
+    // Only run on client side
+    const timeoutId = setTimeout(() => {
       setIsBooped(false)
     }, timing)
+
     return () => {
-      window.clearTimeout(timeoutId)
+      clearTimeout(timeoutId)
     }
-  }, [isBooped])
+  }, [isBooped, timing])
+
   const trigger = React.useCallback(() => {
     setIsBooped(true)
   }, [])
+
   let appliedStyle = prefersReducedMotion ? {} : style
   return [appliedStyle, trigger]
 }
+
 export default useBoop

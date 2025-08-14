@@ -1,11 +1,11 @@
 import { onAuthStateChanged } from 'firebase/auth'
+import { Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 
-import { Login } from '~/components/login'
+import { Login } from '~/components/Login'
 import { Logo } from '~/components/Logo'
 import { ThemeToggle } from '~/components/ThemeToggle'
-import { Button } from '~/components/ui/button'
 import { Separator } from '~/components/ui/separator'
 import { firebaseAuth } from '~/firebase/config'
 
@@ -41,33 +41,34 @@ export default function Home() {
     return () => unsubscribe()
   }, [navigate])
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
-        <h1 className="mb-4 text-center text-3xl font-bold">Loading...</h1>
-      </div>
-    )
-  }
-
   return (
     <div>
       <div className="absolute top-4 left-4">
         <ThemeToggle />
       </div>
-      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center space-y-8 px-8">
+      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center space-y-8 p-8">
         <Logo />
         <h1 className="text-2xl font-bold">Sign in to Packup</h1>
-        <div className="rounded border bg-gray-100/50 p-8 dark:bg-gray-800">
-          <Login />
-          <Separator className="my-6" />
-          <div className="space-y-2 text-center">
-            <p>
-              Don't have an account yet?{' '}
-              <Link to="/signup" className="text-accent hover:underline">
-                Sign up
-              </Link>
-            </p>
-          </div>
+
+        <div className="w-full rounded border bg-gray-100/50 p-8 dark:bg-gray-800">
+          {isLoading ? (
+            <h1 className="text-center text-xl font-bold">
+              <Loader2 className="mr-1 inline size-6 animate-spin" /> Loading...
+            </h1>
+          ) : (
+            <>
+              <Login />
+              <Separator className="my-6" />
+              <div className="space-y-2 text-center">
+                <p>
+                  Don't have an account yet?{' '}
+                  <Link to="/signup" className="font-bold hover:underline">
+                    Sign up
+                  </Link>
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

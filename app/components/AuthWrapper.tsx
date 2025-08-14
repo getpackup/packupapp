@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect } from 'react'
 import { Outlet, redirect, useNavigate } from 'react-router'
 
-import Logout from '~/components/logout'
+import Logout from '~/components/Logout'
 import AuthProvider from '~/contexts/auth/authProvider'
 import { firebaseAuth } from '~/firebase/config'
 import { isAuth } from '~/services/auth'
@@ -30,10 +30,10 @@ export default function AuthWrapper({ children }: { children: ReactNode }) {
 
   return (
     <AuthProvider>
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 left-4">
         <ThemeToggle />
       </div>
-      <div className="absolute top-4 left-4">
+      <div className="absolute top-4 right-4">
         <Logout />
       </div>
 

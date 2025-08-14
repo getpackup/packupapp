@@ -1,10 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { sendSignInLinkToEmail } from 'firebase/auth'
 import { Loader2, Mail, WandSparkles } from 'lucide-react'
+import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
 import { type MouseEventHandler } from 'react'
 import { useForm } from 'react-hook-form'
 import { animated } from 'react-spring'
+import { toast } from 'sonner'
 import { z } from 'zod'
 
 import { firebaseAuth } from '~/firebase/config'
@@ -24,7 +26,6 @@ import { Input } from './ui/input'
 
 export function Login() {
   const [style, trigger] = useBoop({ scale: 1.1, rotation: 10 })
-  const [error, setError] = useState<string | null>(null)
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -53,7 +54,7 @@ export function Login() {
         setSent(true)
       })
       .catch((error) => {
-        setError('Failed to login. Please try again.')
+        toast.error('Failed to login. Please try again.')
         console.error('Login error:', error)
       })
       .finally(() => {
@@ -78,72 +79,99 @@ export function Login() {
 
   return (
     <div className="flex flex-col items-center">
-      {sent ? (
-        <div className="flex flex-col space-y-8 text-center">
-          <h2 className="text-xl font-bold">Check your email</h2>
-          <p>
-            We just sent an email to <span className="italic">{form.getValues('email')}</span>. Tap
-            on the link and you'll be logged in instantly.
-          </p>
+      <AnimatePresence mode="wait">
+        {sent ? (
+          <motion.div
+            key="sent"
+            className="flex flex-col space-y-8 text-center"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{
+              duration: 0.2,
+              scale: { type: 'spring', visualDuration: 0.2, bounce: 0.25 },
+            }}
+          >
+            <h2 className="text-xl font-bold">Check your email</h2>
+            <p>Tap on the link and you'll be logged in instantly.</p>
 
-          <Button variant="accent" onClick={handleOpenInbox} className="w-full">
-            <Mail /> Open your inbox
-          </Button>
-
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            If you don't see the email, check your spam folder. Wrong email?{' '}
-            <span
-              className="text-accent cursor-pointer hover:underline"
-              onClick={() => setSent(false)}
-            >
-              Please re-enter your email address.
-            </span>
-          </p>
-        </div>
-      ) : (
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="your@email.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                  <FormDescription>
-                    We'll send you an email with a magic link that'll log you in instantly.
-                  </FormDescription>
-                </FormItem>
-              )}
-            />
             <Button
-              type="submit"
-              disabled={loading}
               variant="accent"
-              style={style}
-              className="mt-4 w-full"
+              onClick={handleOpenInbox}
+              className="w-full"
               onMouseEnter={trigger as MouseEventHandler<HTMLButtonElement>}
             >
-              {loading ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" /> Sending...
-                </>
-              ) : (
-                <>
-                  <animated.span style={style}>
-                    <WandSparkles />
-                  </animated.span>{' '}
-                  Send magic link
-                </>
-              )}
+              <animated.span style={style}>
+                <Mail />
+              </animated.span>{' '}
+              Open your inbox
             </Button>
-            {error && <p className="mt-2 text-red-500">{error}</p>}
-          </form>
-        </Form>
-      )}
+
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              If you don't see the email, check your spam folder. Wrong email?{' '}
+              <span
+                className="text-accent cursor-pointer hover:underline"
+                onClick={() => setSent(false)}
+              >
+                Please re-enter your email address.
+              </span>
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="form"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{
+              duration: 0.2,
+              scale: { type: 'spring', visualDuration: 0.2, bounce: 0.25 },
+            }}
+          >
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col space-y-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="your@email.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                      <FormDescription className="text-sm">
+                        We'll send you an email with a magic link that'll log you in instantly.
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  variant="accent"
+                  style={style}
+                  className="mt-4 w-full"
+                  onMouseEnter={trigger as MouseEventHandler<HTMLButtonElement>}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" /> Sending...
+                    </>
+                  ) : (
+                    <>
+                      <animated.span style={style}>
+                        <WandSparkles />
+                      </animated.span>{' '}
+                      Send magic link
+                    </>
+                  )}
+                </Button>
+              </form>
+            </Form>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

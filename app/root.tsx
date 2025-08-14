@@ -14,6 +14,8 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 
+import { Toaster } from '~/components/ui/sonner'
+
 import type { Route } from './+types/root'
 import { gdprConsent, themePreferenceCookie } from './cookies.server'
 import { getBodyClassNames } from './lib/getBodyClassNames'
@@ -92,7 +94,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className={bodyClassNames}>
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-
+        <Toaster position="bottom-right" richColors />
         <ScrollRestoration />
         <Scripts />
       </body>

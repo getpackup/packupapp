@@ -15,6 +15,7 @@ import {
 import { useEffect, useRef } from 'react'
 
 import { firestoreDb } from '~/firebase/config'
+import type { User } from '~/types/User'
 
 export const firebaseKeys = {
   all: ['firebase'] as const,
@@ -74,6 +75,23 @@ export function useCreateDocument(collection: string) {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: firebaseKeys.collection(collection) })
       queryClient.setQueryData(firebaseKeys.doc(collection, data.id), data)
+    },
+  })
+}
+
+export function useCreateUser() {
+  const queryClient = useQueryClient()
+  const collection = 'users'
+
+  return useMutation({
+    mutationFn: async (user: User) => {
+      const docRef = doc(firestoreDb, collection, user.uid)
+      await setDoc(docRef, { ...user })
+      return { ...user }
+    },
+    onSuccess: (user) => {
+      queryClient.invalidateQueries({ queryKey: firebaseKeys.collection(collection) })
+      queryClient.setQueryData(firebaseKeys.doc(collection, user.uid), user)
     },
   })
 }

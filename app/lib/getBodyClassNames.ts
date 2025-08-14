@@ -7,7 +7,7 @@ export function getBodyClassNames(themePreference?: 'dark' | 'light'): string {
   const isDarkMode =
     !themePreference && typeof document !== 'undefined' ? systemTheme : themePreference === `dark`
 
-  return [isDarkMode ? `dark bg-gray-900 text-gray-300` : `bg-gray-50 text-gray-900`]
+  return [isDarkMode ? `dark bg-gray-900 text-gray-300` : `bg-gray-50 text-primary`]
     .join(' ')
     .trim()
 }
