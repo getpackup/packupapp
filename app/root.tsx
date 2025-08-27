@@ -1,6 +1,9 @@
 import './app.css'
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
+import { QueryClient } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import {
   data,
   isRouteErrorResponse,
@@ -14,6 +17,7 @@ import {
 } from 'react-router'
 import { z } from 'zod'
 
+import FullPageSpinner from '~/components/FullPageSpinner'
 import { Toaster } from '~/components/ui/sonner'
 
 import type { Route } from './+types/root'
@@ -60,7 +64,25 @@ export const loader: LoaderFunction = async ({ request }) => {
   })
 }
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Keep data fresh for 5 minutes
+      staleTime: 5 * 60 * 1000,
+      // Cache data for 10 minutes
+      gcTime: 10 * 60 * 1000,
+      // Retry failed requests up to 3 times
+      retry: 3,
+      // Don't refetch on window focus for better UX
+      refetchOnWindowFocus: false,
+    },
+  },
+})
+
+// Create a persister for localStorage
+const persister = createAsyncStoragePersister({
+  storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+})
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const loaderData = useLoaderData<RootLoaderData>()
@@ -93,7 +115,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body className={bodyClassNames}>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{
+            persister,
+          }}
+          onSuccess={() => {
+            queryClient.resumePausedMutations()
+          }}
+        >
+          {children}
+          <ReactQueryDevtools initialIsOpen={false} />
+        </PersistQueryClientProvider>
         <Toaster position="bottom-right" richColors />
         <ScrollRestoration />
         <Scripts />
@@ -134,16 +167,5 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 }
 
 export function HydrateFallback() {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-t-4 border-gray-300 border-t-blue-500"></div>
-
-      <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
-    </div>
-  )
+  return <FullPageSpinner />
 }

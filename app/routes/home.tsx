@@ -1,9 +1,9 @@
 import { onAuthStateChanged } from 'firebase/auth'
-import { Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 
-import { Login } from '~/components/Login'
+import FullPageSpinner from '~/components/FullPageSpinner'
+import { LoginForm } from '~/components/LoginForm'
 import { Logo } from '~/components/Logo'
 import { ThemeToggle } from '~/components/ThemeToggle'
 import { Separator } from '~/components/ui/separator'
@@ -13,7 +13,7 @@ import type { Route } from './+types/home'
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: 'Log In | Packup' },
+    { title: 'Sign in | Packup' },
     {
       name: 'description',
       content:
@@ -52,12 +52,10 @@ export default function Home() {
 
         <div className="w-full rounded border bg-gray-100/50 p-8 dark:bg-gray-800">
           {isLoading ? (
-            <h1 className="text-center text-xl font-bold">
-              <Loader2 className="mr-1 inline size-6 animate-spin" /> Loading...
-            </h1>
+            <FullPageSpinner />
           ) : (
             <>
-              <Login />
+              <LoginForm />
               <Separator className="my-6" />
               <div className="space-y-2 text-center">
                 <p>

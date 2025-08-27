@@ -1,12 +1,11 @@
-import { type ReactNode, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Outlet, redirect, useNavigate } from 'react-router'
 
-import Logout from '~/components/Logout'
 import AuthProvider from '~/contexts/auth/authProvider'
 import { firebaseAuth } from '~/firebase/config'
 import { isAuth } from '~/services/auth'
 
-import { ThemeToggle } from './ThemeToggle'
+import { Sidebar } from './Sidebar'
 
 export async function clientLoader() {
   const isLogged = await isAuth()
@@ -15,7 +14,7 @@ export async function clientLoader() {
   }
 }
 
-export default function AuthWrapper({ children }: { children: ReactNode }) {
+export default function AuthWrapper() {
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -30,16 +29,12 @@ export default function AuthWrapper({ children }: { children: ReactNode }) {
 
   return (
     <AuthProvider>
-      <div className="absolute top-4 left-4">
-        <ThemeToggle />
+      <div className="flex h-screen">
+        <Sidebar />
+        <main className="flex flex-1 flex-col bg-gray-100 dark:bg-gray-800/50">
+          <Outlet />
+        </main>
       </div>
-      <div className="absolute top-4 right-4">
-        <Logout />
-      </div>
-
-      <Outlet />
-
-      {children}
     </AuthProvider>
   )
 }

@@ -6,7 +6,7 @@ import {
 } from 'firebase/auth'
 import { Timestamp } from 'firebase/firestore'
 import { BadgeCheck, ChevronLeft, ChevronRight, Loader2, Mail, UserPlus } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence } from 'motion/react'
 import { useCallback, useEffect, useState } from 'react'
 import { type MouseEventHandler } from 'react'
 import { useForm } from 'react-hook-form'
@@ -20,6 +20,7 @@ import useBoop from '~/lib/useBoop'
 import { cn } from '~/lib/utils'
 import { useCreateUser } from '~/services/api'
 
+import AnimatedContainer from './AnimatedContainer'
 import { Button } from './ui/button'
 import {
   Form,
@@ -162,9 +163,15 @@ export function SignupForm() {
     username: string,
     displayName: string
   ) => {
+    if (!result.user.email) {
+      toast.error('Failed to create account. Please try again.')
+      console.error('createUserFromAuthResult error:', result.user)
+      return
+    }
+
     return createUserAsync({
       uid: result.user.uid,
-      email: result.user.email!,
+      email: result.user.email,
       displayName: displayName,
       username: username,
       photoURL: '',
@@ -203,15 +210,17 @@ export function SignupForm() {
     setLoading(true)
     const password = await generatePassword(16)
 
+    window.localStorage.setItem('emailForSignIn', values.email)
+
     createUserWithEmailAndPassword(firebaseAuth, values.email, password)
       .then((result) => {
-        if (result.user) {
+        if (result.user && result.user.email) {
           createUserFromAuthResult(result, values.username, values.displayName)
         }
       })
       .catch((error) => {
-        toast.error('Failed to login. Please try again.')
-        console.error('Login error:', error)
+        toast.error('Failed to create account. Please try again.')
+        console.error('Signup error:', error)
       })
       .finally(() => {
         setLoading(false)
@@ -238,16 +247,10 @@ export function SignupForm() {
     <div className="">
       <AnimatePresence mode="wait">
         {submitted ? (
-          <motion.div
+          <AnimatedContainer
             key="submitted"
             className="flex flex-col space-y-8 text-center"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{
-              duration: 0.2,
-              scale: { type: 'spring', visualDuration: 0.2, bounce: 0.25 },
-            }}
+            animation="scaleAndFadeIn"
           >
             <h2 className="text-xl font-bold">Check your email</h2>
             <p>
@@ -262,24 +265,15 @@ export function SignupForm() {
             <p className="text-muted-foreground text-sm leading-relaxed">
               If you don't see the email, check your spam folder. Wrong email?{' '}
               <span
-                className="text-accent cursor-pointer hover:underline"
+                className="text-accent cursor-pointer font-bold hover:underline"
                 onClick={() => setSubmitted(false)}
               >
                 Please re-enter your email address.
               </span>
             </p>
-          </motion.div>
+          </AnimatedContainer>
         ) : (
-          <motion.div
-            key="form"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{
-              duration: 0.2,
-              scale: { type: 'spring', visualDuration: 0.2, bounce: 0.25 },
-            }}
-          >
+          <AnimatedContainer key="form" animation="scaleAndFadeIn">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div>
@@ -295,12 +289,9 @@ export function SignupForm() {
 
                 <AnimatePresence mode="wait">
                   {formStep === 'email' && (
-                    <motion.div
+                    <AnimatedContainer
                       key="email"
-                      initial={{ y: 10, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: -10, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
+                      animation="slideUpAndFadeIn"
                       className="space-y-4"
                     >
                       <FormField
@@ -344,17 +335,11 @@ export function SignupForm() {
                           Next <ChevronRight className="size-4" />
                         </animated.span>
                       </Button>
-                    </motion.div>
+                    </AnimatedContainer>
                   )}
 
                   {formStep === 'displayName' && (
-                    <motion.div
-                      key="displayName"
-                      initial={{ y: 10, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: -10, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
+                    <AnimatedContainer key="displayName" animation="slideUpAndFadeIn">
                       <FormField
                         control={form.control}
                         name="displayName"
@@ -410,17 +395,11 @@ export function SignupForm() {
                           </animated.span>
                         </Button>
                       </div>
-                    </motion.div>
+                    </AnimatedContainer>
                   )}
 
                   {formStep === 'username' && (
-                    <motion.div
-                      key="username"
-                      initial={{ y: 10, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: -10, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
+                    <AnimatedContainer key="username" animation="slideUpAndFadeIn">
                       <FormField
                         control={form.control}
                         name="username"
@@ -497,12 +476,12 @@ export function SignupForm() {
                           )}
                         </Button>
                       </div>
-                    </motion.div>
+                    </AnimatedContainer>
                   )}
                 </AnimatePresence>
               </form>
             </Form>
-          </motion.div>
+          </AnimatedContainer>
         )}
       </AnimatePresence>
     </div>

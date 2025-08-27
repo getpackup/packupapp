@@ -1,5 +1,4 @@
-import { onAuthStateChanged } from 'firebase/auth'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 
 import { Logo } from '~/components/Logo'
@@ -11,7 +10,7 @@ import type { Route } from './+types/home'
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: 'Sign Up | Packup' },
+    { title: 'Sign up | Packup' },
     {
       name: 'description',
       content:

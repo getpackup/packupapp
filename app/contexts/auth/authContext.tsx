@@ -1,10 +1,10 @@
-import {createContext} from 'react'
+import { createContext } from 'react'
 
-import type {AuthUser} from '~/types/AuthUser'
+import type { User } from '~/types/User'
 
 interface AuthContextType {
-  user: AuthUser | null
-  setUser: (user: AuthUser | null) => void
+  user: User | null
+  setUser: (user: User | null) => void
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)

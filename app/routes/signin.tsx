@@ -71,7 +71,6 @@ export default function Signin() {
                 `That looks like an old link you tried to sign in with. Please check your email for the latest link we sent.`,
                 {
                   icon: <TriangleAlert />,
-                  duration: 10000000,
                 }
               )
             } else {

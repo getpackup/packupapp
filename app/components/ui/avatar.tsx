@@ -1,0 +1,55 @@
+import * as AvatarPrimitive from '@radix-ui/react-avatar'
+import * as React from 'react'
+import { Md5 } from 'ts-md5'
+
+import { cn } from '~/lib/utils'
+
+function Avatar({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Root>) {
+  return (
+    <AvatarPrimitive.Root
+      data-slot="avatar"
+      className={cn('relative flex size-8 shrink-0 overflow-hidden rounded-full', className)}
+      {...props}
+    />
+  )
+}
+
+function AvatarImage({
+  className,
+  gravatarEmail,
+  ...props
+}: React.ComponentProps<typeof AvatarPrimitive.Image> & {
+  gravatarEmail?: string
+}) {
+  // This fixes a 429 Too Many Requests error from firebase loading the same image multiple times
+  // Remove any cache-busting params that might differ
+  // const normalizedSrcUrl = props.src?.split('?')[0]
+
+  return (
+    <AvatarPrimitive.Image
+      data-slot="avatar-image"
+      className={cn('aspect-square size-full', className)}
+      {...props}
+      src={
+        (!props.src || props.src === '') && gravatarEmail
+          ? `https://www.gravatar.com/avatar/${Md5.hashStr(gravatarEmail || '')}?d=identicon&s=192`
+          : props.src
+      }
+    />
+  )
+}
+
+function AvatarFallback({
+  className,
+  ...props
+}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
+  return (
+    <AvatarPrimitive.Fallback
+      data-slot="avatar-fallback"
+      className={cn('bg-muted flex size-full items-center justify-center rounded-full', className)}
+      {...props}
+    />
+  )
+}
+
+export { Avatar, AvatarFallback, AvatarImage }

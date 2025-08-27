@@ -28,11 +28,7 @@ export function ThemeToggle() {
   const isDarkMode = themePreference === 'dark'
 
   return (
-    <Form
-      method="post"
-      action="/resource/toggle-theme"
-      className="flex items-center justify-center"
-    >
+    <Form method="post" action="/resource/toggle-theme">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>

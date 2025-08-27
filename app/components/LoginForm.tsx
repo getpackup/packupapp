@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { sendSignInLinkToEmail } from 'firebase/auth'
 import { Loader2, Mail, WandSparkles } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence } from 'motion/react'
 import { useState } from 'react'
 import { type MouseEventHandler } from 'react'
 import { useForm } from 'react-hook-form'
@@ -12,6 +12,7 @@ import { z } from 'zod'
 import { firebaseAuth } from '~/firebase/config'
 import useBoop from '~/lib/useBoop'
 
+import AnimatedContainer from './AnimatedContainer'
 import { Button } from './ui/button'
 import {
   Form,
@@ -24,7 +25,7 @@ import {
 } from './ui/form'
 import { Input } from './ui/input'
 
-export function Login() {
+export function LoginForm() {
   const [style, trigger] = useBoop({ scale: 1.1, rotation: 10 })
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -81,16 +82,10 @@ export function Login() {
     <div className="flex flex-col items-center">
       <AnimatePresence mode="wait">
         {sent ? (
-          <motion.div
+          <AnimatedContainer
             key="sent"
             className="flex flex-col space-y-8 text-center"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{
-              duration: 0.2,
-              scale: { type: 'spring', visualDuration: 0.2, bounce: 0.25 },
-            }}
+            animation="scaleAndFadeIn"
           >
             <h2 className="text-xl font-bold">Check your email</h2>
             <p>Tap on the link and you'll be logged in instantly.</p>
@@ -110,24 +105,15 @@ export function Login() {
             <p className="text-muted-foreground text-sm leading-relaxed">
               If you don't see the email, check your spam folder. Wrong email?{' '}
               <span
-                className="text-accent cursor-pointer hover:underline"
+                className="text-accent cursor-pointer font-bold hover:underline"
                 onClick={() => setSent(false)}
               >
                 Please re-enter your email address.
               </span>
             </p>
-          </motion.div>
+          </AnimatedContainer>
         ) : (
-          <motion.div
-            key="form"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{
-              duration: 0.2,
-              scale: { type: 'spring', visualDuration: 0.2, bounce: 0.25 },
-            }}
-          >
+          <AnimatedContainer key="form" animation="scaleAndFadeIn">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col space-y-4">
                 <FormField
@@ -169,7 +155,7 @@ export function Login() {
                 </Button>
               </form>
             </Form>
-          </motion.div>
+          </AnimatedContainer>
         )}
       </AnimatePresence>
     </div>

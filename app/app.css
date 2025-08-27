@@ -43,6 +43,19 @@
   font-display: swap;
 }
 
+/* Add this to prevent layout shifts */
+.font-sans {
+  font-display: optional; /* Prevents layout shifts */
+  font-synthesis: none; /* Prevents browser from synthesizing bold/italic */
+}
+
+/* Ensure consistent font rendering */
+* {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 @theme {
   --font-sans:
     'Packup', 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',

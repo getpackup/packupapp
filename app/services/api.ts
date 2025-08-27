@@ -1,16 +1,19 @@
-import { Query, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  type QueryObserverOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import {
   collection,
-  type CollectionReference,
   doc,
-  type DocumentData,
   getDoc,
   getDocs,
   onSnapshot,
   query,
+  QueryConstraint,
   setDoc,
   updateDoc,
-  where,
 } from 'firebase/firestore'
 import { useEffect, useRef } from 'react'
 
@@ -26,25 +29,26 @@ export const firebaseKeys = {
     [...firebaseKeys.collections(), name, filters] as const,
 }
 
-export function useDocument(collection: string, id: string) {
+export function useDocument<T>(collection: string, uid: string) {
   return useQuery({
-    queryKey: firebaseKeys.doc(collection, id),
+    queryKey: firebaseKeys.doc(collection, uid),
     queryFn: async () => {
-      const docRef = doc(firestoreDb, collection, id)
+      const docRef = doc(firestoreDb, collection, uid)
       const docSnap = await getDoc(docRef)
 
       if (!docSnap.exists()) {
         throw new Error('Document does not exist')
       }
 
-      return { id: docSnap.id, ...docSnap.data() }
+      return { uid: docSnap.id, ...docSnap.data() } as T
     },
   })
 }
 
-export function useCollection<T extends { id: string }>(
+export function useCollection<T>(
   collectionName: string,
-  constraints?: any[]
+  constraints?: QueryConstraint[],
+  queryOptions?: QueryObserverOptions
 ) {
   return useQuery({
     queryKey: firebaseKeys.collection(collectionName, constraints),
@@ -54,13 +58,66 @@ export function useCollection<T extends { id: string }>(
       if (constraints?.length) {
         const q = query(collectionRef, ...constraints)
         const querySnapshot = await getDocs(q)
-        return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as T[]
+        return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as T
       }
 
       const querySnapshot = await getDocs(collectionRef)
-      return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as T[]
+      return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as T
     },
-  })
+    // Keep collection data fresh for 2 minutes
+    staleTime: 2 * 60 * 1000,
+    // Cache collection data for 5 minutes
+    gcTime: 5 * 60 * 1000,
+    // Don't refetch on window focus
+    refetchOnWindowFocus: false,
+    // Don't refetch on mount if data is fresh
+    refetchOnMount: false,
+    ...queryOptions,
+  }) as ReturnType<typeof useQuery<T>>
+}
+
+export const useSubCollection = <T>(
+  collectionName: string,
+  subCollectionName: string,
+  parentDocId: string,
+  constraints?: QueryConstraint[],
+  queryOptions?: Partial<QueryObserverOptions>
+) => {
+  return useQuery({
+    queryKey: [
+      ...firebaseKeys.collection(collectionName),
+      parentDocId,
+      subCollectionName,
+      constraints,
+    ],
+    queryFn: async () => {
+      const subCollectionRef = collection(
+        firestoreDb,
+        collectionName,
+        parentDocId,
+        subCollectionName
+      )
+
+      if (constraints?.length) {
+        const q = query(subCollectionRef, ...constraints)
+        const querySnapshot = await getDocs(q)
+        return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as T
+      }
+
+      const querySnapshot = await getDocs(subCollectionRef)
+      return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as T
+    },
+    enabled: !!parentDocId,
+    // Keep subcollection data fresh for 2 minutes
+    staleTime: 2 * 60 * 1000,
+    // Cache subcollection data for 5 minutes
+    gcTime: 5 * 60 * 1000,
+    // Don't refetch on window focus
+    refetchOnWindowFocus: false,
+    // Don't refetch on mount if data is fresh
+    refetchOnMount: false,
+    ...queryOptions,
+  }) as ReturnType<typeof useQuery<T>>
 }
 
 export function useCreateDocument(collection: string) {
@@ -79,6 +136,37 @@ export function useCreateDocument(collection: string) {
   })
 }
 
+export function useCreateSubCollectionDocument(collection: string, subCollection: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      parentDocId,
+      id,
+      data,
+    }: {
+      parentDocId: string
+      id: string
+      data: any
+    }) => {
+      const docRef = doc(firestoreDb, collection, parentDocId, subCollection, id)
+      await setDoc(docRef, { ...data, createdAt: new Date() })
+      return { id, ...data }
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate the subcollection query
+      queryClient.invalidateQueries({
+        queryKey: [...firebaseKeys.collection(collection), variables.parentDocId, subCollection],
+      })
+      // Set the new document data
+      queryClient.setQueryData(
+        [...firebaseKeys.collection(collection), variables.parentDocId, subCollection, data.id],
+        data
+      )
+    },
+  })
+}
+
 export function useCreateUser() {
   const queryClient = useQueryClient()
   const collection = 'users'
@@ -93,6 +181,32 @@ export function useCreateUser() {
       queryClient.invalidateQueries({ queryKey: firebaseKeys.collection(collection) })
       queryClient.setQueryData(firebaseKeys.doc(collection, user.uid), user)
     },
+  })
+}
+
+export function useGetUser(uid: string) {
+  const collection = 'users'
+  return useQuery({
+    queryKey: firebaseKeys.doc(collection, uid),
+    queryFn: async (): Promise<User> => {
+      const docRef = doc(firestoreDb, collection, uid)
+      const docSnap = await getDoc(docRef)
+
+      if (!docSnap.exists()) {
+        throw new Error('User does not exist')
+      }
+
+      return { uid: docSnap.id, ...docSnap.data() } as User
+    },
+    enabled: !!uid,
+    // Keep user data fresh for 10 minutes
+    staleTime: 10 * 60 * 1000,
+    // Cache user data for 30 minutes
+    gcTime: 30 * 60 * 1000,
+    // Don't refetch on window focus
+    refetchOnWindowFocus: false,
+    // Don't refetch on mount if data is fresh
+    refetchOnMount: false,
   })
 }
 

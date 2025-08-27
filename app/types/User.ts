@@ -11,6 +11,7 @@ export type User = {
   profileHeaderImage?: string
   searchableIndex?: Array<{ [key: string]: boolean }>
   uid: string
+  id: string
   username: string
   website?: string
   lastUpdated?: Timestamp
