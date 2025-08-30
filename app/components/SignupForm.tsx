@@ -170,6 +170,7 @@ export function SignupForm() {
     }
 
     return createUserAsync({
+      id: result.user.uid,
       uid: result.user.uid,
       email: result.user.email,
       displayName: displayName,
@@ -423,7 +424,7 @@ export function SignupForm() {
                             <FormMessage />
                             <FormDescription
                               className={cn('flex items-center gap-1 text-sm', {
-                                'text-lime-700 dark:text-lime-600': usernameStatus === 'available',
+                                'text-success': usernameStatus === 'available',
                               })}
                             >
                               {usernameStatus === 'checking' && (

@@ -164,13 +164,13 @@ export function Sidebar({ className }: SidebarProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="text-sidebar-foreground hover:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent hover:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground flex items-center justify-center gap-2 rounded-lg px-3 py-2 transition-colors">
-                <Avatar className="h-8 w-8 rounded-lg border">
+                <Avatar className="h-8 w-8 border">
                   <AvatarImage
                     src={user?.photoURL ?? ''}
                     alt={`${user?.username.toLocaleLowerCase()} avatar`}
                     gravatarEmail={user?.email}
                   />
-                  <AvatarFallback className="rounded-lg">
+                  <AvatarFallback>
                     {user?.displayName?.charAt(0) ??
                       (user ? <Loader2 className="h-4 w-4 animate-spin" /> : '?')}
                   </AvatarFallback>
@@ -196,13 +196,13 @@ export function Sidebar({ className }: SidebarProps) {
             >
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-start gap-2 px-1 py-1.5 text-left text-sm">
-                  <Avatar className="size-12 rounded-lg border">
+                  <Avatar className="size-12 border">
                     <AvatarImage
                       src={user?.photoURL ?? ''}
                       alt={`${user?.username.toLocaleLowerCase()} avatar`}
                       gravatarEmail={user?.email}
                     />
-                    <AvatarFallback className="rounded-lg">
+                    <AvatarFallback>
                       {user?.displayName?.charAt(0) ??
                         (user ? <Loader2 className="h-4 w-4 animate-spin" /> : '?')}
                     </AvatarFallback>

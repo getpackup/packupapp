@@ -109,13 +109,11 @@ export const useSubCollection = <T>(
     },
     enabled: !!parentDocId,
     // Keep subcollection data fresh for 2 minutes
-    staleTime: 2 * 60 * 1000,
+    // staleTime: 2 * 60 * 1000,
     // Cache subcollection data for 5 minutes
-    gcTime: 5 * 60 * 1000,
-    // Don't refetch on window focus
-    refetchOnWindowFocus: false,
-    // Don't refetch on mount if data is fresh
-    refetchOnMount: false,
+    // gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
     ...queryOptions,
   }) as ReturnType<typeof useQuery<T>>
 }

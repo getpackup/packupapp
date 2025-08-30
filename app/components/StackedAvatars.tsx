@@ -1,4 +1,5 @@
 import { TooltipTrigger } from '@radix-ui/react-tooltip'
+import { BadgeCheck } from 'lucide-react'
 
 import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
@@ -50,7 +51,9 @@ const StackedAvatars = ({ tripMembers, users }: StackedAvatarsProps) => {
               <p className="flex flex-col items-center gap-2 pb-2">
                 @{user.username.toLocaleLowerCase()}
                 {tripMember.status === TripMemberStatus.Owner && (
-                  <Badge variant="primary">Trip Creator</Badge>
+                  <Badge variant="primary">
+                    <BadgeCheck /> Trip Creator
+                  </Badge>
                 )}
                 {tripMember.status === TripMemberStatus.Pending && (
                   <Badge variant="secondary">Invited</Badge>
