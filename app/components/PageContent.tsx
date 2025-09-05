@@ -3,7 +3,7 @@ type PageContentProps = {
 }
 
 const PageContent = ({ children }: PageContentProps) => {
-  return <div className="overflow-y-auto">{children}</div>
+  return <div className="flex-1 overflow-hidden">{children}</div>
 }
 
 export default PageContent

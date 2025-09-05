@@ -31,7 +31,7 @@ export default function AuthWrapper() {
     <AuthProvider>
       <div className="flex h-screen">
         <Sidebar />
-        <main className="flex flex-1 flex-col bg-gray-100 dark:bg-gray-800/50">
+        <main className="flex flex-1 flex-col overflow-hidden bg-gray-100 dark:bg-gray-800/50">
           <Outlet />
         </main>
       </div>

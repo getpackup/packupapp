@@ -1,9 +1,9 @@
 import './app.css'
 
-import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
-import { QueryClient } from '@tanstack/react-query'
+// import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
+// import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import {
   data,
   isRouteErrorResponse,
@@ -80,9 +80,9 @@ const queryClient = new QueryClient({
 })
 
 // Create a persister for localStorage
-const persister = createAsyncStoragePersister({
-  storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-})
+// const persister = createAsyncStoragePersister({
+//   storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+// })
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const loaderData = useLoaderData<RootLoaderData>()
@@ -115,18 +115,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body className={bodyClassNames}>
-        <PersistQueryClientProvider
-          client={queryClient}
-          persistOptions={{
-            persister,
-          }}
-          onSuccess={() => {
-            queryClient.resumePausedMutations()
-          }}
-        >
+        <QueryClientProvider client={queryClient}>
           {children}
           <ReactQueryDevtools initialIsOpen={false} />
-        </PersistQueryClientProvider>
+        </QueryClientProvider>
         <Toaster position="bottom-right" richColors />
         <ScrollRestoration />
         <Scripts />

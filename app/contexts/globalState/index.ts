@@ -5,6 +5,10 @@ import { useShallow } from 'zustand/react/shallow'
 type GlobalState = {
   isSidebarCollapsed: boolean
   setIsSidebarCollapsed: (isSidebarCollapsed: boolean) => void
+  activePackingListFilter: 'All' | 'Packed' | 'Unpacked'
+  setActivePackingListFilter: (activePackingListFilter: 'All' | 'Packed' | 'Unpacked') => void
+  packingListSearchValue: string
+  setPackingListSearchValue: (packingListSearchValue: string) => void
 }
 
 const createMemoryStorage = () => {
@@ -34,6 +38,10 @@ const useGlobalState = create<GlobalState>()(
     (set) => ({
       isSidebarCollapsed: false,
       setIsSidebarCollapsed: (isSidebarCollapsed) => set({ isSidebarCollapsed }),
+      activePackingListFilter: 'All',
+      setActivePackingListFilter: (activePackingListFilter) => set({ activePackingListFilter }),
+      packingListSearchValue: '',
+      setPackingListSearchValue: (packingListSearchValue) => set({ packingListSearchValue }),
     }),
     {
       name: 'packup-global-state',
@@ -56,4 +64,15 @@ export const useSidebarState = () => {
     }))
   )
   return { isSidebarCollapsed, setIsSidebarCollapsed }
+}
+
+export const usePackingListState = () => {
+  return useGlobalState(
+    useShallow((state) => ({
+      activePackingListFilter: state.activePackingListFilter,
+      setActivePackingListFilter: state.setActivePackingListFilter,
+      packingListSearchValue: state.packingListSearchValue,
+      setPackingListSearchValue: state.setPackingListSearchValue,
+    }))
+  )
 }

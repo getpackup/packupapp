@@ -68,10 +68,8 @@ export function useCollection<T>(
     staleTime: 2 * 60 * 1000,
     // Cache collection data for 5 minutes
     gcTime: 5 * 60 * 1000,
-    // Don't refetch on window focus
-    refetchOnWindowFocus: false,
-    // Don't refetch on mount if data is fresh
-    refetchOnMount: false,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
     ...queryOptions,
   }) as ReturnType<typeof useQuery<T>>
 }
@@ -109,9 +107,9 @@ export const useSubCollection = <T>(
     },
     enabled: !!parentDocId,
     // Keep subcollection data fresh for 2 minutes
-    // staleTime: 2 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
     // Cache subcollection data for 5 minutes
-    // gcTime: 5 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     ...queryOptions,
@@ -165,6 +163,65 @@ export function useCreateSubCollectionDocument(collection: string, subCollection
   })
 }
 
+export function useUpdateSubCollectionDocument(collection: string, subCollection: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      parentDocId,
+      id,
+      data,
+    }: {
+      parentDocId: string
+      id: string
+      data: any
+    }) => {
+      const docRef = doc(firestoreDb, collection, parentDocId, subCollection, id)
+      const updateData = { ...data, updatedAt: new Date() }
+
+      await updateDoc(docRef, updateData)
+      return { id, ...updateData }
+    },
+    onMutate: async ({ parentDocId, id, data }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({
+        queryKey: [...firebaseKeys.collection(collection), parentDocId, subCollection],
+      })
+
+      // Snapshot the previous value for rollback
+      const previousQueries = queryClient.getQueriesData({
+        queryKey: [...firebaseKeys.collection(collection), parentDocId, subCollection],
+      })
+
+      // Optimistically update all matching queries
+      previousQueries.forEach(([queryKey, queryData]) => {
+        if (Array.isArray(queryData)) {
+          const updatedData = queryData.map((item: any) =>
+            item.id === id ? { ...item, ...data } : item
+          )
+          queryClient.setQueryData(queryKey, updatedData)
+        }
+      })
+
+      return { previousQueries }
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousQueries) {
+        // Restore previous query data
+        context.previousQueries.forEach(([queryKey, queryData]) => {
+          queryClient.setQueryData(queryKey, queryData)
+        })
+      }
+    },
+    onSettled: (data, error, variables) => {
+      // Invalidate all subcollection queries to ensure fresh data
+      queryClient.invalidateQueries({
+        queryKey: [...firebaseKeys.collection(collection), variables.parentDocId, subCollection],
+      })
+    },
+  })
+}
+
 export function useCreateUser() {
   const queryClient = useQueryClient()
   const collection = 'users'
@@ -202,9 +259,9 @@ export function useGetUser(uid: string) {
     // Cache user data for 30 minutes
     gcTime: 30 * 60 * 1000,
     // Don't refetch on window focus
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
     // Don't refetch on mount if data is fresh
-    refetchOnMount: false,
+    refetchOnMount: true,
   })
 }
 

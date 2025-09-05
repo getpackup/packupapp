@@ -51,11 +51,11 @@ export default function TripDetails({ params }: Route.ComponentProps) {
         {!trip ? (
           <FullPageSpinner what="trip details" />
         ) : (
-          <div className="flex">
-            <div className="w-2/3 p-8">
+          <div className="flex h-full min-h-0">
+            <div className="w-2/3 overflow-y-auto p-8">
               <TripPackingList tripId={id} />
             </div>
-            <div className="border-sidebar-border w-1/3 border-l">
+            <div className="border-sidebar-border w-1/3 overflow-y-auto border-l">
               <TripDetailsSidebar trip={trip} users={users} />
             </div>
           </div>
