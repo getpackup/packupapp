@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-query'
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -106,8 +107,7 @@ export const useSubCollection = <T>(
       return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as T
     },
     enabled: !!parentDocId,
-    // Keep subcollection data fresh for 2 minutes
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,
     // Cache subcollection data for 5 minutes
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
@@ -207,14 +207,50 @@ export function useUpdateSubCollectionDocument(collection: string, subCollection
     },
     onError: (err, variables, context) => {
       if (context?.previousQueries) {
-        // Restore previous query data
         context.previousQueries.forEach(([queryKey, queryData]) => {
           queryClient.setQueryData(queryKey, queryData)
         })
       }
     },
     onSettled: (data, error, variables) => {
-      // Invalidate all subcollection queries to ensure fresh data
+      queryClient.invalidateQueries({
+        queryKey: [...firebaseKeys.collection(collection), variables.parentDocId, subCollection],
+      })
+    },
+  })
+}
+
+export function useDeleteSubCollectionDocument(collection: string, subCollection: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ parentDocId, id }: { parentDocId: string; id: string }) => {
+      const docRef = doc(firestoreDb, collection, parentDocId, subCollection, id)
+      await deleteDoc(docRef)
+    },
+    onMutate: async ({ parentDocId, id }) => {
+      await queryClient.cancelQueries({
+        queryKey: [...firebaseKeys.collection(collection), parentDocId, subCollection],
+      })
+      const previousQueries = queryClient.getQueriesData({
+        queryKey: [...firebaseKeys.collection(collection), parentDocId, subCollection],
+      })
+
+      previousQueries.forEach(([queryKey, queryData]) => {
+        if (Array.isArray(queryData)) {
+          const updatedData = queryData.filter((item: any) => item.id !== id)
+          queryClient.setQueryData(queryKey, updatedData)
+        }
+      })
+      return { previousQueries }
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(([queryKey, queryData]) => {
+          queryClient.setQueryData(queryKey, queryData)
+        })
+      }
+    },
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
         queryKey: [...firebaseKeys.collection(collection), variables.parentDocId, subCollection],
       })

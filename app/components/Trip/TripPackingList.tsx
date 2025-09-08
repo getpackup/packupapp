@@ -196,7 +196,15 @@ const TripPackingList = ({ tripId }: TripPackingListProps) => {
           {sharedItems.length === 0 ? (
             <div className="text-muted-foreground text-sm">No shared group items</div>
           ) : (
-            sharedItems.map((item) => <TripPackingListItem key={item.id} item={item} />)
+            sharedItems.map((item) => (
+              <TripPackingListItem
+                key={item.id}
+                item={item}
+                isMultiSelecting={false}
+                isSelected={false}
+                onItemSelection={() => {}}
+              />
+            ))
           )}
         </TabsContent>
       </Tabs>
