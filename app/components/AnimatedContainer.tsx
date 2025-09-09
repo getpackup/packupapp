@@ -29,18 +29,18 @@ const highlightNewItem = {
   initial: {
     opacity: 0.5,
     backgroundColor: 'rgba(73, 125, 0, 0.15)',
-    borderRadius: '0.5rem',
+    borderRadius: '0.75rem',
   },
   animate: {
     opacity: 1,
     backgroundColor: 'rgba(73, 125, 0, 0.75)',
-    borderRadius: '0.5rem',
+    borderRadius: '0.75rem',
   },
   exit: {
     scale: 1,
     opacity: 1,
     backgroundColor: 'rgba(73, 125, 0, 0)',
-    borderRadius: '0.5rem',
+    borderRadius: '0.75rem',
   },
   transition: {
     duration: 0.6,

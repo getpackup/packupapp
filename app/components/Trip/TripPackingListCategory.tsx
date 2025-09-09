@@ -15,7 +15,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router'
 import { toast } from 'sonner'
 
-import { usePrevious } from '~/lib/usePrevious'
+import { cn } from '~/lib/utils'
 import { useDeleteSubCollectionDocument, useUpdateSubCollectionDocument } from '~/services/api'
 import type { PackingListItem } from '~/types/PackingListItem'
 
@@ -49,34 +49,34 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
   const [lastSelectedItem, setLastSelectedItem] = useState<string | null>(null)
   const [accordionOpen, setAccordionOpen] = useState(true)
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false)
-  const [newlyAddedItems, setNewlyAddedItems] = useState<Set<string>>(new Set())
+  const [newlyAddedItem, setNewlyAddedItem] = useState<string | null>(null)
 
-  const ref = useRef<HTMLDivElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
 
   const { mutate: updatePackingListItem } = useUpdateSubCollectionDocument('trips', 'packing-list')
   const { mutate: deletePackingListItem } = useDeleteSubCollectionDocument('trips', 'packing-list')
   const { id } = useParams()
 
-  const previousItemsLength = usePrevious(items.length)
+  const handleItemCreated = (itemId: string) => {
+    if (newlyAddedItem) {
+      return
+    }
+    setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'center' })
+    }, 100)
+
+    setNewlyAddedItem(itemId)
+
+    setTimeout(() => {
+      setNewlyAddedItem(null)
+    }, 2000)
+  }
 
   useEffect(() => {
-    if (previousItemsLength === items.length - 1) {
-      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-
-      const newItem = items[items.length - 1]
-      if (newItem?.id) {
-        setNewlyAddedItems((prev) => new Set([...prev, newItem.id]))
-
-        setTimeout(() => {
-          setNewlyAddedItems((prev) => {
-            const newSet = new Set(prev)
-            newSet.delete(newItem.id)
-            return newSet
-          })
-        }, 2000)
-      }
+    return () => {
+      setNewlyAddedItem(null)
     }
-  }, [items.length, newlyAddedItems])
+  }, [])
 
   const clearOrExitMultiSelect = () => {
     if (selectedItems.length > 0) {
@@ -113,6 +113,7 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
     })
     setSelectedItems([])
     setActionsMenuOpen(false)
+    setIsMultiSelecting(false)
     toast.success('Selected items deleted')
   }
 
@@ -173,307 +174,318 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
     )
 
   return (
-    <Accordion
-      ref={ref}
-      type="single"
-      collapsible
-      className="w-full"
-      defaultValue={categoryName}
-      disabled={isMultiSelecting}
-      value={accordionOpen ? categoryName : ''}
-      onValueChange={(value) => {
-        setAccordionOpen(value === categoryName)
-      }}
-    >
-      <AccordionItem value={categoryName} disabled={isMultiSelecting}>
-        <AccordionTrigger
-          hideIcon
-          className="group/accordion hover:no-underline"
-          asChild
-          onClick={(e) => {
-            if (isMultiSelecting) {
-              e.preventDefault()
-              e.stopPropagation()
-            }
-          }}
-        >
-          <div
+    <>
+      <Accordion
+        type="single"
+        collapsible
+        className="w-full"
+        defaultValue={categoryName}
+        disabled={isMultiSelecting}
+        value={accordionOpen ? categoryName : ''}
+        onValueChange={(value) => {
+          setAccordionOpen(value === categoryName)
+        }}
+      >
+        <AccordionItem value={categoryName} disabled={isMultiSelecting}>
+          <AccordionTrigger
+            hideIcon
+            className="group/accordion hover:no-underline"
+            asChild
             onClick={(e) => {
               if (isMultiSelecting) {
                 e.preventDefault()
                 e.stopPropagation()
               }
             }}
-            className="focus-visible:border-ring focus-visible:ring-ring/50 flex w-full justify-between border-b px-2 pb-2 transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                e.currentTarget.click()
-              }
-            }}
           >
-            <div className="group flex cursor-pointer items-center gap-3">
-              {isMultiSelecting && (
-                <Tooltip>
-                  <TooltipTrigger className="ml-1 flex items-center" asChild>
-                    <div>
-                      <Checkbox
-                        className="pointer-events-auto"
-                        checked={
-                          selectedItems.length === items.length
-                            ? true
-                            : selectedItems.length >= 1 && selectedItems.length < items.length
-                              ? 'indeterminate'
-                              : false
-                        }
-                        onCheckedChange={() => {
-                          selectedItems.length === items.length
-                            ? setSelectedItems([])
-                            : setSelectedItems(items.map((item) => item.id))
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                        }}
-                      />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <div className="w-44 space-y-3">
-                      <div className="flex items-center justify-between">
-                        Multi-select
-                        <span>
-                          <KeyboardInput>{controlOrCommand}</KeyboardInput>
-                          <KeyboardInput>Click</KeyboardInput>
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        Select a range
-                        <span>
-                          <KeyboardInput>
-                            <ArrowBigUp className="inline size-3" />
-                          </KeyboardInput>
-                          <KeyboardInput>Click</KeyboardInput>
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        Select all
-                        <span>
-                          <KeyboardInput>{controlOrCommand}</KeyboardInput>
-                          <KeyboardInput>A</KeyboardInput>
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        Clear selection
-                        <KeyboardInput>Esc</KeyboardInput>
-                      </div>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              <div>
-                <div className="text-lg font-semibold">
-                  {categoryName}{' '}
-                  {isMultiSelecting ? null : (
-                    <ChevronDown className="inline h-4 w-4 group-data-[state=closed]/accordion:rotate-180" />
-                  )}
-                </div>
-                <div className="text-muted-foreground text-sm">
-                  {!isMultiSelecting && (
-                    <span>
-                      {items.filter((item) => item.isPacked).length} of {items.length} packed
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {isMultiSelecting ? (
-                <div className="flex items-center gap-2">
+            <div
+              onClick={(e) => {
+                if (isMultiSelecting) {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }
+              }}
+              className="focus-visible:border-ring focus-visible:ring-ring/50 flex w-full justify-between border-b px-2 pb-2 transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  e.currentTarget.click()
+                }
+              }}
+            >
+              <div className="group flex cursor-pointer items-center gap-3">
+                {isMultiSelecting && (
                   <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="dashed"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          clearOrExitMultiSelect()
-                        }}
-                        className="gap-2"
-                      >
-                        {selectedItems.length} selected
-                        <Separator orientation="vertical" className="!h-4" />{' '}
-                        <X className="size-4" />
-                      </Button>
+                    <TooltipTrigger className="ml-1 flex items-center" asChild>
+                      <div>
+                        <Checkbox
+                          className="pointer-events-auto"
+                          checked={
+                            selectedItems.length === items.length
+                              ? true
+                              : selectedItems.length >= 1 && selectedItems.length < items.length
+                                ? 'indeterminate'
+                                : false
+                          }
+                          onCheckedChange={() => {
+                            selectedItems.length === items.length
+                              ? setSelectedItems([])
+                              : setSelectedItems(items.map((item) => item.id))
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                          }}
+                        />
+                      </div>
                     </TooltipTrigger>
-                    <TooltipContent className="flex items-center gap-4">
-                      {selectedItems.length > 0 ? 'Clear selected' : 'Exit multi-select'}{' '}
-                      <KeyboardInput>Esc</KeyboardInput>
+                    <TooltipContent>
+                      <div className="w-44 space-y-3">
+                        <div className="flex items-center justify-between">
+                          Multi-select
+                          <span>
+                            <KeyboardInput>{controlOrCommand}</KeyboardInput>
+                            <KeyboardInput>Click</KeyboardInput>
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          Select a range
+                          <span>
+                            <KeyboardInput>
+                              <ArrowBigUp className="inline size-3" />
+                            </KeyboardInput>
+                            <KeyboardInput>Click</KeyboardInput>
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          Select all
+                          <span>
+                            <KeyboardInput>{controlOrCommand}</KeyboardInput>
+                            <KeyboardInput>A</KeyboardInput>
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          Clear selection
+                          <KeyboardInput>Esc</KeyboardInput>
+                        </div>
+                      </div>
                     </TooltipContent>
                   </Tooltip>
-                  <DropdownMenu open={actionsMenuOpen} onOpenChange={setActionsMenuOpen}>
-                    <DropdownMenuTrigger asChild>
-                      <div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setActionsMenuOpen(!actionsMenuOpen)
-                              }}
-                              variant="outline"
-                              size="sm"
-                            >
-                              <Command className="size-3 opacity-80 hover:opacity-100" /> Actions
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <div className="flex items-center gap-4">
-                              Open command menu{' '}
-                              <span>
-                                <KeyboardInput>{controlOrCommand}</KeyboardInput>
-                                <KeyboardInput>K</KeyboardInput>
-                              </span>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem
-                        className="flex justify-between gap-8"
-                        disabled={selectedItems.length === 0}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          markSelectedAsPacked()
-                        }}
-                      >
-                        <span className="flex items-center gap-2">
-                          <ListChecks />
-                          Mark selected as packed
-                        </span>
-                        <KeyboardInput>/</KeyboardInput>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        disabled={selectedItems.length === 0}
-                        className="flex justify-between gap-8"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          deleteSelectedItems()
-                        }}
-                      >
-                        <span className="flex items-center gap-2">
-                          <Trash2 />
-                          Delete selected
-                        </span>
-                        <KeyboardInput>
-                          <Delete className="text-popover-foreground size-4" strokeWidth={1.5} />
-                        </KeyboardInput>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-
-                      <DropdownMenuItem
-                        disabled={selectedItems.length === 0}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          clearOrExitMultiSelect()
-                        }}
-                        className="flex justify-between gap-8"
-                      >
-                        <span className="flex items-center gap-2">
-                          <X />
-                          Clear selected
-                        </span>
-                        <KeyboardInput>Esc</KeyboardInput>
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setIsMultiSelecting(false)
-                          setSelectedItems([])
-                        }}
-                        className="flex justify-between gap-8"
-                      >
-                        <span className="flex items-center gap-2">
-                          <LogOut />
-                          Exit multi-select
-                        </span>
-                        <span>
-                          <KeyboardInput>Esc</KeyboardInput>
-                          <KeyboardInput>Esc</KeyboardInput>
-                        </span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                )}
+                <div>
+                  <div className="text-lg font-semibold">
+                    {categoryName}{' '}
+                    {isMultiSelecting ? null : (
+                      <ChevronDown className="inline h-4 w-4 group-data-[state=closed]/accordion:rotate-180" />
+                    )}
+                  </div>
+                  <div className="text-muted-foreground text-sm">
+                    {!isMultiSelecting && (
+                      <span>
+                        {items.filter((item) => item.isPacked).length} of {items.length} packed
+                      </span>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <>
-                  <AddPackingListDialog categoryName={categoryName} />
+              </div>
+              <div className="flex items-center gap-2">
+                {isMultiSelecting ? (
+                  <div className="flex items-center gap-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="dashed"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            clearOrExitMultiSelect()
+                          }}
+                          className="gap-2"
+                        >
+                          {selectedItems.length} selected
+                          <Separator orientation="vertical" className="!h-4" />{' '}
+                          <X className="size-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="flex items-center gap-4">
+                        {selectedItems.length > 0 ? 'Clear selected' : 'Exit multi-select'}{' '}
+                        <KeyboardInput>Esc</KeyboardInput>
+                      </TooltipContent>
+                    </Tooltip>
+                    <DropdownMenu open={actionsMenuOpen} onOpenChange={setActionsMenuOpen}>
+                      <DropdownMenuTrigger asChild>
+                        <div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setActionsMenuOpen(!actionsMenuOpen)
+                                }}
+                                variant="outline"
+                                size="sm"
+                              >
+                                <Command className="size-3 opacity-80 hover:opacity-100" /> Actions
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="flex items-center gap-4">
+                                Open command menu{' '}
+                                <span>
+                                  <KeyboardInput>{controlOrCommand}</KeyboardInput>
+                                  <KeyboardInput>K</KeyboardInput>
+                                </span>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem
+                          className="flex justify-between gap-8"
+                          disabled={selectedItems.length === 0}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            markSelectedAsPacked()
+                          }}
+                        >
+                          <span className="flex items-center gap-2">
+                            <ListChecks />
+                            Mark selected as packed
+                          </span>
+                          <KeyboardInput>/</KeyboardInput>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          disabled={selectedItems.length === 0}
+                          className="flex justify-between gap-8"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            deleteSelectedItems()
+                          }}
+                        >
+                          <span className="flex items-center gap-2">
+                            <Trash2 />
+                            Delete selected
+                          </span>
+                          <KeyboardInput>
+                            <Delete className="text-popover-foreground size-4" strokeWidth={1.5} />
+                          </KeyboardInput>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="p-1 opacity-80 hover:opacity-100">
-                      <Ellipsis className="h-4 w-4" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setAccordionOpen(true)
-                          setIsMultiSelecting(true)
-                        }}
-                      >
-                        <CopyCheck />
-                        Multi-select items
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          markAllPacked()
-                        }}
-                      >
-                        <ListChecks />
-                        Mark all as {areAllPacked ? 'unpacked' : 'packed'}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          deleteAllItems()
-                        }}
-                      >
-                        <Trash2 />
-                        Delete all in {categoryName}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </>
-              )}
+                        <DropdownMenuItem
+                          disabled={selectedItems.length === 0}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            clearOrExitMultiSelect()
+                          }}
+                          className="flex justify-between gap-8"
+                        >
+                          <span className="flex items-center gap-2">
+                            <X />
+                            Clear selected
+                          </span>
+                          <KeyboardInput>Esc</KeyboardInput>
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setIsMultiSelecting(false)
+                            setSelectedItems([])
+                          }}
+                          className="flex justify-between gap-8"
+                        >
+                          <span className="flex items-center gap-2">
+                            <LogOut />
+                            Exit multi-select
+                          </span>
+                          <span>
+                            <KeyboardInput>Esc</KeyboardInput>
+                            <KeyboardInput>Esc</KeyboardInput>
+                          </span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ) : (
+                  <>
+                    <AddPackingListDialog
+                      categoryName={categoryName}
+                      onItemCreated={handleItemCreated}
+                    />
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="p-1 opacity-80 hover:opacity-100">
+                        <Ellipsis className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setAccordionOpen(true)
+                            setIsMultiSelecting(true)
+                          }}
+                        >
+                          <CopyCheck />
+                          Multi-select items
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            markAllPacked()
+                          }}
+                        >
+                          <ListChecks />
+                          Mark all as {areAllPacked ? 'unpacked' : 'packed'}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            deleteAllItems()
+                          }}
+                        >
+                          <Trash2 />
+                          Delete all in {categoryName}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="flex flex-col gap-4 text-balance">
-          <div className="space-y-1">
-            {items.map((item) => {
-              const isNewlyAdded = newlyAddedItems.has(item.id)
+          </AccordionTrigger>
+          <AccordionContent className="flex flex-col gap-4 text-balance">
+            <div className="space-y-1">
+              {items.map((item) => {
+                const isNewlyAdded = newlyAddedItem === item.id
 
-              return (
-                <AnimatedContainer
-                  key={item.id}
-                  animation={isNewlyAdded ? 'highlightNewItem' : undefined}
-                >
-                  <TripPackingListItem
-                    item={item}
-                    isMultiSelecting={isMultiSelecting}
-                    isSelected={selectedItems.includes(item.id)}
-                    onItemSelection={handleItemSelection}
-                  />
-                </AnimatedContainer>
-              )
-            })}
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+                return (
+                  <AnimatedContainer
+                    key={`${item.id}-${isNewlyAdded ? 'highlighted' : 'normal'}`}
+                    animation={isNewlyAdded ? 'highlightNewItem' : undefined}
+                  >
+                    <TripPackingListItem
+                      item={item}
+                      isMultiSelecting={isMultiSelecting}
+                      isSelected={selectedItems.includes(item.id)}
+                      onItemSelection={handleItemSelection}
+                    />
+                  </AnimatedContainer>
+                )
+              })}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+      <div
+        ref={bottomRef}
+        className={cn('', {
+          'h-[40px]': newlyAddedItem,
+          'h-0': !newlyAddedItem,
+        })}
+      />
+    </>
   )
 }
 

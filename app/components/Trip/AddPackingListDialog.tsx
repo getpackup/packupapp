@@ -33,9 +33,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 
 type AddPackingListDialogProps = {
   categoryName: string
+  onItemCreated?: (itemId: string) => void
 }
 
-function AddPackingListDialog({ categoryName }: AddPackingListDialogProps) {
+function AddPackingListDialog({ categoryName, onItemCreated }: AddPackingListDialogProps) {
   const { id } = useParams()
   const { user } = useAuth()
 
@@ -61,7 +62,7 @@ function AddPackingListDialog({ categoryName }: AddPackingListDialogProps) {
 
     //TODO: Add save to gear closet logic
 
-    await createPackingListItem({
+    const result = await createPackingListItem({
       parentDocId: id,
       data: {
         category: categoryName,
@@ -78,11 +79,15 @@ function AddPackingListDialog({ categoryName }: AddPackingListDialogProps) {
         ],
         quantity: 1,
       },
-    }).then(() => {
-      form.reset()
-      // fake esc key press to close the dialog
-      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     })
+
+    if (result?.id && onItemCreated) {
+      onItemCreated(result.id)
+    }
+
+    form.reset()
+    // fake esc key press to close the dialog
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
   }
   return (
     <Dialog onOpenChange={() => form.reset()}>
