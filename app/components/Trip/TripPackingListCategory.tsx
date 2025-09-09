@@ -8,17 +8,18 @@ import {
   Ellipsis,
   ListChecks,
   LogOut,
-  Plus,
   Trash2,
   X,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router'
 import { toast } from 'sonner'
 
+import { usePrevious } from '~/lib/usePrevious'
 import { useDeleteSubCollectionDocument, useUpdateSubCollectionDocument } from '~/services/api'
 import type { PackingListItem } from '~/types/PackingListItem'
 
+import AnimatedContainer from '../AnimatedContainer'
 import KeyboardInput from '../KeyboardInput'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion'
 import { Button } from '../ui/button'
@@ -32,7 +33,10 @@ import {
 } from '../ui/dropdown-menu'
 import { Separator } from '../ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
+import AddPackingListDialog from './AddPackingListDialog'
 import TripPackingListItem from './TripPackingListItem'
+import { usePackingListCategoryHotkeys } from './usePackingListCategoryHotkeys'
+import { usePackingListCategorySelection } from './usePackingListCategorySelection'
 
 type TripPackingListCategoryProps = {
   categoryName: string
@@ -45,10 +49,34 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
   const [lastSelectedItem, setLastSelectedItem] = useState<string | null>(null)
   const [accordionOpen, setAccordionOpen] = useState(true)
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false)
+  const [newlyAddedItems, setNewlyAddedItems] = useState<Set<string>>(new Set())
+
+  const ref = useRef<HTMLDivElement>(null)
 
   const { mutate: updatePackingListItem } = useUpdateSubCollectionDocument('trips', 'packing-list')
   const { mutate: deletePackingListItem } = useDeleteSubCollectionDocument('trips', 'packing-list')
   const { id } = useParams()
+
+  const previousItemsLength = usePrevious(items.length)
+
+  useEffect(() => {
+    if (previousItemsLength === items.length - 1) {
+      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+
+      const newItem = items[items.length - 1]
+      if (newItem?.id) {
+        setNewlyAddedItems((prev) => new Set([...prev, newItem.id]))
+
+        setTimeout(() => {
+          setNewlyAddedItems((prev) => {
+            const newSet = new Set(prev)
+            newSet.delete(newItem.id)
+            return newSet
+          })
+        }, 2000)
+      }
+    }
+  }, [items.length, newlyAddedItems])
 
   const clearOrExitMultiSelect = () => {
     if (selectedItems.length > 0) {
@@ -61,63 +89,6 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
       setActionsMenuOpen(false)
     }
   }
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Handle Escape key to clear OR exit multi-select mode
-      if (event.key === 'Escape' && isMultiSelecting) {
-        event.preventDefault()
-        clearOrExitMultiSelect()
-        return
-      }
-
-      if ((event.key === 'Delete' || event.key === 'Backspace') && isMultiSelecting) {
-        event.preventDefault()
-        deleteSelectedItems()
-        return
-      }
-
-      if (event.key === '/' && isMultiSelecting) {
-        event.preventDefault()
-        markSelectedAsPacked()
-        return
-      }
-
-      // Check if Ctrl/Cmd + A is pressed
-      if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
-        if (isMultiSelecting) {
-          event.preventDefault()
-
-          setSelectedItems(
-            selectedItems.length === items.length ? [] : items.map((item) => item.id)
-          )
-        }
-      }
-
-      // Check if Ctrl/Cmd + K is pressed to open Actions menu
-      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
-        // Only trigger if we're in multi-select mode
-        if (isMultiSelecting) {
-          event.preventDefault()
-          event.stopPropagation()
-
-          if (actionsMenuOpen) {
-            setActionsMenuOpen(false)
-          } else {
-            setActionsMenuOpen(true)
-          }
-        }
-      }
-    }
-
-    // Add event listener with capture phase to handle before other handlers
-    document.addEventListener('keydown', handleKeyDown, true)
-
-    // Cleanup event listener on unmount
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown, true)
-    }
-  }, [isMultiSelecting, selectedItems.length, items, actionsMenuOpen])
 
   const areAllPacked = items.every((item) => item.isPacked)
 
@@ -173,56 +144,26 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
     })
   }
 
-  const handleItemSelection = (itemId: string, isShiftClick: boolean, isCommandClick: boolean) => {
-    if (!isMultiSelecting) return
+  const { handleItemSelection } = usePackingListCategorySelection(
+    isMultiSelecting,
+    lastSelectedItem,
+    items,
+    selectedItems,
+    setSelectedItems,
+    setLastSelectedItem
+  )
 
-    if (isShiftClick && lastSelectedItem) {
-      // Range selection
-      const lastIndex = items.findIndex((item) => item.id === lastSelectedItem)
-      const currentIndex = items.findIndex((item) => item.id === itemId)
-
-      if (lastIndex === -1 || currentIndex === -1) return
-
-      const startIndex = Math.min(lastIndex, currentIndex)
-      const endIndex = Math.max(lastIndex, currentIndex)
-
-      const rangeItems = items.slice(startIndex, endIndex + 1).map((item) => item.id)
-
-      // Determine if we should add or remove the range based on the current item's state
-      const isCurrentItemSelected = selectedItems.includes(itemId)
-
-      if (isCurrentItemSelected) {
-        // Remove all items in range from selection
-        setSelectedItems(selectedItems.filter((id) => !rangeItems.includes(id)))
-      } else {
-        // Add all items in range to selection
-        const newSelectedItems = [...new Set([...selectedItems, ...rangeItems])]
-        setSelectedItems(newSelectedItems)
-      }
-
-      // Update last selected item for future range operations
-      setLastSelectedItem(itemId)
-    } else if (isCommandClick) {
-      // Toggle individual item
-      const isCurrentlySelected = selectedItems.includes(itemId)
-      if (isCurrentlySelected) {
-        setSelectedItems(selectedItems.filter((id) => id !== itemId))
-      } else {
-        setSelectedItems([...selectedItems, itemId])
-      }
-      setLastSelectedItem(itemId)
-    } else {
-      // Regular click - toggle individual item
-      const isCurrentlySelected = selectedItems.includes(itemId)
-      if (isCurrentlySelected) {
-        setSelectedItems(selectedItems.filter((id) => id !== itemId))
-        setLastSelectedItem(null)
-      } else {
-        setSelectedItems([...selectedItems, itemId])
-        setLastSelectedItem(itemId)
-      }
-    }
-  }
+  usePackingListCategoryHotkeys(
+    isMultiSelecting,
+    clearOrExitMultiSelect,
+    deleteSelectedItems,
+    markSelectedAsPacked,
+    setSelectedItems,
+    selectedItems,
+    items,
+    actionsMenuOpen,
+    setActionsMenuOpen
+  )
 
   const controlOrCommand =
     navigator.userAgent.indexOf('Mac') !== -1 ? (
@@ -233,6 +174,7 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
 
   return (
     <Accordion
+      ref={ref}
       type="single"
       collapsible
       className="w-full"
@@ -273,8 +215,8 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
           >
             <div className="group flex cursor-pointer items-center gap-3">
               {isMultiSelecting && (
-                <Tooltip delayDuration={500}>
-                  <TooltipTrigger className="ml-1" asChild>
+                <Tooltip>
+                  <TooltipTrigger className="ml-1 flex items-center" asChild>
                     <div>
                       <Checkbox
                         className="pointer-events-auto"
@@ -297,15 +239,15 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <div className="w-44 space-y-1">
-                      <div className="flex justify-between">
+                    <div className="w-44 space-y-3">
+                      <div className="flex items-center justify-between">
                         Multi-select
                         <span>
                           <KeyboardInput>{controlOrCommand}</KeyboardInput>
                           <KeyboardInput>Click</KeyboardInput>
                         </span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex items-center justify-between">
                         Select a range
                         <span>
                           <KeyboardInput>
@@ -314,14 +256,14 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
                           <KeyboardInput>Click</KeyboardInput>
                         </span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex items-center justify-between">
                         Select all
                         <span>
                           <KeyboardInput>{controlOrCommand}</KeyboardInput>
                           <KeyboardInput>A</KeyboardInput>
                         </span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex items-center justify-between">
                         Clear selection
                         <KeyboardInput>Esc</KeyboardInput>
                       </div>
@@ -332,7 +274,9 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
               <div>
                 <div className="text-lg font-semibold">
                   {categoryName}{' '}
-                  <ChevronDown className="inline h-4 w-4 group-data-[state=closed]/accordion:rotate-180" />
+                  {isMultiSelecting ? null : (
+                    <ChevronDown className="inline h-4 w-4 group-data-[state=closed]/accordion:rotate-180" />
+                  )}
                 </div>
                 <div className="text-muted-foreground text-sm">
                   {!isMultiSelecting && (
@@ -346,33 +290,31 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
             <div className="flex items-center gap-2">
               {isMultiSelecting ? (
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 rounded-sm border border-dashed px-2 py-1">
-                    <span className="opacity-80 hover:opacity-100">
-                      {selectedItems.length} selected
-                    </span>
-                    <Separator orientation="vertical" className="!h-4" />{' '}
-                    <Tooltip delayDuration={500}>
-                      <TooltipTrigger asChild>
-                        <button
-                          className="opacity-80 hover:opacity-100"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            clearOrExitMultiSelect()
-                          }}
-                        >
-                          <X className="size-4" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="flex items-center gap-2">
-                        {selectedItems.length > 0 ? 'Clear selected' : 'Exit multi-select'}{' '}
-                        <KeyboardInput>Esc</KeyboardInput>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="dashed"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          clearOrExitMultiSelect()
+                        }}
+                        className="gap-2"
+                      >
+                        {selectedItems.length} selected
+                        <Separator orientation="vertical" className="!h-4" />{' '}
+                        <X className="size-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="flex items-center gap-4">
+                      {selectedItems.length > 0 ? 'Clear selected' : 'Exit multi-select'}{' '}
+                      <KeyboardInput>Esc</KeyboardInput>
+                    </TooltipContent>
+                  </Tooltip>
                   <DropdownMenu open={actionsMenuOpen} onOpenChange={setActionsMenuOpen}>
                     <DropdownMenuTrigger asChild>
                       <div>
-                        <Tooltip delayDuration={500}>
+                        <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
                               onClick={(e) => {
@@ -381,13 +323,18 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
                               }}
                               variant="outline"
                               size="sm"
-                              className=""
                             >
                               <Command className="size-3 opacity-80 hover:opacity-100" /> Actions
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            Open command menu <KeyboardInput>Cmd+K</KeyboardInput>
+                            <div className="flex items-center gap-4">
+                              Open command menu{' '}
+                              <span>
+                                <KeyboardInput>{controlOrCommand}</KeyboardInput>
+                                <KeyboardInput>K</KeyboardInput>
+                              </span>
+                            </div>
                           </TooltipContent>
                         </Tooltip>
                       </div>
@@ -424,21 +371,22 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
                         </KeyboardInput>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      {selectedItems.length > 0 && (
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            clearOrExitMultiSelect()
-                          }}
-                          className="flex justify-between gap-8"
-                        >
-                          <span className="flex items-center gap-2">
-                            <X />
-                            Clear selected
-                          </span>
-                          <KeyboardInput>Esc</KeyboardInput>
-                        </DropdownMenuItem>
-                      )}
+
+                      <DropdownMenuItem
+                        disabled={selectedItems.length === 0}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          clearOrExitMultiSelect()
+                        }}
+                        className="flex justify-between gap-8"
+                      >
+                        <span className="flex items-center gap-2">
+                          <X />
+                          Clear selected
+                        </span>
+                        <KeyboardInput>Esc</KeyboardInput>
+                      </DropdownMenuItem>
+
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation()
@@ -451,23 +399,17 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
                           <LogOut />
                           Exit multi-select
                         </span>
-                        <KeyboardInput>
-                          {selectedItems.length === 0 ? 'Esc' : 'Esc+Esc'}
-                        </KeyboardInput>
+                        <span>
+                          <KeyboardInput>Esc</KeyboardInput>
+                          <KeyboardInput>Esc</KeyboardInput>
+                        </span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
               ) : (
                 <>
-                  <Tooltip delayDuration={500}>
-                    <TooltipTrigger className="p-1 opacity-80 hover:opacity-100">
-                      <Plus className="h-4 w-4" />
-                    </TooltipTrigger>
-                    <TooltipContent className="flex items-center gap-2">
-                      Add item to {categoryName}
-                    </TooltipContent>
-                  </Tooltip>
+                  <AddPackingListDialog categoryName={categoryName} />
 
                   <DropdownMenu>
                     <DropdownMenuTrigger className="p-1 opacity-80 hover:opacity-100">
@@ -511,15 +453,23 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
         </AccordionTrigger>
         <AccordionContent className="flex flex-col gap-4 text-balance">
           <div className="space-y-1">
-            {items.map((item) => (
-              <TripPackingListItem
-                key={item.id}
-                item={item}
-                isMultiSelecting={isMultiSelecting}
-                isSelected={selectedItems.includes(item.id)}
-                onItemSelection={handleItemSelection}
-              />
-            ))}
+            {items.map((item) => {
+              const isNewlyAdded = newlyAddedItems.has(item.id)
+
+              return (
+                <AnimatedContainer
+                  key={item.id}
+                  animation={isNewlyAdded ? 'highlightNewItem' : undefined}
+                >
+                  <TripPackingListItem
+                    item={item}
+                    isMultiSelecting={isMultiSelecting}
+                    isSelected={selectedItems.includes(item.id)}
+                    onItemSelection={handleItemSelection}
+                  />
+                </AnimatedContainer>
+              )
+            })}
           </div>
         </AccordionContent>
       </AccordionItem>

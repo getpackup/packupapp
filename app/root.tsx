@@ -21,6 +21,7 @@ import FullPageSpinner from '~/components/FullPageSpinner'
 import { Toaster } from '~/components/ui/sonner'
 
 import type { Route } from './+types/root'
+import { TooltipProvider } from './components/ui/tooltip'
 import { gdprConsent, themePreferenceCookie } from './cookies.server'
 import { getBodyClassNames } from './lib/getBodyClassNames'
 import { cn } from './lib/utils'
@@ -116,7 +117,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className={bodyClassNames}>
         <QueryClientProvider client={queryClient}>
-          {children}
+          <TooltipProvider>{children}</TooltipProvider>
           <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>
         <Toaster position="bottom-right" richColors />

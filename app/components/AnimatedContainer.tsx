@@ -25,13 +25,36 @@ const slideUpAndFadeIn = {
   transition: { duration: 0.2 },
 }
 
+const highlightNewItem = {
+  initial: {
+    opacity: 0.5,
+    backgroundColor: 'rgba(73, 125, 0, 0.15)',
+    borderRadius: '0.5rem',
+  },
+  animate: {
+    opacity: 1,
+    backgroundColor: 'rgba(73, 125, 0, 0.75)',
+    borderRadius: '0.5rem',
+  },
+  exit: {
+    scale: 1,
+    opacity: 1,
+    backgroundColor: 'rgba(73, 125, 0, 0)',
+    borderRadius: '0.5rem',
+  },
+  transition: {
+    duration: 0.6,
+    delay: 0,
+  },
+}
+
 const AnimatedContainer = ({
   children,
   animation,
   ...rest
 }: {
   children: React.ReactNode
-  animation: 'scaleAndFadeIn' | 'slideUpAndFadeIn' | 'fadeIn'
+  animation: 'scaleAndFadeIn' | 'slideUpAndFadeIn' | 'fadeIn' | 'highlightNewItem' | undefined
 } & Omit<HTMLMotionProps<'div'>, 'initial' | 'animate' | 'exit' | 'transition'>) => {
   const getAnimationConfig = () => {
     switch (animation) {
@@ -41,8 +64,10 @@ const AnimatedContainer = ({
         return slideUpAndFadeIn
       case 'fadeIn':
         return fadeIn
+      case 'highlightNewItem':
+        return highlightNewItem
       default:
-        return scaleAndFadeIn
+        return undefined
     }
   }
 

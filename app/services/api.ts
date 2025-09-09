@@ -5,6 +5,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import {
+  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -75,13 +76,13 @@ export function useCollection<T>(
   }) as ReturnType<typeof useQuery<T>>
 }
 
-export const useSubCollection = <T>(
+export function useSubCollection<T>(
   collectionName: string,
   subCollectionName: string,
   parentDocId: string,
   constraints?: QueryConstraint[],
   queryOptions?: Partial<QueryObserverOptions>
-) => {
+) {
   return useQuery({
     queryKey: [
       ...firebaseKeys.collection(collectionName),
@@ -132,38 +133,39 @@ export function useCreateDocument(collection: string) {
   })
 }
 
-export function useCreateSubCollectionDocument(collection: string, subCollection: string) {
+export function useCreateSubCollectionDocument<T>(collectionName: string, subCollection: string) {
   const queryClient = useQueryClient()
 
-  return useMutation({
-    mutationFn: async ({
-      parentDocId,
-      id,
-      data,
-    }: {
-      parentDocId: string
-      id: string
-      data: any
-    }) => {
-      const docRef = doc(firestoreDb, collection, parentDocId, subCollection, id)
-      await setDoc(docRef, { ...data, createdAt: new Date() })
-      return { id, ...data }
+  return useMutation<
+    T & { id: string; created: Date },
+    Error,
+    { parentDocId: string; data: Omit<T, 'id' | 'created'> }
+  >({
+    mutationFn: async ({ parentDocId, data }) => {
+      const subCollectionRef = collection(firestoreDb, collectionName, parentDocId, subCollection)
+      const documentData = { ...data, created: new Date() }
+      const docRef = await addDoc(subCollectionRef, documentData)
+      return { ...documentData, id: docRef.id } as T & { id: string; created: Date }
     },
     onSuccess: (data, variables) => {
       // Invalidate the subcollection query
       queryClient.invalidateQueries({
-        queryKey: [...firebaseKeys.collection(collection), variables.parentDocId, subCollection],
+        queryKey: [
+          ...firebaseKeys.collection(collectionName),
+          variables.parentDocId,
+          subCollection,
+        ],
       })
       // Set the new document data
       queryClient.setQueryData(
-        [...firebaseKeys.collection(collection), variables.parentDocId, subCollection, data.id],
+        [...firebaseKeys.collection(collectionName), variables.parentDocId, subCollection, data.id],
         data
       )
     },
   })
 }
 
-export function useUpdateSubCollectionDocument(collection: string, subCollection: string) {
+export function useUpdateSubCollectionDocument(collectionName: string, subCollection: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -176,7 +178,7 @@ export function useUpdateSubCollectionDocument(collection: string, subCollection
       id: string
       data: any
     }) => {
-      const docRef = doc(firestoreDb, collection, parentDocId, subCollection, id)
+      const docRef = doc(firestoreDb, collectionName, parentDocId, subCollection, id)
       const updateData = { ...data, updatedAt: new Date() }
 
       await updateDoc(docRef, updateData)
@@ -185,12 +187,12 @@ export function useUpdateSubCollectionDocument(collection: string, subCollection
     onMutate: async ({ parentDocId, id, data }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({
-        queryKey: [...firebaseKeys.collection(collection), parentDocId, subCollection],
+        queryKey: [...firebaseKeys.collection(collectionName), parentDocId, subCollection],
       })
 
       // Snapshot the previous value for rollback
       const previousQueries = queryClient.getQueriesData({
-        queryKey: [...firebaseKeys.collection(collection), parentDocId, subCollection],
+        queryKey: [...firebaseKeys.collection(collectionName), parentDocId, subCollection],
       })
 
       // Optimistically update all matching queries
@@ -214,25 +216,29 @@ export function useUpdateSubCollectionDocument(collection: string, subCollection
     },
     onSettled: (data, error, variables) => {
       queryClient.invalidateQueries({
-        queryKey: [...firebaseKeys.collection(collection), variables.parentDocId, subCollection],
+        queryKey: [
+          ...firebaseKeys.collection(collectionName),
+          variables.parentDocId,
+          subCollection,
+        ],
       })
     },
   })
 }
 
-export function useDeleteSubCollectionDocument(collection: string, subCollection: string) {
+export function useDeleteSubCollectionDocument(collectionName: string, subCollection: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ parentDocId, id }: { parentDocId: string; id: string }) => {
-      const docRef = doc(firestoreDb, collection, parentDocId, subCollection, id)
+      const docRef = doc(firestoreDb, collectionName, parentDocId, subCollection, id)
       await deleteDoc(docRef)
     },
     onMutate: async ({ parentDocId, id }) => {
       await queryClient.cancelQueries({
-        queryKey: [...firebaseKeys.collection(collection), parentDocId, subCollection],
+        queryKey: [...firebaseKeys.collection(collectionName), parentDocId, subCollection],
       })
       const previousQueries = queryClient.getQueriesData({
-        queryKey: [...firebaseKeys.collection(collection), parentDocId, subCollection],
+        queryKey: [...firebaseKeys.collection(collectionName), parentDocId, subCollection],
       })
 
       previousQueries.forEach(([queryKey, queryData]) => {
@@ -252,7 +258,11 @@ export function useDeleteSubCollectionDocument(collection: string, subCollection
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: [...firebaseKeys.collection(collection), variables.parentDocId, subCollection],
+        queryKey: [
+          ...firebaseKeys.collection(collectionName),
+          variables.parentDocId,
+          subCollection,
+        ],
       })
     },
   })
