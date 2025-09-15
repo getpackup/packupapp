@@ -21,7 +21,7 @@ type TripPackingListProps = {
 
 const TripPackingList = ({ tripId }: TripPackingListProps) => {
   const { user } = useAuth()
-  const { data: packingList, isLoading: packingListLoading } = useSubCollection<PackingListItem[]>(
+  const { data: packingList, isLoading } = useSubCollection<PackingListItem[]>(
     'trips',
     'packing-list',
     tripId,
@@ -146,7 +146,7 @@ const TripPackingList = ({ tripId }: TripPackingListProps) => {
           </div>
         </div>
         <TabsContent value="personal">
-          {packingListLoading || packingList?.length === 0 ? (
+          {isLoading || packingList?.length === 0 ? (
             <FullPageSpinner what="packing list" />
           ) : (
             <div className="space-y-1">

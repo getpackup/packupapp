@@ -1,5 +1,5 @@
 import { TooltipTrigger } from '@radix-ui/react-tooltip'
-import { BadgeCheck } from 'lucide-react'
+import { BadgeCheck, Contact, Send, UserX } from 'lucide-react'
 
 import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
@@ -10,7 +10,7 @@ import { Tooltip, TooltipContent } from './ui/tooltip'
 
 type StackedAvatarsProps = {
   tripMembers: TripMember[]
-  users: User[]
+  users?: User[]
 }
 
 export const activeTripMembersOnly = (tripMembers: TripMember[]) =>
@@ -29,7 +29,7 @@ const StackedAvatars = ({ tripMembers, users }: StackedAvatarsProps) => {
   return (
     <div className="flex -space-x-2">
       {activeTripMembers.map((tripMember) => {
-        const user = users.find((user) => user.id === tripMember.uid)
+        const user = users?.find((user) => user.id === tripMember.uid)
         if (!user) {
           return null
         }
@@ -48,20 +48,52 @@ const StackedAvatars = ({ tripMembers, users }: StackedAvatarsProps) => {
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p className="flex flex-col items-center gap-2 pb-2">
-                @{user.username.toLocaleLowerCase()}
-                {tripMember.status === TripMemberStatus.Owner && (
-                  <Badge variant="primary">
-                    <BadgeCheck /> Trip Creator
-                  </Badge>
-                )}
-                {tripMember.status === TripMemberStatus.Pending && (
-                  <Badge variant="secondary">Invited</Badge>
-                )}
-                {tripMember.status === TripMemberStatus.Accepted && (
-                  <Badge variant="secondary">Trip Member</Badge>
-                )}
-              </p>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Avatar className="size-16 border">
+                    <AvatarImage
+                      src={user.photoURL}
+                      gravatarEmail={user.email}
+                      alt={`${user.username} avatar`}
+                    />
+                    <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="mb-2 flex flex-col">
+                    <span className="mb-1 text-lg leading-none">{user.displayName}</span>
+                    <span className="text-sm leading-none">
+                      @{user.username.toLocaleLowerCase()}
+                    </span>
+                  </div>
+                </div>
+                <div className="mb-2">
+                  {tripMember.status === TripMemberStatus.Owner && (
+                    <Badge variant="primary">
+                      <BadgeCheck /> Trip Creator
+                    </Badge>
+                  )}
+                  {tripMember.status === TripMemberStatus.Pending && (
+                    <Badge variant="success">
+                      <Send />
+                      Invited
+                    </Badge>
+                  )}
+                  {tripMember.status === TripMemberStatus.Accepted && (
+                    <Badge variant="secondary">
+                      <Contact /> Trip Member
+                    </Badge>
+                  )}
+                  {tripMember.status === TripMemberStatus.Declined && (
+                    <Badge variant="destructive">
+                      <UserX /> Declined
+                    </Badge>
+                  )}
+                  {tripMember.status === TripMemberStatus.Removed && (
+                    <Badge variant="destructive">
+                      <UserX /> Removed
+                    </Badge>
+                  )}
+                </div>
+              </div>
             </TooltipContent>
           </Tooltip>
         )

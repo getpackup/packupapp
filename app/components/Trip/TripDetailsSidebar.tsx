@@ -4,6 +4,7 @@ import {
   CalendarIcon,
   Contact,
   Ellipsis,
+  Info,
   MapPinIcon,
   Plus,
   Send,
@@ -169,6 +170,14 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
               {trip.startingPoint}
             </div>
           </SidebarItem>
+          {trip.description && (
+            <SidebarItem>
+              <div className="flex items-center gap-2 text-base">
+                <Info className="h-4 w-4" />
+                {trip.description}
+              </div>
+            </SidebarItem>
+          )}
           <Separator className="mt-4" />
           <SubHeading>
             Activities <Ellipsis className="h-4 w-4" />

@@ -61,9 +61,17 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
     if (newlyAddedItem) {
       return
     }
-    setTimeout(() => {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'center' })
-    }, 100)
+
+    if (!accordionOpen) {
+      setAccordionOpen(true)
+    }
+
+    setTimeout(
+      () => {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'center' })
+      },
+      accordionOpen ? 100 : 500
+    )
 
     setNewlyAddedItem(itemId)
 
@@ -99,7 +107,9 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
       if (!itemData) return
       updatePackingListItem({ parentDocId: id, id: item, data: { isPacked: true } })
     })
-    toast.success('Selected items marked as packed')
+    toast.success(
+      `${selectedItems.length} ${selectedItems.length === 1 ? 'item' : 'items'} marked as packed`
+    )
     setSelectedItems([])
     setActionsMenuOpen(false)
     setIsMultiSelecting(false)
@@ -114,7 +124,9 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
     setSelectedItems([])
     setActionsMenuOpen(false)
     setIsMultiSelecting(false)
-    toast.success('Selected items deleted')
+    toast.success(
+      `${selectedItems.length} ${selectedItems.length === 1 ? 'item' : 'items'} deleted`
+    )
   }
 
   const deleteAllItems = () => {
