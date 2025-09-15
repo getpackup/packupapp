@@ -22,7 +22,7 @@ const buttonVariants = cva(
           'border border-dashed bg-background shadow-xs hover:bg-gray-50 hover:text-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50',
       },
       size: {
-        default: 'h-9 px-4 py-2 has-[>svg]:px-3 size-fit',
+        default: 'h-9 px-4 py-2 has-[>svg]:px-3 size-fit cursor-pointer',
         sm: 'h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5',
         lg: 'h-10 rounded-md px-6 has-[>svg]:px-4',
         icon: 'size-9',
