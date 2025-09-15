@@ -1,4 +1,4 @@
-import { type HTMLMotionProps, motion } from 'motion/react'
+import { type Easing, type HTMLMotionProps, motion } from 'motion/react'
 
 const scaleAndFadeIn = {
   initial: { opacity: 0, scale: 0.8 },
@@ -32,19 +32,18 @@ const highlightNewItem = {
     borderRadius: '0.75rem',
   },
   animate: {
-    opacity: 1,
-    backgroundColor: 'rgba(73, 125, 0, 0.75)',
-    borderRadius: '0.75rem',
-  },
-  exit: {
-    scale: 1,
-    opacity: 1,
-    backgroundColor: 'rgba(73, 125, 0, 0)',
+    opacity: [0.5, 1, 1, 1],
+    backgroundColor: [
+      'rgba(73, 125, 0, 0.15)',
+      'rgba(73, 125, 0, 0.75)',
+      'rgba(73, 125, 0, 0.75)',
+      'rgba(73, 125, 0, 0)',
+    ],
     borderRadius: '0.75rem',
   },
   transition: {
-    duration: 0.6,
-    delay: 0,
+    duration: 2,
+    ease: 'easeInOut' as Easing,
   },
 }
 

@@ -1,5 +1,6 @@
 import {
   type QueryObserverOptions,
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -11,10 +12,12 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
   onSnapshot,
   query,
   QueryConstraint,
   setDoc,
+  startAfter,
   updateDoc,
 } from 'firebase/firestore'
 import { useEffect, useRef } from 'react'
@@ -44,6 +47,11 @@ export function useDocument<T>(collection: string, uid: string) {
 
       return { uid: docSnap.id, ...docSnap.data() } as T
     },
+    staleTime: 5 * 60 * 1000,
+    // Cache document data for 5 minutes
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   })
 }
 
@@ -74,6 +82,50 @@ export function useCollection<T>(
     refetchOnMount: true,
     ...queryOptions,
   }) as ReturnType<typeof useQuery<T>>
+}
+
+export function useInfiniteCollection<T>(
+  collectionName: string,
+  baseConstraints: QueryConstraint[] = [],
+  pageSize: number = 10,
+  queryOptions?: Partial<QueryObserverOptions>
+) {
+  return useInfiniteQuery({
+    queryKey: firebaseKeys.collection(collectionName, [...baseConstraints, 'infinite']),
+    queryFn: async ({ pageParam }: { pageParam: any }) => {
+      const collectionRef = collection(firestoreDb, collectionName)
+
+      // Build constraints for this page
+      const constraints = [...baseConstraints]
+
+      // Add pagination constraints
+      if (pageParam) {
+        constraints.push(startAfter(pageParam))
+      }
+      constraints.push(limit(pageSize))
+
+      const q = query(collectionRef, ...constraints)
+      const querySnapshot = await getDocs(q)
+
+      const docs = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as T[]
+      const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1]
+
+      return {
+        data: docs,
+        nextCursor: lastDoc,
+        hasMore: querySnapshot.docs.length === pageSize,
+      }
+    },
+    initialPageParam: null as any,
+    getNextPageParam: (lastPage: any) => {
+      return lastPage.hasMore ? lastPage.nextCursor : undefined
+    },
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    ...queryOptions,
+  } as any)
 }
 
 export function useSubCollection<T>(
