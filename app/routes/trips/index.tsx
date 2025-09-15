@@ -49,20 +49,18 @@ export default function Trips() {
     <>
       <PageHeader crumbs={[{ label: 'Trips', href: '/trips' }]} />
       <PageContent>
-        <div className="p-8">
-          {isLoading && <FullPageSpinner what="trips" />}
-          {!isLoading && nonArchivedTrips && nonArchivedTrips.length > 0 ? (
-            <div className="w-full max-w-4xl">
-              {nonArchivedTrips.map((trip) => (
-                <div key={trip.id}>
-                  <Link to={`/trips/${trip.id}`}>{trip.name}</Link>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-600">No trips found</p>
-          )}
-        </div>
+        {isLoading && <FullPageSpinner what="trips" />}
+        {!isLoading && nonArchivedTrips && nonArchivedTrips.length > 0 ? (
+          <div className="w-full max-w-4xl">
+            {nonArchivedTrips.map((trip) => (
+              <div key={trip.id}>
+                <Link to={`/trips/${trip.id}`}>{trip.name}</Link>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-600">No trips found</p>
+        )}
       </PageContent>
     </>
   )
