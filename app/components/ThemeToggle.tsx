@@ -5,26 +5,23 @@ import { animated } from 'react-spring'
 import useSound from 'use-sound'
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip'
+import { useSoundsState } from '~/contexts/globalState'
 import useBoop from '~/lib/useBoop'
 import { useRootLoaderData } from '~/lib/useRootLoaderData'
-import { useSoundsPreference } from '~/lib/useSoundsPreference'
 
 import offSound from '../../sounds/switch-off.mp3'
 import onSound from '../../sounds/switch-on.mp3'
 
 export function ThemeToggle() {
-  const { soundsEnabled } = useSoundsPreference()
+  const { soundsEnabled } = useSoundsState()
+  const [style, trigger] = useBoop({ scale: 1.1, rotation: 10})
 
   const [switchOn] = useSound(onSound, {
     interrupt: true,
-    soundEnabled: soundsEnabled,
   })
   const [switchOff] = useSound(offSound, {
     interrupt: true,
-    soundEnabled: soundsEnabled,
   })
-
-  const [style, trigger] = useBoop({ scale: 1.1, rotation: 10})
 
   const { themePreference } = useRootLoaderData()
 
@@ -42,7 +39,9 @@ export function ThemeToggle() {
               type="submit"
               aria-label={'Toggle theme'}
               onClick={() => {
-                isDarkMode ? switchOn() : switchOff()
+                if (soundsEnabled) {
+                  isDarkMode ? switchOn() : switchOff()
+                }
               }}
               className="rounded-md p-1 focus:bg-gray-100 focus:outline-none md:first-letter:p-2 dark:focus:bg-gray-800"
             >

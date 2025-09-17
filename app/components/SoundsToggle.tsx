@@ -1,28 +1,24 @@
-import { Volume1, Volume2, VolumeX } from 'lucide-react'
+import { Volume2, VolumeX } from 'lucide-react'
 import { type MouseEventHandler } from 'react'
 import { animated } from 'react-spring'
 import useSound from 'use-sound'
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip'
+import { useSoundsState } from '~/contexts/globalState'
 import useBoop from '~/lib/useBoop'
-import { useSoundsPreference } from '~/lib/useSoundsPreference'
 
-import offSound from '../../sounds/switch-off.mp3'
 import onSound from '../../sounds/switch-on.mp3'
 
 export function SoundsToggle() {
-  const { soundsEnabled, toggleSounds } = useSoundsPreference()
+  const { soundsEnabled, toggleSounds } = useSoundsState()
 
   const [switchOn] = useSound(onSound, {
     interrupt: true,
-    soundEnabled: soundsEnabled,
-  })
-  const [switchOff] = useSound(offSound, {
-    interrupt: true,
-    soundEnabled: soundsEnabled,
   })
 
   const [style, trigger] = useBoop({ scale: 1.1, rotation: 10 })
+
+  console.log('soundsToggle', soundsEnabled)
 
   return (
     <div className="flex items-center">
@@ -36,12 +32,14 @@ export function SoundsToggle() {
               type="button"
               aria-label="Toggle sounds"
               onClick={() => {
-                soundsEnabled ? switchOff() : switchOn()
+                if (!soundsEnabled) {
+                  switchOn()
+                }
                 toggleSounds()
               }}
               className="rounded-md p-1 focus:bg-gray-100 focus:outline-none md:first-letter:p-2 dark:focus:bg-gray-800"
             >
-              {soundsEnabled ? <VolumeX /> : <Volume2 />}
+              {soundsEnabled ? <Volume2 /> : <VolumeX />}
             </animated.button>
           </TooltipTrigger>
           <TooltipContent>Toggle sounds</TooltipContent>

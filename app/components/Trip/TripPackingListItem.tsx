@@ -5,6 +5,7 @@ import { useParams } from 'react-router'
 import { animated, useSpring } from 'react-spring'
 import useSound from 'use-sound'
 
+import { useSoundsState } from '~/contexts/globalState'
 import { cn } from '~/lib/utils'
 import { useDeleteSubCollectionDocument, useUpdateSubCollectionDocument } from '~/services/api'
 import { type PackingListItem } from '~/types/PackingListItem'
@@ -36,6 +37,7 @@ const TripPackingListItem = ({
   onItemSelection,
 }: TripPackingListItemProps) => {
   const { id } = useParams()
+  const { soundsEnabled } = useSoundsState()
 
   const queryClient = useQueryClient()
 
@@ -139,11 +141,15 @@ const TripPackingListItem = ({
                 onClick={togglePacked}
                 onMouseDown={() => {
                   setActive(true)
-                  playActive()
+                  if (soundsEnabled) {
+                    playActive()
+                  }
                 }}
                 onMouseUp={() => {
                   setActive(false)
-                  item.isPacked ? playOff() : playOn()
+                  if (soundsEnabled) {
+                    item.isPacked ? playOff() : playOn()
+                  }
                 }}
               >
                 {item.isPacked ? (

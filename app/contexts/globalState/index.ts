@@ -9,6 +9,9 @@ type GlobalState = {
   setActivePackingListFilter: (activePackingListFilter: 'All' | 'Packed' | 'Unpacked') => void
   packingListSearchValue: string
   setPackingListSearchValue: (packingListSearchValue: string) => void
+  soundsEnabled: boolean
+  setSoundsEnabled: (soundsEnabled: boolean) => void
+  toggleSounds: () => void
 }
 
 const createMemoryStorage = () => {
@@ -35,13 +38,16 @@ const storageOption =
 
 const useGlobalState = create<GlobalState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       isSidebarCollapsed: false,
       setIsSidebarCollapsed: (isSidebarCollapsed) => set({ isSidebarCollapsed }),
       activePackingListFilter: 'All',
       setActivePackingListFilter: (activePackingListFilter) => set({ activePackingListFilter }),
       packingListSearchValue: '',
       setPackingListSearchValue: (packingListSearchValue) => set({ packingListSearchValue }),
+      soundsEnabled: true,
+      setSoundsEnabled: (soundsEnabled) => set({ soundsEnabled }),
+      toggleSounds: () => set({ soundsEnabled: !get().soundsEnabled }),
     }),
     {
       name: 'packup-global-state',
@@ -73,6 +79,16 @@ export const usePackingListState = () => {
       setActivePackingListFilter: state.setActivePackingListFilter,
       packingListSearchValue: state.packingListSearchValue,
       setPackingListSearchValue: state.setPackingListSearchValue,
+    }))
+  )
+}
+
+export const useSoundsState = () => {
+  return useGlobalState(
+    useShallow((state) => ({
+      soundsEnabled: state.soundsEnabled,
+      setSoundsEnabled: state.setSoundsEnabled,
+      toggleSounds: state.toggleSounds,
     }))
   )
 }
