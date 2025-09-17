@@ -18,8 +18,6 @@ export function SoundsToggle() {
 
   const [style, trigger] = useBoop({ scale: 1.1, rotation: 10 })
 
-  console.log('soundsToggle', soundsEnabled)
-
   return (
     <div className="flex items-center">
       <span className="mr-5">Sounds</span>
