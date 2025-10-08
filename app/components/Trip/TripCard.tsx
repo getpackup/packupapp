@@ -1,27 +1,51 @@
 import { formatDistanceToNow } from 'date-fns'
 import { limit, where } from 'firebase/firestore'
-import { CalendarIcon, Info, MapPinIcon } from 'lucide-react'
+import { CalendarIcon, Check, Info, MapPinIcon, X } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
+import { toast } from 'sonner'
 
-import { formattedDateRange } from '~/lib/date'
-import { useCollection } from '~/services/api'
+import useAuth from '~/contexts/auth/useAuth'
+import { formattedDate, formattedDateRange } from '~/lib/date'
+import { cn } from '~/lib/utils'
+import { useCollection, useUpdateDocument } from '~/services/api'
 import type { Trip } from '~/types/Trip'
+import { TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
 
 import StackedAvatars from '../StackedAvatars'
 import StaticMapImage from '../StaticMapImage'
 import { AspectRatio } from '../ui/aspect-ratio'
 import { Badge } from '../ui/badge'
+import { Button } from '../ui/button'
 import { Separator } from '../ui/separator'
 
 type TripCardProps = {
   trip: Trip
   showCountdown?: boolean
   showRemaining?: boolean
+  isPending?: boolean
 }
 
-const TripCard = ({ trip, showCountdown, showRemaining }: TripCardProps) => {
+const TripCard = ({ trip, showCountdown, showRemaining, isPending }: TripCardProps) => {
   const navigate = useNavigate()
+
+  const { user } = useAuth()
+
+  const { refetch } = useCollection<Trip[]>(
+    'trips',
+    [
+      where(`tripMembers.${user?.uid}.status`, 'not-in', [
+        TripMemberStatus.Declined,
+        TripMemberStatus.Removed,
+      ]),
+    ],
+    {
+      enabled: !!user?.uid,
+      queryKey: ['firebase', 'docs', 'trips'],
+    }
+  )
+
+  const { mutateAsync: updateDocument } = useUpdateDocument('trips')
 
   const constraints =
     trip?.tripMembers && Object.keys(trip.tripMembers).length > 0
@@ -33,11 +57,90 @@ const TripCard = ({ trip, showCountdown, showRemaining }: TripCardProps) => {
     queryKey: ['firebase', 'docs', 'trips', trip?.tripId, 'tripMembers'],
   })
 
+  const getInvitedByText = () => {
+    if (!user?.uid || !trip || !users || !isPending) return null
+
+    let inviter: string | undefined
+    let invitedAt: number | undefined
+
+    if (users && Object.keys(users).length > 1) {
+      if (trip && trip.tripMembers && Object.keys(trip.tripMembers).length > 0) {
+        if (user.uid && trip.tripMembers[user.uid].invitedBy) {
+          const invitedBy = trip.tripMembers[user.uid].invitedBy
+
+          if (invitedBy && typeof invitedBy === 'string') {
+            const inviterUser = users.find((user) => user.id === invitedBy)?.displayName
+
+            inviter = inviterUser || undefined
+            invitedAt = trip.tripMembers[user.uid].invitedAt.seconds * 1000
+          }
+        }
+      }
+    }
+
+    return inviter && invitedAt
+      ? `${inviter} invited you on ${formattedDate(new Date(invitedAt))}`
+      : null
+  }
+
+  const acceptOrDeclineInvitation = (status: TripMemberStatus) => {
+    if (trip && user?.uid) {
+      const payload = {
+        [`tripMembers.${user.uid}`]: {
+          uid: user.uid,
+          invitedAt: trip?.tripMembers[`${user.uid}`].invitedAt,
+          acceptedAt: status === TripMemberStatus.Accepted ? new Date() : '',
+          declinedAt: status === TripMemberStatus.Declined ? new Date() : '',
+          status,
+        },
+      }
+
+      updateDocument(
+        { id: trip.tripId, data: payload },
+        {
+          onSuccess: () => {
+            // trackEvent(`Trip Party Member ${status}`, {
+            //   ...trip,
+            //   acceptedMember: user.uid,
+            //   status,
+            // })
+            if (status === TripMemberStatus.Accepted) {
+              toast.success(
+                `Excellent! Let's start thinking about what you'll need to bring next 🤙`
+              )
+              navigate(`/trips/${trip.tripId}/generator`)
+            }
+            if (status === TripMemberStatus.Declined) {
+              toast.success(`Bummer... You have successfully declined to go on the trip 😔`)
+              // refetch the trips collection so the pending trip is removed
+              refetch()
+            }
+          },
+          onError: (err: Error) => {
+            // trackEvent(`Trip Party Member ${status} Failure`, {
+            //   ...trip,
+            //   acceptedMember: user.uid,
+            //   status,
+            // error: err,
+            // })
+            toast.error(err.message)
+          },
+        }
+      )
+    }
+  }
+
   return (
     <div
-      className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus:ring-ring flex cursor-pointer gap-6 rounded-lg border p-4 transition-colors duration-300"
+      className={cn(
+        'focus:ring-ring flex gap-6 rounded-lg border p-4 transition-colors duration-300',
+        {
+          'cursor-initial': isPending,
+          'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer': !isPending,
+        }
+      )}
       tabIndex={0}
-      onClick={() => navigate(`/trips/${trip.id}`)}
+      onClick={() => (isPending ? null : navigate(`/trips/${trip.id}`))}
     >
       <div className="relative w-2/5">
         {showRemaining && (
@@ -74,9 +177,14 @@ const TripCard = ({ trip, showCountdown, showRemaining }: TripCardProps) => {
       <div className="flex w-3/5 flex-col">
         <div>
           <div className="flex items-start justify-between gap-4">
-            <Link to={`/trips/${trip.id}`}>
+            {isPending ? (
               <h2 className="mb-2 text-2xl font-bold">{trip.name}</h2>
-            </Link>
+            ) : (
+              <Link to={`/trips/${trip.id}`}>
+                <h2 className="mb-2 text-2xl font-bold">{trip.name}</h2>
+              </Link>
+            )}
+
             <StackedAvatars tripMembers={Object.values(trip.tripMembers)} users={users} />
           </div>
           <div className="flex items-center gap-2 text-base">
@@ -105,6 +213,30 @@ const TripCard = ({ trip, showCountdown, showRemaining }: TripCardProps) => {
             ))}
           </div>
         </div>
+        {isPending && (
+          <div className="mt-auto">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm italic">{getInvitedByText()}</p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="success"
+                  onClick={() => acceptOrDeclineInvitation(TripMemberStatus.Accepted)}
+                >
+                  <Check /> Accept
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => acceptOrDeclineInvitation(TripMemberStatus.Declined)}
+                >
+                  <X /> Decline
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

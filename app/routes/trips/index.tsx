@@ -109,6 +109,18 @@ export default function Trips() {
             {isLoading && <FullPageSpinner what="trips" />}
             {!isLoading && nonArchivedTrips && nonArchivedTrips.length > 0 && (
               <div className="space-y-4">
+                {/* Pending Trips */}
+                {pendingTrips && pendingTrips.length > 0 && (
+                  <div className="space-y-4">
+                    <h2 className="text-2xl font-bold">Pending invitations</h2>
+                    <div className="space-y-4">
+                      {pendingTrips.map((trip: Trip) => (
+                        <TripCard key={trip.id} trip={trip} isPending showCountdown />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* In Progress Trips */}
                 {inProgressTrips && inProgressTrips.length > 0 && (
                   <div className="space-y-4">
