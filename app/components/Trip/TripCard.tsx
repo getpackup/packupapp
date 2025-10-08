@@ -3,7 +3,7 @@ import { limit, where } from 'firebase/firestore'
 import { CalendarIcon, Info, MapPinIcon } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 
-import { formattedDateRange, isAfterToday } from '~/lib/date'
+import { formattedDateRange } from '~/lib/date'
 import { useCollection } from '~/services/api'
 import type { Trip } from '~/types/Trip'
 import type { User } from '~/types/User'
@@ -16,9 +16,11 @@ import { Separator } from '../ui/separator'
 
 type TripCardProps = {
   trip: Trip
+  showCountdown?: boolean
+  showRemaining?: boolean
 }
 
-const TripCard = ({ trip }: TripCardProps) => {
+const TripCard = ({ trip, showCountdown, showRemaining }: TripCardProps) => {
   const navigate = useNavigate()
 
   const constraints =
@@ -31,8 +33,6 @@ const TripCard = ({ trip }: TripCardProps) => {
     queryKey: ['firebase', 'docs', 'trips', trip?.tripId, 'tripMembers'],
   })
 
-  const isTripInFuture = isAfterToday(trip.startDate.seconds * 1000)
-
   return (
     <div
       className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus:ring-ring flex cursor-pointer gap-6 rounded-lg border p-4 transition-colors duration-300"
@@ -40,13 +40,22 @@ const TripCard = ({ trip }: TripCardProps) => {
       onClick={() => navigate(`/trips/${trip.id}`)}
     >
       <div className="relative w-2/5">
-        <div className="absolute top-2 left-2 z-10 text-xs">
-          <Badge variant={isTripInFuture ? 'default' : 'secondary'}>
-            {formatDistanceToNow(trip.startDate.seconds * 1000, { addSuffix: true })}
-          </Badge>
-        </div>
+        {showRemaining && (
+          <div className="absolute top-2 left-2 z-10 text-xs">
+            <Badge variant="default">
+              {formatDistanceToNow(trip.endDate.seconds * 1000, { addSuffix: false })} remaining
+            </Badge>
+          </div>
+        )}
+        {showCountdown && (
+          <div className="absolute top-2 left-2 z-10 text-xs">
+            <Badge variant="default">
+              {formatDistanceToNow(trip.startDate.seconds * 1000, { addSuffix: true })}
+            </Badge>
+          </div>
+        )}
 
-        <AspectRatio ratio={1.5} className="pointer-events-none">
+        <AspectRatio ratio={1.5} className="pointer-events-none overflow-hidden rounded-sm border">
           {!trip.headerImage && !!trip.lat && !!trip.lng && (
             <StaticMapImage
               lat={trip.lat}
@@ -58,11 +67,7 @@ const TripCard = ({ trip }: TripCardProps) => {
             />
           )}
           {trip.headerImage && (
-            <img
-              src={trip?.headerImage}
-              alt={trip?.name}
-              className="h-full w-full rounded-sm object-cover"
-            />
+            <img src={trip?.headerImage} alt={trip?.name} className="h-full w-full object-cover" />
           )}
         </AspectRatio>
       </div>
