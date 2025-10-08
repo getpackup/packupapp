@@ -24,26 +24,13 @@ type TripCardProps = {
   showCountdown?: boolean
   showRemaining?: boolean
   isPending?: boolean
+  refetch?: () => void
 }
 
-const TripCard = ({ trip, showCountdown, showRemaining, isPending }: TripCardProps) => {
+const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: TripCardProps) => {
   const navigate = useNavigate()
 
   const { user } = useAuth()
-
-  const { refetch } = useCollection<Trip[]>(
-    'trips',
-    [
-      where(`tripMembers.${user?.uid}.status`, 'not-in', [
-        TripMemberStatus.Declined,
-        TripMemberStatus.Removed,
-      ]),
-    ],
-    {
-      enabled: !!user?.uid,
-      queryKey: ['firebase', 'docs', 'trips'],
-    }
-  )
 
   const { mutateAsync: updateDocument } = useUpdateDocument('trips')
 
@@ -113,7 +100,7 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending }: TripCardPro
             if (status === TripMemberStatus.Declined) {
               toast.success(`Bummer... You have successfully declined to go on the trip 😔`)
               // refetch the trips collection so the pending trip is removed
-              refetch()
+              refetch?.()
             }
           },
           onError: (err: Error) => {

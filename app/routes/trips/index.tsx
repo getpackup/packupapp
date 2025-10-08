@@ -48,6 +48,7 @@ export default function Trips() {
     data: trips,
     isLoading,
     error,
+    refetch,
   } = useCollection<Trip[]>(
     'trips',
     [
@@ -115,7 +116,13 @@ export default function Trips() {
                     <h2 className="text-2xl font-bold">Pending invitations</h2>
                     <div className="space-y-4">
                       {pendingTrips.map((trip: Trip) => (
-                        <TripCard key={trip.id} trip={trip} isPending showCountdown />
+                        <TripCard
+                          key={trip.id}
+                          trip={trip}
+                          isPending
+                          showCountdown
+                          refetch={refetch}
+                        />
                       ))}
                     </div>
                   </div>
