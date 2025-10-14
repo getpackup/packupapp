@@ -266,7 +266,7 @@ export function SignupForm() {
             <p className="text-muted-foreground text-sm leading-relaxed">
               If you don't see the email, check your spam folder. Wrong email?{' '}
               <span
-                className="text-accent cursor-pointer font-bold hover:underline"
+                className="text-muted-foreground cursor-pointer font-bold hover:underline"
                 onClick={() => setSubmitted(false)}
               >
                 Please re-enter your email address.
