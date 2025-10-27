@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { onAuthStateChanged } from 'firebase/auth'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 
 import { Logo } from '~/components/Logo'
 import { SignupForm } from '~/components/SignupForm'
-import { ThemeToggle } from '~/components/ThemeToggle'
 import { Separator } from '~/components/ui/separator'
+import { firebaseAuth } from '~/firebase/config'
 
 import type { Route } from './+types/home'
 
@@ -23,20 +24,20 @@ export default function Signup() {
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
 
-  // useEffect(() => {
-  //   const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
-  //     if (user) {
-  //       // Add a small delay to ensure the component has fully rendered
-  //       setTimeout(() => {
-  //         navigate('/trips', { replace: true })
-  //       }, 100)
-  //     } else {
-  //       setIsLoading(false)
-  //     }
-  //   })
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+      if (user) {
+        // Add a small delay to ensure the component has fully rendered
+        setTimeout(() => {
+          navigate('/trips', { replace: true })
+        }, 100)
+      } else {
+        setIsLoading(false)
+      }
+    })
 
-  //   return () => unsubscribe()
-  // }, [navigate])
+    return () => unsubscribe()
+  }, [navigate])
 
   if (isLoading) {
     return (
@@ -48,9 +49,6 @@ export default function Signup() {
 
   return (
     <div>
-      <div className="absolute top-4 left-4">
-        <ThemeToggle />
-      </div>
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center space-y-8 p-8">
         <Logo />
         <h1 className="text-2xl font-bold">Sign up for Packup</h1>

@@ -102,6 +102,26 @@ const TripPackingListItem = ({
     })
   }
 
+  const handleMoveToOrFromGroupItems = () => {
+    if (!id || !item.id) return
+
+    const isAlreadyShared = item.packedBy[0].isShared
+
+    updatePackingListItem({
+      parentDocId: id,
+      id: item.id,
+      data: {
+        ...item,
+        packedBy: [
+          {
+            ...item.packedBy[0],
+            isShared: !isAlreadyShared,
+          },
+        ],
+      },
+    })
+  }
+
   const handleDelete = () => {
     if (!id || !item.id) return
 
@@ -221,8 +241,9 @@ const TripPackingListItem = ({
                     Edit
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Users /> Move to Group Items
+                  <DropdownMenuItem onClick={handleMoveToOrFromGroupItems}>
+                    <Users />{' '}
+                    {item.packedBy[0].isShared ? 'Move to Personal Items' : 'Move to Group Items'}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleDelete}>

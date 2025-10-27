@@ -1,15 +1,4 @@
-import {
-  BadgeCheck,
-  BadgeInfo,
-  CalendarIcon,
-  Contact,
-  Ellipsis,
-  Info,
-  MapPinIcon,
-  Plus,
-  Send,
-  UserX,
-} from 'lucide-react'
+import { BadgeInfo, CalendarIcon, Ellipsis, Info, MapPinIcon } from 'lucide-react'
 
 import { formattedDate, formattedDateRange } from '~/lib/date'
 import {
@@ -19,7 +8,6 @@ import {
   gearListOtherConsiderations,
 } from '~/lib/gearListItemEnum'
 import type { Trip } from '~/types/Trip'
-import { TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
 
 import StaticMapImage from '../StaticMapImage'
@@ -27,6 +15,8 @@ import { AspectRatio } from '../ui/aspect-ratio'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
+import { AddTripPartyMember } from './AddTripPartyMember'
+import TripPartyMemberBadge from './TripPartyMemberBadge'
 
 type TripDetailsSidebarProps = {
   trip: Trip
@@ -88,7 +78,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           <SubHeading>
             <span>Trip Members</span>
             <div className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
+              <AddTripPartyMember tripMembers={Object.values(trip.tripMembers)} />
               {/* TODO: add action to show/hide declined and removed members */}
               <Ellipsis className="h-4 w-4" />
             </div>
@@ -118,32 +108,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
                       </span>
                     </div>
                   </div>
-                  {member.status === TripMemberStatus.Owner && (
-                    <Badge variant="primary">
-                      <BadgeCheck /> Trip Creator
-                    </Badge>
-                  )}
-                  {member.status === TripMemberStatus.Pending && (
-                    <Badge variant="success">
-                      <Send />
-                      Invited
-                    </Badge>
-                  )}
-                  {member.status === TripMemberStatus.Accepted && (
-                    <Badge variant="secondary">
-                      <Contact /> Trip Member
-                    </Badge>
-                  )}
-                  {member.status === TripMemberStatus.Declined && (
-                    <Badge variant="destructive">
-                      <UserX /> Declined
-                    </Badge>
-                  )}
-                  {member.status === TripMemberStatus.Removed && (
-                    <Badge variant="destructive">
-                      <UserX /> Removed
-                    </Badge>
-                  )}
+                  <TripPartyMemberBadge member={member} />
                 </div>
               </SidebarItem>
             )
