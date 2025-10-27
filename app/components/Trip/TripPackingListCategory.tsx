@@ -20,7 +20,6 @@ import { useDeleteSubCollectionDocument, useUpdateSubCollectionDocument } from '
 import type { PackingListItem } from '~/types/PackingListItem'
 
 import AnimatedContainer from '../AnimatedContainer'
-import KeyboardInput from '../KeyboardInput'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion'
 import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
@@ -31,6 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
+import { Kbd, KbdGroup } from '../ui/kbd'
 import { Separator } from '../ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import AddPackingListDialog from './AddPackingListDialog'
@@ -41,9 +41,14 @@ import { usePackingListCategorySelection } from './usePackingListCategorySelecti
 type TripPackingListCategoryProps = {
   categoryName: string
   items: PackingListItem[]
+  isGroup?: boolean
 }
 
-const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategoryProps) => {
+const TripPackingListCategory = ({
+  categoryName,
+  items,
+  isGroup,
+}: TripPackingListCategoryProps) => {
   const [isMultiSelecting, setIsMultiSelecting] = useState(false)
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [lastSelectedItem, setLastSelectedItem] = useState<string | null>(null)
@@ -190,7 +195,9 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
       <Accordion
         type="single"
         collapsible
-        className="w-full"
+        className={cn('w-full rounded-lg', {
+          '-mr-1 -ml-1 bg-gray-200/50 px-1 dark:bg-gray-700/50': isGroup,
+        })}
         defaultValue={categoryName}
         disabled={isMultiSelecting}
         value={accordionOpen ? categoryName : ''}
@@ -217,7 +224,7 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
                   e.stopPropagation()
                 }
               }}
-              className="focus-visible:border-ring focus-visible:ring-ring/50 flex w-full justify-between border-b px-2 pb-2 transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50"
+              className="focus-visible:border-ring focus-visible:ring-ring/50 mx-2 flex w-full justify-between border-b pb-2 transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50"
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -255,30 +262,37 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
                       <div className="w-44 space-y-3">
                         <div className="flex items-center justify-between">
                           Multi-select
-                          <span>
-                            <KeyboardInput>{controlOrCommand}</KeyboardInput>
-                            <KeyboardInput>Click</KeyboardInput>
-                          </span>
+                          <KbdGroup>
+                            <Kbd>{controlOrCommand}</Kbd>
+                            <span>+</span>
+                            <Kbd>Click</Kbd>
+                          </KbdGroup>
                         </div>
                         <div className="flex items-center justify-between">
                           Select a range
                           <span>
-                            <KeyboardInput>
-                              <ArrowBigUp className="inline size-3" />
-                            </KeyboardInput>
-                            <KeyboardInput>Click</KeyboardInput>
+                            <KbdGroup>
+                              <Kbd>
+                                <ArrowBigUp className="inline size-3" />
+                              </Kbd>
+                              <span>+</span>
+                              <Kbd>Click</Kbd>
+                            </KbdGroup>
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
                           Select all
-                          <span>
-                            <KeyboardInput>{controlOrCommand}</KeyboardInput>
-                            <KeyboardInput>A</KeyboardInput>
-                          </span>
+                          <KbdGroup>
+                            <Kbd>{controlOrCommand}</Kbd>
+                            <span>+</span>
+                            <Kbd>A</Kbd>
+                          </KbdGroup>
                         </div>
                         <div className="flex items-center justify-between">
                           Clear selection
-                          <KeyboardInput>Esc</KeyboardInput>
+                          <KbdGroup>
+                            <Kbd>Esc</Kbd>
+                          </KbdGroup>
                         </div>
                       </div>
                     </TooltipContent>
@@ -292,7 +306,7 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
                     )}
                   </div>
                   <div className="text-muted-foreground text-sm">
-                    {!isMultiSelecting && (
+                    {!isMultiSelecting && items.length > 0 && (
                       <span>
                         {items.filter((item) => item.isPacked).length} of {items.length} packed
                       </span>
@@ -321,7 +335,9 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
                       </TooltipTrigger>
                       <TooltipContent className="flex items-center gap-4">
                         {selectedItems.length > 0 ? 'Clear selected' : 'Exit multi-select'}{' '}
-                        <KeyboardInput>Esc</KeyboardInput>
+                        <KbdGroup>
+                          <Kbd>Esc</Kbd>
+                        </KbdGroup>
                       </TooltipContent>
                     </Tooltip>
                     <DropdownMenu open={actionsMenuOpen} onOpenChange={setActionsMenuOpen}>
@@ -343,10 +359,11 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
                             <TooltipContent>
                               <div className="flex items-center gap-4">
                                 Open command menu{' '}
-                                <span>
-                                  <KeyboardInput>{controlOrCommand}</KeyboardInput>
-                                  <KeyboardInput>K</KeyboardInput>
-                                </span>
+                                <KbdGroup>
+                                  <Kbd>{controlOrCommand}</Kbd>
+                                  <span>+</span>
+                                  <Kbd>K</Kbd>
+                                </KbdGroup>
                               </div>
                             </TooltipContent>
                           </Tooltip>
@@ -365,7 +382,9 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
                             <ListChecks />
                             Mark selected as packed
                           </span>
-                          <KeyboardInput>/</KeyboardInput>
+                          <KbdGroup>
+                            <Kbd>/</Kbd>
+                          </KbdGroup>
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           disabled={selectedItems.length === 0}
@@ -379,9 +398,11 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
                             <Trash2 />
                             Delete selected
                           </span>
-                          <KeyboardInput>
-                            <Delete className="text-popover-foreground size-4" strokeWidth={1.5} />
-                          </KeyboardInput>
+                          <KbdGroup>
+                            <Kbd>
+                              <Delete className="size-4" strokeWidth={1.5} />
+                            </Kbd>
+                          </KbdGroup>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
 
@@ -397,7 +418,9 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
                             <X />
                             Clear selected
                           </span>
-                          <KeyboardInput>Esc</KeyboardInput>
+                          <KbdGroup>
+                            <Kbd>Esc</Kbd>
+                          </KbdGroup>
                         </DropdownMenuItem>
 
                         <DropdownMenuItem
@@ -413,8 +436,11 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
                             Exit multi-select
                           </span>
                           <span>
-                            <KeyboardInput>Esc</KeyboardInput>
-                            <KeyboardInput>Esc</KeyboardInput>
+                            <KbdGroup>
+                              <Kbd>Esc</Kbd>
+                              <span>+</span>
+                              <Kbd>Esc</Kbd>
+                            </KbdGroup>
                           </span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -451,15 +477,17 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
                           <ListChecks />
                           Mark all as {areAllPacked ? 'unpacked' : 'packed'}
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            deleteAllItems()
-                          }}
-                        >
-                          <Trash2 />
-                          Delete all in {categoryName}
-                        </DropdownMenuItem>
+                        {!isGroup && (
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteAllItems()
+                            }}
+                          >
+                            <Trash2 />
+                            Delete all in {categoryName}
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </>
@@ -469,6 +497,9 @@ const TripPackingListCategory = ({ categoryName, items }: TripPackingListCategor
           </AccordionTrigger>
           <AccordionContent className="flex flex-col gap-4 text-balance">
             <div className="space-y-1">
+              {isGroup && items.length === 0 && (
+                <div className="text-muted-foreground text-center text-sm">No group items yet</div>
+              )}
               {items.map((item) => {
                 const isNewlyAdded = newlyAddedItem === item.id
 

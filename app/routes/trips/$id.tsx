@@ -60,7 +60,7 @@ export default function TripDetails({ params }: Route.ComponentProps) {
         ) : (
           <div className="flex h-full min-h-0">
             <div className="w-2/3 overflow-y-auto p-8">
-              <TripPackingList tripId={id} />
+              <TripPackingList tripId={id} users={users} />
             </div>
             <div className="border-sidebar-border w-1/3 overflow-y-auto border-l">
               <TripDetailsSidebar trip={trip} users={users} />

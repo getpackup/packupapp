@@ -1,5 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Check, Circle, Ellipsis, Minus, Plus, Settings, Trash2, Users, X } from 'lucide-react'
+import {
+  Check,
+  Circle,
+  Ellipsis,
+  Minus,
+  Plus,
+  Settings,
+  Trash2,
+  UserIcon,
+  Users,
+  X,
+} from 'lucide-react'
 import { useState } from 'react'
 import { useParams } from 'react-router'
 import { animated, useSpring } from 'react-spring'
@@ -98,6 +109,26 @@ const TripPackingListItem = ({
       id: item.id,
       data: {
         quantity: newQuantity,
+      },
+    })
+  }
+
+  const handleMoveToOrFromGroupItems = () => {
+    if (!id || !item.id) return
+
+    const isAlreadyShared = item.packedBy[0].isShared
+
+    updatePackingListItem({
+      parentDocId: id,
+      id: item.id,
+      data: {
+        ...item,
+        packedBy: [
+          {
+            ...item.packedBy[0],
+            isShared: !isAlreadyShared,
+          },
+        ],
       },
     })
   }
@@ -221,8 +252,9 @@ const TripPackingListItem = ({
                     Edit
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Users /> Move to Group Items
+                  <DropdownMenuItem onClick={handleMoveToOrFromGroupItems}>
+                    {item.packedBy[0].isShared ? <UserIcon /> : <Users />}{' '}
+                    {item.packedBy[0].isShared ? 'Move to Personal Items' : 'Move to Group Items'}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleDelete}>

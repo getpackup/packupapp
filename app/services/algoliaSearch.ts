@@ -1,6 +1,17 @@
-import { algoliasearch } from 'algoliasearch'
+import {
+  type Algoliasearch,
+  algoliasearch,
+  type SearchParamsObject,
+  type SearchResponses,
+} from 'algoliasearch'
 
-let algoliaClient: any = null
+type SearchRequest = {
+  indexName: string
+  query?: string
+  params?: Partial<SearchParamsObject>
+}
+
+let algoliaClient: Algoliasearch | null = null
 
 const createClient = () => {
   if (algoliaClient) return algoliaClient
@@ -23,7 +34,7 @@ const createClient = () => {
 }
 
 export const algoliaSearch = {
-  search(requests: any) {
+  search<T = Record<string, unknown>>(requests: SearchRequest[]): Promise<SearchResponses<T>> {
     try {
       const client = createClient()
 
@@ -36,12 +47,19 @@ export const algoliaSearch = {
               nbHits: 0,
               nbPages: 0,
               processingTimeMS: 0,
+              hitsPerPage: 0,
+              page: 0,
+              params: '',
+              query: '',
+              exhaustiveNbHits: false,
+              exhaustiveFacetCount: false,
+              exhaustive: { facetsCount: false, nbHits: false },
             },
           ],
-        })
+        } as SearchResponses<T>)
       }
 
-      if (requests.every((request: any) => !request.query)) {
+      if (requests.every((request) => !request.query)) {
         console.warn('No query provided in requests, returning empty results')
         return Promise.resolve({
           results: requests.map(() => ({
@@ -49,22 +67,29 @@ export const algoliaSearch = {
             nbHits: 0,
             nbPages: 0,
             processingTimeMS: 0,
+            hitsPerPage: 0,
+            page: 0,
+            params: '',
+            query: '',
+            exhaustiveNbHits: false,
+            exhaustiveFacetCount: false,
+            exhaustive: { facetsCount: false, nbHits: false },
           })),
-        })
+        } as SearchResponses<T>)
       }
 
       // Apply global search options and fix request structure
-      const modifiedRequests = requests.map((request: any) => ({
+      const modifiedRequests = requests.map((request) => ({
         indexName: request.indexName,
         query: request.query,
         params: {
-          restrictSearchableAttributes: ['username'],
+          restrictSearchableAttributes: ['username', 'displayName', 'email'],
           typoTolerance: false,
           ...request.params,
         },
       }))
 
-      return client.search(modifiedRequests)
+      return client.search<T>(modifiedRequests)
     } catch (error) {
       console.error('Algolia search error:', error)
       throw error
