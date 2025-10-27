@@ -196,7 +196,7 @@ const TripPackingListCategory = ({
         type="single"
         collapsible
         className={cn('w-full rounded-lg', {
-          '-mr-1 -ml-1 bg-gray-200 px-1 dark:bg-gray-700/50': isGroup,
+          '-mr-1 -ml-1 bg-gray-200/50 px-1 dark:bg-gray-700/50': isGroup,
         })}
         defaultValue={categoryName}
         disabled={isMultiSelecting}

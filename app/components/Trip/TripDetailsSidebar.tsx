@@ -12,9 +12,9 @@ import type { User } from '~/types/User'
 
 import StaticMapImage from '../StaticMapImage'
 import { AspectRatio } from '../ui/aspect-ratio'
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
+import UserMediaObject from '../UserMediaObject'
 import { AddTripPartyMember } from './AddTripPartyMember'
 import TripPartyMemberBadge from './TripPartyMemberBadge'
 
@@ -83,36 +83,23 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
               <Ellipsis className="h-4 w-4" />
             </div>
           </SubHeading>
-          {Object.values(trip.tripMembers).map((member) => {
-            const user = users?.find((user) => user.id === member.uid)
-            if (!user) {
-              return null
-            }
+          {Object.values(trip.tripMembers)
+            .sort((a, b) => a.invitedAt.seconds - b.invitedAt.seconds)
+            .map((member) => {
+              const user = users?.find((user) => user.id === member.uid)
+              if (!user) {
+                return null
+              }
 
-            return (
-              <SidebarItem key={member.uid}>
-                <div key={member.uid} className="flex items-center justify-between gap-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="border">
-                      <AvatarImage
-                        src={user.photoURL}
-                        gravatarEmail={user.email}
-                        alt={`${user.username} avatar`}
-                      />
-                      <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                      <span>{user.displayName}</span>
-                      <span className="text-muted-foreground text-xs">
-                        @{user.username.toLocaleLowerCase()}
-                      </span>
-                    </div>
+              return (
+                <SidebarItem key={member.uid}>
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <UserMediaObject user={user} />
+                    <TripPartyMemberBadge member={member} />
                   </div>
-                  <TripPartyMemberBadge member={member} />
-                </div>
-              </SidebarItem>
-            )
-          })}
+                </SidebarItem>
+              )
+            })}
 
           <SubHeading>
             Details <Ellipsis className="h-4 w-4" />

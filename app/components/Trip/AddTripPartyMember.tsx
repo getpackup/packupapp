@@ -1,9 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import type { SearchResponse } from 'algoliasearch'
 import { Loader2, Plus } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useParams } from 'react-router'
+import { useFetcher, useParams } from 'react-router'
 import { toast } from 'sonner'
 import z from 'zod'
 
@@ -20,24 +21,27 @@ import { Input } from '~/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { useAuth } from '~/contexts/auth/useAuth'
 import { algoliaSearch } from '~/services/algoliaSearch'
-import { useUpdateDocument } from '~/services/api'
+import { firebaseKeys, useUpdateDocument } from '~/services/api'
 import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
 
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Button } from '../ui/button'
+import UserMediaObject from '../UserMediaObject'
 import TripPartyMemberBadge from './TripPartyMemberBadge'
 
 export function AddTripPartyMember({ tripMembers }: { tripMembers: TripMember[] }) {
   const { mutateAsync: updateDocument } = useUpdateDocument('trips')
   const { user } = useAuth()
   const { id } = useParams()
+  const fetcher = useFetcher()
+  const queryClient = useQueryClient()
 
   const [searchValueTimeout, setSearchValueTimeout] = useState<NodeJS.Timeout | null>(null)
   const [isLoadingSearchResults, setIsLoadingSearchResults] = useState(false)
   const [isHydrated, setIsHydrated] = useState(false)
   const [algoliaService, setAlgoliaService] = useState<typeof algoliaSearch | null>(null)
   const [hits, setHits] = useState<SearchResponse<User>['hits']>([])
+  const [isAddingMember, setIsAddingMember] = useState<string | null>(null)
 
   // Prevent hydration mismatch by only allowing username checking after hydration
   useEffect(() => {
@@ -92,7 +96,7 @@ export function AddTripPartyMember({ tripMembers }: { tripMembers: TripMember[] 
         // Type guard to check if result is SearchResponse (has hits) not SearchForFacetValuesResponse
         if ('hits' in result) {
           const hits = result.hits
-          console.log(hits)
+
           setHits(hits)
         }
       } catch (error) {
@@ -147,46 +151,123 @@ export function AddTripPartyMember({ tripMembers }: { tripMembers: TripMember[] 
     },
   })
 
-  const addMemberToTrip = (hitUserId: string, hitEmail: string, hitName: string) => {
-    if (!user || !id) return
+  const addMemberToTrip = async (hitUserId: string, hitEmail: string, hitName: string) => {
+    if (!user || !id || !hitUserId || !hitEmail || !hitName) return
+
+    setIsAddingMember(hitUserId)
+
+    const newMember = {
+      uid: hitUserId,
+      invitedAt: new Date(),
+      status: TripMemberStatus.Pending,
+      invitedBy: user.uid,
+    }
 
     const payload = {
-      [`tripMembers.${hitUserId}`]: {
-        uid: hitUserId,
-        invitedAt: new Date(),
-        status: TripMemberStatus.Pending,
-        invitedBy: user.uid,
-      },
+      [`tripMembers.${hitUserId}`]: newMember,
     }
-    updateDocument(
-      { id: id, data: payload },
-      {
-        onSuccess: () => {
-          // TODO: send trip invitation email and track events
-          //   sendTripInvitationEmail({
-          // tripId: id,
-          // invitedBy: user.username,
-          // email: hitEmail,
-          // greetingName: hitName || '',
-          //         })
 
-          // trackEvent('Trip Party Search User Added', {
-          //   tripId: id,
-          //   ...payload,
-          // })
+    await queryClient.cancelQueries({ queryKey: firebaseKeys.doc('trips', id) })
 
-          toast.success(`${hitName} has been invited to the trip`)
-        },
-        onError: (err: Error) => {
-          // trackEvent(`Trip Party Member Add Failure`, {
-          //   ...payload,
-          // tripId: id,
-          // error: err,
-          // })
-          toast.error(err.message)
+    const previousTripData = queryClient.getQueryData(firebaseKeys.doc('trips', id))
+    queryClient.setQueryData(firebaseKeys.doc('trips', id), (old: any) => {
+      if (!old) return old
+      return {
+        ...old,
+        tripMembers: {
+          ...old.tripMembers,
+          [hitUserId]: newMember,
         },
       }
-    )
+    })
+
+    const previousUsersData = queryClient.getQueryData<User[]>([
+      'firebase',
+      'docs',
+      'trips',
+      id,
+      'tripMembers',
+    ])
+    const foundUser = hits.find((hit) => hit.uid === hitUserId)
+    if (foundUser && previousUsersData) {
+      queryClient.setQueryData<User[]>(
+        ['firebase', 'docs', 'trips', id, 'tripMembers'],
+        [...previousUsersData, foundUser]
+      )
+    }
+
+    try {
+      await updateDocument(
+        { id: id, data: payload },
+        {
+          onSuccess: async () => {
+            queryClient.invalidateQueries({ queryKey: firebaseKeys.doc('trips', id) })
+            queryClient.invalidateQueries({
+              queryKey: ['firebase', 'docs', 'trips', id, 'tripMembers'],
+            })
+
+            fetcher
+              .submit(
+                {
+                  invitedBy: user.username,
+                  email: hitEmail,
+                  greetingName: hitName || '',
+                },
+                {
+                  method: 'POST',
+                  action: '/resource/send-trip-invitation',
+                }
+              )
+              .then(() => {
+                toast.success(`${hitName} has been invited to the trip`)
+                // trackEvent('Trip Party Search User Added', {
+                //   tripId: id,
+                //   ...payload,
+                // })
+              })
+              .catch((err) => {
+                toast.error(err.message)
+              })
+              .finally(() => {
+                setIsAddingMember(null)
+              })
+          },
+          onError: (err: Error) => {
+            // Rollback optimistic updates on error
+            if (previousTripData) {
+              queryClient.setQueryData(firebaseKeys.doc('trips', id), previousTripData)
+            }
+            if (previousUsersData) {
+              queryClient.setQueryData(
+                ['firebase', 'docs', 'trips', id, 'tripMembers'],
+                previousUsersData
+              )
+            }
+            // trackEvent(`Trip Party Member Add Failure`, {
+            //   ...payload,
+            // tripId: id,
+            // error: err,
+            // })
+            toast.error(err.message)
+            setIsAddingMember(null)
+          },
+        }
+      )
+    } catch (error) {
+      // Rollback optimistic updates on error
+      if (previousTripData) {
+        queryClient.setQueryData(firebaseKeys.doc('trips', id), previousTripData)
+      }
+      if (previousUsersData) {
+        queryClient.setQueryData(
+          ['firebase', 'docs', 'trips', id, 'tripMembers'],
+          previousUsersData
+        )
+      }
+      toast.error('Error adding member to trip: ' + (error as Error).message)
+      console.error('Error adding member to trip:', error)
+      setIsAddingMember(null)
+    }
   }
 
   return (
@@ -253,34 +334,22 @@ export function AddTripPartyMember({ tripMembers }: { tripMembers: TripMember[] 
                         key={hit.objectID}
                         className="text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent flex items-center justify-between gap-2 rounded-lg px-3 py-2 transition-colors"
                       >
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-8 w-8 border">
-                            <AvatarImage
-                              src={hit.photoURL}
-                              alt={`${hit.username.toLocaleLowerCase()} avatar`}
-                              gravatarEmail={hit.email}
-                            />
-                            <AvatarFallback>{hit.displayName?.charAt(0)}</AvatarFallback>
-                          </Avatar>
-
-                          <div>
-                            <div className="grid flex-1 text-left text-sm leading-tight">
-                              <span className="truncate font-medium">{hit.displayName}</span>
-                              <span className="text-muted-foreground truncate text-xs">
-                                @{hit.username.toLocaleLowerCase()}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
+                        <UserMediaObject user={hit} />
                         {matchingUser ? (
                           <TripPartyMemberBadge member={matchingUser} />
                         ) : (
                           <Button
+                            type="button"
                             variant="outline"
                             size="icon"
                             onClick={() => addMemberToTrip(hit.uid, hit.email, hit.displayName)}
+                            disabled={isAddingMember === hit.uid}
                           >
-                            <Plus />
+                            {isAddingMember === hit.uid ? (
+                              <Loader2 className="size-4 animate-spin" />
+                            ) : (
+                              <Plus />
+                            )}
                             <span className="sr-only">Add {hit.displayName} to trip</span>
                           </Button>
                         )}

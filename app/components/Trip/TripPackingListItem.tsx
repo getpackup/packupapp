@@ -1,5 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Check, Circle, Ellipsis, Minus, Plus, Settings, Trash2, Users, X } from 'lucide-react'
+import {
+  Check,
+  Circle,
+  Ellipsis,
+  Minus,
+  Plus,
+  Settings,
+  Trash2,
+  UserIcon,
+  Users,
+  X,
+} from 'lucide-react'
 import { useState } from 'react'
 import { useParams } from 'react-router'
 import { animated, useSpring } from 'react-spring'
@@ -242,7 +253,7 @@ const TripPackingListItem = ({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleMoveToOrFromGroupItems}>
-                    <Users />{' '}
+                    {item.packedBy[0].isShared ? <UserIcon /> : <Users />}{' '}
                     {item.packedBy[0].isShared ? 'Move to Personal Items' : 'Move to Group Items'}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
