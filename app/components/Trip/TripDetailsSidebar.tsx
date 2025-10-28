@@ -78,7 +78,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           <SubHeading>
             <span>Trip Members</span>
             <div className="flex items-center gap-2">
-              <AddTripPartyMember tripMembers={Object.values(trip.tripMembers)} />
+              <AddTripPartyMember tripMembers={Object.values(trip.tripMembers)} trip={trip} />
               {/* TODO: add action to show/hide declined and removed members */}
               <Ellipsis className="h-4 w-4" />
             </div>

@@ -1,6 +1,5 @@
 import { limit, where } from 'firebase/firestore'
 import { useEffect } from 'react'
-import { toast } from 'sonner'
 
 import FullPageSpinner from '~/components/FullPageSpinner'
 import PageContent from '~/components/PageContent'
@@ -20,7 +19,7 @@ export function meta({}: Route.MetaArgs) {
 export default function TripDetails({ params }: Route.ComponentProps) {
   const { id } = params
 
-  const { data: trip, isRefetching } = useDocument<Trip>('trips', id)
+  const { data: trip } = useDocument<Trip>('trips', id)
 
   useEffect(() => {
     if (trip?.name) {
@@ -29,12 +28,6 @@ export default function TripDetails({ params }: Route.ComponentProps) {
       document.title = 'Trip Details | Packup'
     }
   }, [trip?.name])
-
-  useEffect(() => {
-    if (isRefetching) {
-      toast.info('Checking for trip updates...')
-    }
-  }, [isRefetching])
 
   const constraints =
     trip?.tripMembers && Object.keys(trip.tripMembers).length > 0
