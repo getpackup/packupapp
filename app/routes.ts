@@ -12,6 +12,7 @@ export default [
   ]),
   route('resource/toggle-theme', 'routes/resource.toggle-theme.tsx'),
   route('resource/send-trip-invitation', 'routes/resource.send-trip-invitation.tsx'),
+  route('resource/send-signin-email', 'routes/resource.send-signin-email.tsx'),
   // Add catch-all route for unknown URLs
   route('...', 'routes/[...].tsx'),
 ] satisfies RouteConfig

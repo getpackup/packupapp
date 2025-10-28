@@ -8,7 +8,8 @@
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix"
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "email:dev": "cd react-email && npm run dev"
   },
   "dependencies": {
     "@algolia/client-search": "^5.35.0",
@@ -29,6 +30,7 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "@react-email/render": "1.4.0",
     "@react-router/node": "^7.7.1",
     "@react-router/serve": "^7.7.1",
     "@sendgrid/mail": "^8.1.6",
@@ -43,6 +45,7 @@
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "firebase": "^12.1.0",
+    "firebase-admin": "^13.5.0",
     "install": "^0.13.0",
     "isbot": "^5.1.27",
     "lucide-react": "^0.539.0",
