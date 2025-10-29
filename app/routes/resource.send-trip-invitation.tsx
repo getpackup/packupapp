@@ -1,8 +1,8 @@
 import { render, toPlainText } from '@react-email/render'
 import sgMail from '@sendgrid/mail'
-import InviteToTripEmail from 'react-email/emails/invite-to-trip'
 import { type ActionFunction } from 'react-router'
 
+import InviteToTripEmail from '~/emails/invite-to-trip'
 import getObjectFromFormData from '~/lib/getObjectFromFormData'
 
 interface SendTripInvitationBody {

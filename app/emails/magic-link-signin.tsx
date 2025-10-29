@@ -1,7 +1,8 @@
 import { Column, Link, Row, Section, Text } from '@react-email/components'
+
 import BaseEmailTemplate from './base'
-import CallToAction from '../components/call-to-action'
-import DarkAndLightIconsFromBase64 from '../components/DarkAndLightIconsFromBase64'
+import CallToAction from './components/call-to-action'
+import DarkAndLightIconsFromBase64 from './components/DarkAndLightIconsFromBase64'
 
 interface MagicLinkSigninEmailProps {
   signinUrl: string

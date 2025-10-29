@@ -1,4 +1,5 @@
 import { BadgeInfo, CalendarIcon, Ellipsis, Info, MapPinIcon } from 'lucide-react'
+import { useState } from 'react'
 
 import { formattedDate, formattedDateRange } from '~/lib/date'
 import {
@@ -8,20 +9,34 @@ import {
   gearListOtherConsiderations,
 } from '~/lib/gearListItemEnum'
 import type { Trip } from '~/types/Trip'
+import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
 
 import StaticMapImage from '../StaticMapImage'
 import { AspectRatio } from '../ui/aspect-ratio'
 import { Badge } from '../ui/badge'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
 import { Separator } from '../ui/separator'
 import UserMediaObject from '../UserMediaObject'
 import { AddTripPartyMember } from './AddTripPartyMember'
+import { EditTripName } from './EditTripName'
 import TripPartyMemberBadge from './TripPartyMemberBadge'
 
 type TripDetailsSidebarProps = {
   trip: Trip
   users?: User[]
 }
+
+export const acceptedTripMembersOnly = (tripMembers: TripMember[]) =>
+  tripMembers.filter(
+    (member) =>
+      member.status !== TripMemberStatus.Declined && member.status !== TripMemberStatus.Removed
+  )
 
 const SidebarItem = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -40,6 +55,11 @@ const SubHeading = ({ children }: { children: React.ReactNode }) => {
 }
 
 const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
+  const [showAllMembers, setShowAllMembers] = useState(false)
+  const tripMembers = showAllMembers
+    ? Object.values(trip.tripMembers)
+    : acceptedTripMembersOnly(Object.values(trip.tripMembers))
+
   const onlyActivityTags = trip
     ? trip.tags.filter((item) => gearListActivities.some((activity) => item === activity.label))
     : []
@@ -79,11 +99,25 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
             <span>Trip Members</span>
             <div className="flex items-center gap-2">
               <AddTripPartyMember tripMembers={Object.values(trip.tripMembers)} trip={trip} />
-              {/* TODO: add action to show/hide declined and removed members */}
-              <Ellipsis className="h-4 w-4" />
+              {Object.values(trip.tripMembers)?.some(
+                (member) =>
+                  member.status === TripMemberStatus.Declined ||
+                  member.status === TripMemberStatus.Removed
+              ) && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="p-1 opacity-80 hover:opacity-100">
+                    <Ellipsis className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => setShowAllMembers(!showAllMembers)}>
+                      Toggle declined & removed members {showAllMembers ? 'off' : 'on'}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </SubHeading>
-          {Object.values(trip.tripMembers)
+          {tripMembers
             .sort((a, b) => a.invitedAt.seconds - b.invitedAt.seconds)
             .map((member) => {
               const user = users?.find((user) => user.id === member.uid)
@@ -93,7 +127,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
 
               return (
                 <SidebarItem key={member.uid}>
-                  <div className="flex items-center justify-between gap-2 text-sm">
+                  <div className="flex items-center justify-between gap-2">
                     <UserMediaObject user={user} />
                     <TripPartyMemberBadge member={member} />
                   </div>
@@ -101,15 +135,15 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
               )
             })}
 
-          <SubHeading>
-            Details <Ellipsis className="h-4 w-4" />
-          </SubHeading>
-          <SidebarItem>
-            <div className="flex items-center gap-2 text-sm">
-              <BadgeInfo className="h-4 w-4" />
-              {trip.name}
-            </div>
-          </SidebarItem>
+          <SubHeading>Details</SubHeading>
+          <EditTripName tripName={trip.name}>
+            <SidebarItem>
+              <div className="flex items-center gap-2 text-sm">
+                <BadgeInfo className="h-4 w-4" />
+                {trip.name}
+              </div>
+            </SidebarItem>
+          </EditTripName>
           <SidebarItem>
             <div className="flex items-center gap-2 text-sm">
               <CalendarIcon className="h-4 w-4" />

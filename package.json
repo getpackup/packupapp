@@ -9,7 +9,7 @@
     "typecheck": "react-router typegen && tsc",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
-    "email:dev": "cd react-email && npm run dev"
+    "email:dev": "email dev --dir app/emails"
   },
   "dependencies": {
     "@algolia/client-search": "^5.35.0",
@@ -30,6 +30,7 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "@react-email/components": "0.5.7",
     "@react-email/render": "1.4.0",
     "@react-router/node": "^7.7.1",
     "@react-router/serve": "^7.7.1",
@@ -67,6 +68,7 @@
     "zustand": "^5.0.7"
   },
   "devDependencies": {
+    "@react-email/preview-server": "4.3.2",
     "@react-router/dev": "^7.7.1",
     "@tailwindcss/vite": "^4.1.4",
     "@types/node": "^20",
@@ -75,6 +77,7 @@
     "@typescript-eslint/eslint-plugin": "^8.39.1",
     "@typescript-eslint/parser": "^8.39.1",
     "eslint": "^9.33.0",
+    "react-email": "4.3.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^5.5.4",

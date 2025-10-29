@@ -2,9 +2,9 @@ import { render, toPlainText } from '@react-email/render'
 import sgMail from '@sendgrid/mail'
 import { cert, getApps, initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
-import { MagicLinkSigninEmail } from 'react-email/emails/magic-link-signin'
 import { type ActionFunction } from 'react-router'
 
+import { MagicLinkSigninEmail } from '~/emails/magic-link-signin'
 import getObjectFromFormData from '~/lib/getObjectFromFormData'
 
 interface SendSigninEmailBody {

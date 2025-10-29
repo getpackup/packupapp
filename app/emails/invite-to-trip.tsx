@@ -1,7 +1,8 @@
-import { Column, Img, Row, Section, Text } from '@react-email/components'
-import { BaseEmailTemplate } from './base'
-import CallToAction from '../components/call-to-action'
-import DarkAndLightIconsFromBase64 from '../components/DarkAndLightIconsFromBase64'
+import { Column, Row, Section, Text } from '@react-email/components'
+
+import BaseEmailTemplate from './base'
+import CallToAction from './components/call-to-action'
+import DarkAndLightIconsFromBase64 from './components/DarkAndLightIconsFromBase64'
 
 const baseUrl =
   process.env.NODE_ENV === 'production' ? `https://packupapp.com` : 'http://localhost:5173'
@@ -20,11 +21,11 @@ interface InviteToTripEmailProps {
 export const InviteToTripEmail = ({
   greetingName,
   invitedBy,
-  tripName = 'Test Trip',
-  where = 'Test Location',
-  why = 'Test Reason',
+  tripName,
+  where,
+  why,
   when,
-  tags = 'test, test2, test3',
+  tags,
 }: InviteToTripEmailProps) => {
   return (
     <BaseEmailTemplate

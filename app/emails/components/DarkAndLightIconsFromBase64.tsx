@@ -28,3 +28,4 @@ function DarkAndLightIconsFromBase64({ base64String }: { base64String: string })
 }
 
 export default DarkAndLightIconsFromBase64
+

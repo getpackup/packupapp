@@ -15,7 +15,7 @@ import {
   limit,
   onSnapshot,
   query,
-  QueryConstraint,
+  type QueryConstraint,
   setDoc,
   startAfter,
   updateDoc,

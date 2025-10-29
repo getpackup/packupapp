@@ -18,7 +18,7 @@ const UserMediaObject = ({ user }: UserMediaObjectProps) => {
         <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
       </Avatar>
       <div className="flex flex-col leading-tight">
-        <span>{user.displayName}</span>
+        <span className="text-sm">{user.displayName}</span>
         <span className="text-muted-foreground text-xs">@{user.username.toLocaleLowerCase()}</span>
       </div>
     </div>
