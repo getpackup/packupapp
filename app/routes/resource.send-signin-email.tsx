@@ -11,34 +11,59 @@ interface SendSigninEmailBody {
   email: string
 }
 
-// Simple device detection from user-agent string
-function detectDevice(userAgent: string): string {
+// Extract operating system from user-agent string
+function detectOS(userAgent: string): string {
   if (!userAgent) return 'Unknown'
 
   const ua = userAgent.toLowerCase()
 
-  // Detect mobile devices
-  if (/mobile|android|iphone|ipad|iphone|ipod|blackberry|iemobile|opera mini/i.test(ua)) {
-    if (/iphone|ipad|ipod/i.test(ua)) return '📱 iOS Device'
-    if (/android/i.test(ua)) return '📱 Android Device'
-    if (/windows phone/i.test(ua)) return '📱 Windows Phone'
-    return '📱 Unknown Mobile Device'
-  }
+  // Detect mobile operating systems
+  if (/iphone/i.test(ua)) return 'iOS'
+  if (/ipad/i.test(ua)) return 'iPadOS'
+  if (/android/i.test(ua)) return 'Android'
+  if (/windows phone/i.test(ua)) return 'Windows Phone'
 
-  // Detect operating systems
-  if (/windows nt/i.test(ua)) return '💻 Windows'
-  if (/macintosh|mac os x/i.test(ua)) return '💻 macOS'
-  if (/linux/i.test(ua)) return '💻 Linux'
-  if (/unix/i.test(ua)) return '💻 Unix'
+  // Detect desktop operating systems
+  if (/windows nt/i.test(ua)) return 'Windows'
+  if (/macintosh|mac os x/i.test(ua)) return 'macOS'
+  if (/linux/i.test(ua)) return 'Linux'
+  if (/unix/i.test(ua)) return 'Unix'
 
-  // Detect browsers for desktop
+  return 'Unknown'
+}
+
+// Extract browser from user-agent string
+function detectBrowser(userAgent: string): string {
+  if (!userAgent) return 'Unknown'
+
+  const ua = userAgent.toLowerCase()
+
+  // Detect mobile browsers first
+  if (/firefox/i.test(ua)) return 'Firefox Mobile'
+  if (/safari/i.test(ua) && !/chrome/i.test(ua)) return 'Safari Mobile'
+  if (/chrome/i.test(ua)) return 'Chrome Mobile'
+  if (/edg/i.test(ua)) return 'Edge Mobile'
+  if (/opera|opr/i.test(ua)) return 'Opera Mobile'
+
+  // Detect desktop browsers
   if (/edg/i.test(ua)) return 'Edge'
   if (/chrome/i.test(ua)) return 'Chrome'
   if (/safari/i.test(ua)) return 'Safari'
   if (/firefox/i.test(ua)) return 'Firefox'
+  if (/opera|opr/i.test(ua)) return 'Opera'
   if (/msie|trident/i.test(ua)) return 'Internet Explorer'
 
   return 'Unknown'
+}
+
+// Combined device detection
+function detectDevice(userAgent: string): string {
+  const os = detectOS(userAgent)
+  const browser = detectBrowser(userAgent)
+
+  if (os === 'Unknown' && browser === 'Unknown') return 'Unknown'
+  if (os !== 'Unknown' && browser !== 'Unknown') return `${os} - ${browser}`
+  return os !== 'Unknown' ? os : browser
 }
 
 // Extract IP address from request headers
