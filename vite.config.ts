@@ -2,6 +2,8 @@ import { defineConfig } from 'vite'
 import { reactRouter } from '@react-router/dev/vite'
 import tailwindcss from '@tailwindcss/vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
+import netlifyReactRouter from '@netlify/vite-plugin-react-router'
+import netlify from '@netlify/vite-plugin'
 
 export default defineConfig({
   server: {
@@ -11,6 +13,8 @@ export default defineConfig({
     tailwindcss(),
     reactRouter(),
     tsconfigPaths(),
+    netlifyReactRouter(),
+    netlify(),
     {
       name: 'ignore-chrome-devtools-json',
       configureServer(server) {
