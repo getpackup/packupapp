@@ -98,14 +98,31 @@ export const action: ActionFunction = async ({ request }) => {
       })
     }
 
-    // The credential is base64 encoded, so we need to decode it first
-    const base64Credential = process.env.VITE_FIREBASE_ADMIN_CREDENTIAL!
-    const decodedCredential = Buffer.from(base64Credential, 'base64').toString('utf-8')
-    const credential = JSON.parse(decodedCredential)
-
-    // Check if Firebase app is already initialized
+    // Initialize Firebase Admin
+    // Try individual env vars first (recommended for Netlify), fallback to base64 credential
     const apps = getApps()
-    const app = apps.length > 0 ? apps[0] : initializeApp({ credential: cert(credential) })
+    let app
+    if (apps.length > 0) {
+      app = apps[0]
+    } else if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+      app = initializeApp({
+        credential: cert({
+          projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        }),
+      })
+    } else if (process.env.VITE_FIREBASE_ADMIN_CREDENTIAL) {
+      // Fallback to base64-encoded credential for backwards compatibility
+      const base64Credential = process.env.VITE_FIREBASE_ADMIN_CREDENTIAL
+      const decodedCredential = Buffer.from(base64Credential, 'base64').toString('utf-8')
+      const credential = JSON.parse(decodedCredential)
+      app = initializeApp({ credential: cert(credential) })
+    } else {
+      throw new Error(
+        'Firebase Admin credentials not configured. Set FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY, or VITE_FIREBASE_ADMIN_CREDENTIAL.'
+      )
+    }
 
     const auth = getAuth(app)
 
