@@ -20,8 +20,10 @@ import {
 import { Input } from '~/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { useAuth } from '~/contexts/auth/useAuth'
+import { formattedDateRange } from '~/lib/date'
 import { algoliaSearch } from '~/services/algoliaSearch'
 import { firebaseKeys, useUpdateDocument } from '~/services/api'
+import type { Trip } from '~/types/Trip'
 import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
 
@@ -29,7 +31,13 @@ import { Button } from '../ui/button'
 import UserMediaObject from '../UserMediaObject'
 import TripPartyMemberBadge from './TripPartyMemberBadge'
 
-export function AddTripPartyMember({ tripMembers }: { tripMembers: TripMember[] }) {
+export function AddTripPartyMember({
+  trip,
+  tripMembers,
+}: {
+  trip: Trip
+  tripMembers: TripMember[]
+}) {
   const { mutateAsync: updateDocument } = useUpdateDocument('trips')
   const { user } = useAuth()
   const { id } = useParams()
@@ -212,6 +220,14 @@ export function AddTripPartyMember({ tripMembers }: { tripMembers: TripMember[] 
                   invitedBy: user.username,
                   email: hitEmail,
                   greetingName: hitName || '',
+                  tripName: trip.name,
+                  where: trip.startingPoint,
+                  why: trip.description,
+                  when: formattedDateRange(
+                    trip.startDate.seconds * 1000,
+                    trip.endDate.seconds * 1000
+                  ),
+                  tags: trip.tags,
                 },
                 {
                   method: 'POST',

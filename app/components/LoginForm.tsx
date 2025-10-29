@@ -1,15 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { sendSignInLinkToEmail } from 'firebase/auth'
 import { Loader2, Mail, WandSparkles } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
 import { useState } from 'react'
 import { type MouseEventHandler } from 'react'
 import { useForm } from 'react-hook-form'
+import { useFetcher } from 'react-router'
 import { animated } from 'react-spring'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
-import { firebaseAuth } from '~/firebase/config'
 import useBoop from '~/lib/useBoop'
 
 import AnimatedContainer from './AnimatedContainer'
@@ -29,6 +28,7 @@ export function LoginForm() {
   const [style, trigger] = useBoop({ scale: 1.1, rotation: 10 })
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
+  const fetcher = useFetcher()
 
   const formSchema = z.object({
     email: z.email(),
@@ -43,14 +43,19 @@ export function LoginForm() {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true)
-    const actionCodeSettings = {
-      url: `${window.location.origin}/signin`,
-      handleCodeInApp: true,
-    }
 
     window.localStorage.setItem('emailForSignIn', values.email)
 
-    sendSignInLinkToEmail(firebaseAuth, values.email, actionCodeSettings)
+    fetcher
+      .submit(
+        {
+          email: values.email,
+        },
+        {
+          method: 'POST',
+          action: '/resource/send-signin-email',
+        }
+      )
       .then(() => {
         setSent(true)
       })

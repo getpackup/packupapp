@@ -65,15 +65,16 @@ export default function Signin() {
 
           if (error) {
             console.error(error)
-            navigate(`/signup?email=${encodeURIComponent(email)}`)
+            navigate(`/`)
             if (error.code === 'auth/invalid-action-code') {
               toast.error(
-                `That looks like an old link you tried to sign in with. Please check your email for the latest link we sent.`,
+                `It appears that this magic link has expired. Please request a new one by entering your email again.`,
                 {
                   icon: <TriangleAlert />,
                 }
               )
             } else {
+              navigate(`/signup?email=${encodeURIComponent(email)}`)
               toast(`Looks like you don't have an account yet. Let's get you signed up!`, {
                 icon: '👋',
               })

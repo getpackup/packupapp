@@ -1,13 +1,19 @@
+import { render, toPlainText } from '@react-email/render'
 import sgMail from '@sendgrid/mail'
+import InviteToTripEmail from 'react-email/emails/invite-to-trip'
 import { type ActionFunction } from 'react-router'
 
-import inviteToTripEmail from '~/email-templates/inviteToTripEmail'
 import getObjectFromFormData from '~/lib/getObjectFromFormData'
 
 interface SendTripInvitationBody {
   invitedBy: string
   email: string
   greetingName: string
+  tripName: string
+  where: string
+  why?: string
+  when: string
+  tags?: string
 }
 
 export const action: ActionFunction = async ({ request }) => {
@@ -20,10 +26,10 @@ export const action: ActionFunction = async ({ request }) => {
 
   try {
     const formData = await request.formData()
-    const { invitedBy, email, greetingName } =
+    const { invitedBy, email, greetingName, tripName, where, why, when, tags } =
       getObjectFromFormData<SendTripInvitationBody>(formData)
 
-    if (!greetingName || !invitedBy || !email) {
+    if (!greetingName || !invitedBy || !email || !tripName || !where || !when) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
@@ -32,17 +38,26 @@ export const action: ActionFunction = async ({ request }) => {
 
     sgMail.setApiKey(process.env.SENDGRID_API_KEY!)
 
-    const { htmlTemplate, textOnlyTemplate } = inviteToTripEmail({
-      greetingName,
-      username: invitedBy,
-    })
+    const html = await render(
+      <InviteToTripEmail
+        greetingName={greetingName}
+        email={email}
+        invitedBy={invitedBy}
+        tripName={tripName}
+        where={where}
+        why={why ?? ''}
+        when={when}
+        tags={tags ?? ''}
+      />
+    )
+    const text = toPlainText(html)
 
     const msg = {
       to: email,
       from: 'The Packup Team <hello@getpackup.com>',
       subject: `${invitedBy} has invited you on a trip 🏕️`,
-      html: htmlTemplate,
-      text: textOnlyTemplate,
+      html: html,
+      text: text,
     }
 
     await sgMail.send(msg)
