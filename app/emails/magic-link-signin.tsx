@@ -98,12 +98,12 @@ export const MagicLinkSigninEmail = ({
         </Section>
       )}
 
-      <Text className="text-primary m-0 mb-6 text-left font-sans text-base leading-relaxed dark:text-gray-300">
-        If you didn't request this, change your password or{' '}
+      <Text className="text-primary m-0 mb-6 text-left font-sans text-sm leading-relaxed dark:text-gray-300">
+        If you didn't request this, you can safely ignore it, or{' '}
         <Link href="mailto:hello@getpackup.com" className="text-accent">
           contact support
-        </Link>
-        .
+        </Link>{' '}
+        if you have any questions.
       </Text>
     </BaseEmailTemplate>
   )
