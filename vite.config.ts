@@ -9,6 +9,9 @@ export default defineConfig({
   server: {
     open: true,
   },
+  ssr: {
+    noExternal: ['use-sound'],
+  },
   plugins: [
     tailwindcss(),
     reactRouter(),
