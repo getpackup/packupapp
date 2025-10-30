@@ -28,6 +28,7 @@ export const InviteToTripEmail = ({
 }: InviteToTripEmailProps) => {
   return (
     <BaseEmailTemplate
+      url={url}
       heading="New Trip Invitation on Packup"
       preview={`@${invitedBy} has invited you to join them on a trip on Packup 🏕️`}
     >

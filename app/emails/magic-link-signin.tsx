@@ -9,6 +9,7 @@ interface MagicLinkSigninEmailProps {
   ipAddress?: string
   device?: string
   timestamp?: string
+  url: string
 }
 
 export const MagicLinkSigninEmail = ({
@@ -16,6 +17,7 @@ export const MagicLinkSigninEmail = ({
   ipAddress,
   device,
   timestamp,
+  url,
 }: MagicLinkSigninEmailProps) => {
   const formatTimestamp = (ts?: string) => {
     if (!ts) return 'Unknown'
@@ -33,7 +35,11 @@ export const MagicLinkSigninEmail = ({
   }
 
   return (
-    <BaseEmailTemplate heading="Sign in to Packup" preview="Sign in to Packup with a magic link">
+    <BaseEmailTemplate
+      url={url}
+      heading="Sign in to Packup"
+      preview="Sign in to Packup with a magic link"
+    >
       <Text className="text-primary m-0 mb-6 text-left font-sans text-base leading-relaxed dark:text-gray-300">
         You requested a sign-in link for your Packup account. This one-time link expires in 1 hour
         for your security.

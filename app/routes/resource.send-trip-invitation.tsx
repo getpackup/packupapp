@@ -48,7 +48,7 @@ export const action: ActionFunction = async ({ request }) => {
         why={why ?? ''}
         when={when}
         tags={tags ?? ''}
-        url={request.headers.get('origin') ?? 'https://packupapp.com'}
+        url={request.headers.get('origin') ?? 'https://new.packupapp.com'}
       />
     )
     const text = toPlainText(html)

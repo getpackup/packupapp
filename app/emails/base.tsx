@@ -14,16 +14,19 @@ import {
   Text,
 } from '@react-email/components'
 
-const baseUrl =
-  process.env.NODE_ENV === 'production' ? `https://packupapp.com` : 'http://localhost:5173'
-
 interface BaseEmailTemplateProps {
   heading: string
   children: React.ReactNode
   preview: string
+  url: string
 }
 
-export const BaseEmailTemplate = ({ heading, children, preview }: BaseEmailTemplateProps) => {
+export const BaseEmailTemplate = ({
+  heading,
+  children,
+  preview,
+  url = 'https://new.packupapp.com/',
+}: BaseEmailTemplateProps) => {
   return (
     <Tailwind
       config={{
@@ -76,9 +79,9 @@ export const BaseEmailTemplate = ({ heading, children, preview }: BaseEmailTempl
         <Body className="font-sans">
           <Container className="mx-auto bg-white px-0 py-4 text-center font-sans dark:bg-gray-900">
             <Section className="bg-white py-6 dark:bg-gray-900">
-              <Link href="https://packupapp.com">
+              <Link href={url}>
                 <Img
-                  src={`${baseUrl}/icons/yak-brand.png`}
+                  src={`${url}/icons/yak-brand.png`}
                   width="60"
                   height="33"
                   alt="Packup yak"
@@ -88,7 +91,7 @@ export const BaseEmailTemplate = ({ heading, children, preview }: BaseEmailTempl
               <Heading className="text-primary mx-0 my-6 p-0 font-sans text-2xl font-bold dark:text-gray-300">
                 {heading}
               </Heading>
-              <Section className="mx-auto mb-6 max-w-lg rounded border border-solid border-gray-200 bg-gray-100/50 p-6 dark:border-gray-700 dark:bg-gray-800">
+              <Section className="mx-auto mb-6 rounded border border-solid border-gray-200 bg-gray-100/50 p-6 dark:border-gray-700 dark:bg-gray-800">
                 {children}
 
                 <Text className="text-primary m-0 mb-6 text-left font-sans text-base leading-relaxed dark:text-gray-300">

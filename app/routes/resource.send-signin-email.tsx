@@ -161,6 +161,7 @@ export const action: ActionFunction = async ({ request }) => {
         ipAddress={ipAddress}
         device={device}
         timestamp={utcTime}
+        url={request.headers.get('origin') ?? 'https://new.packupapp.com'}
       />
     )
     const text = toPlainText(html)
