@@ -10,15 +10,12 @@ import useBoop from '~/lib/useBoop'
 import { useRootLoaderData } from '~/lib/useRootLoaderData'
 import { useUpdateDocument } from '~/services/api'
 
-import offSound from '../../sounds/switch-off.mp3'
-import onSound from '../../sounds/switch-on.mp3'
-
 export function ThemeToggle() {
-  const [switchOn] = useSound(onSound, {
+  const [switchOn] = useSound('/sounds/switch-on.mp3', {
     interrupt: true,
     soundEnabled: true,
   })
-  const [switchOff] = useSound(offSound, {
+  const [switchOff] = useSound('/sounds/switch-off.mp3', {
     interrupt: true,
     soundEnabled: true,
   })
