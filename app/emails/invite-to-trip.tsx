@@ -4,9 +4,6 @@ import BaseEmailTemplate from './base'
 import CallToAction from './components/call-to-action'
 import DarkAndLightIconsFromBase64 from './components/DarkAndLightIconsFromBase64'
 
-const baseUrl =
-  process.env.NODE_ENV === 'production' ? `https://packupapp.com` : 'http://localhost:5173'
-
 interface InviteToTripEmailProps {
   invitedBy: string
   email: string
@@ -16,6 +13,7 @@ interface InviteToTripEmailProps {
   why: string
   when: string
   tags: string
+  url: string
 }
 
 export const InviteToTripEmail = ({
@@ -26,6 +24,7 @@ export const InviteToTripEmail = ({
   why,
   when,
   tags,
+  url,
 }: InviteToTripEmailProps) => {
   return (
     <BaseEmailTemplate
@@ -107,7 +106,7 @@ export const InviteToTripEmail = ({
           </Row>
         )}
       </Section>
-      <CallToAction text="View Trip Invitation" url={baseUrl} />
+      <CallToAction text="View Trip Invitation" url={url} />
     </BaseEmailTemplate>
   )
 }

@@ -48,6 +48,7 @@ export const action: ActionFunction = async ({ request }) => {
         why={why ?? ''}
         when={when}
         tags={tags ?? ''}
+        url={request.headers.get('origin') ?? 'https://packupapp.com'}
       />
     )
     const text = toPlainText(html)
@@ -55,7 +56,7 @@ export const action: ActionFunction = async ({ request }) => {
     const msg = {
       to: email,
       from: 'The Packup Team <hello@getpackup.com>',
-      subject: `${invitedBy} has invited you on a trip 🏕️`,
+      subject: `@${invitedBy} has invited you on a trip 🏕️`,
       html: html,
       text: text,
     }
