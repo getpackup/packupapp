@@ -119,7 +119,7 @@ export function Sidebar({ className }: SidebarProps) {
           onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex items-center justify-center rounded-lg px-3 py-2 transition-colors"
         >
-          <MenuIcon className="h-5 w-5 flex-shrink-0" />
+          <MenuIcon className="h-5 w-5 shrink-0" />
         </button>
       </div>
 
@@ -146,7 +146,7 @@ export function Sidebar({ className }: SidebarProps) {
                   className="flex items-center gap-2"
                 >
                   <item.icon
-                    className={cn('h-5 w-5 flex-shrink-0', {
+                    className={cn('h-5 w-5 shrink-0', {
                       'transition-transform duration-300 group-hover:rotate-90': index === 0,
                     })}
                   />

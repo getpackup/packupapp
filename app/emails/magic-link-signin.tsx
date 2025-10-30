@@ -59,11 +59,11 @@ export const MagicLinkSigninEmail = ({
           </Text>
           {timestamp && (
             <Row>
-              <Column className="w-6 align-middle">
+              <Column className="w-6 pt-1 align-top">
                 <DarkAndLightIconsFromBase64 base64String="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWNsb2NrLWljb24gbHVjaWRlLWNsb2NrIj48cGF0aCBkPSJNMTIgNnY2bDQgMiIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIi8+PC9zdmc+" />
               </Column>
               <Column>
-                <Text className="text-primary m-0 mb-1 text-left font-sans text-base leading-relaxed dark:text-gray-300">
+                <Text className="text-primary m-0 mb-1 text-left align-top font-sans text-base leading-relaxed dark:text-gray-300">
                   {formatTimestamp(timestamp)}
                 </Text>
               </Column>

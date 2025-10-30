@@ -224,7 +224,7 @@ const TripPackingListItem = ({
                 <DropdownMenuContent>
                   <DropdownMenuItem className="flex justify-between p-0">
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       disabled={item.quantity === 1}
                       onClick={(e) => {
@@ -236,7 +236,7 @@ const TripPackingListItem = ({
                     </Button>
                     {item.quantity}
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation()

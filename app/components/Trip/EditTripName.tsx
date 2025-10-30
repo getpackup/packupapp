@@ -1,5 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { PopoverClose } from '@radix-ui/react-popover'
 import { useQueryClient } from '@tanstack/react-query'
+import { Timestamp } from 'firebase/firestore'
 import { useForm } from 'react-hook-form'
 import { useParams } from 'react-router'
 import { toast } from 'sonner'
@@ -55,26 +57,35 @@ export function EditTripName({
     await queryClient.cancelQueries({ queryKey: firebaseKeys.doc('trips', id) })
 
     const previousTripData = queryClient.getQueryData<Trip>(firebaseKeys.doc('trips', id))
-    queryClient.setQueryData(firebaseKeys.doc('trips', id), (old: Trip) => {
+    queryClient.setQueryData<Trip>(firebaseKeys.doc('trips', id), (old: Trip | undefined) => {
       if (!old) return old
       return {
         ...old,
         name: values.name,
+        updatedAt: Timestamp.fromDate(new Date()),
       }
     })
 
     try {
       await updateDocument(
-        { id: id, data: { ...previousTripData, name: values.name } },
+        {
+          id: id,
+          data: {
+            ...previousTripData,
+            name: values.name,
+            updatedAt: Timestamp.fromDate(new Date()),
+          },
+        },
         {
           onSuccess: async () => {
             queryClient.invalidateQueries({ queryKey: firebaseKeys.doc('trips', id) })
 
             toast.success(`Trip name successfully updated`)
-            // trackEvent('Trip Name Updates Successfully', {
+            // trackEvent('Trip Name Updated Successfully', {
             //   tripId: id,
             //   ...previousTripData,
             //   name: values.name,
+            //   updatedAt: Timestamp.fromDate(new Date()),
             // })
           },
           onError: (err: Error) => {
@@ -104,34 +115,40 @@ export function EditTripName({
   return (
     <Popover>
       <PopoverTrigger className="w-full">{children}</PopoverTrigger>
-      <PopoverContent className="w-96" forceMount={undefined}>
+      <PopoverContent className="PopoverContent">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <FormLabel className="mb-2">Update trip name</FormLabel>
-            <div className="flex w-full items-center gap-2">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem className="w-full">
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Update trip name"
-                        onFocus={(e) => {
-                          field.onBlur()
-                          // Move cursor to the end instead of selecting all text
-                          setTimeout(() => {
-                            e.target.setSelectionRange(e.target.value.length, e.target.value.length)
-                          }, 10)
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" disabled={!form.formState.isDirty} className="mr-auto">
+
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem className="mb-2 w-full">
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Update trip name"
+                      onFocus={(e) => {
+                        field.onBlur()
+                        // Move cursor to the end instead of selecting all text
+                        setTimeout(() => {
+                          e.target.setSelectionRange(e.target.value.length, e.target.value.length)
+                        }, 10)
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex justify-end gap-2">
+              <PopoverClose asChild>
+                <Button type="button" variant="outline" className="">
+                  Cancel
+                </Button>
+              </PopoverClose>
+              <Button type="submit" disabled={!form.formState.isDirty} className="">
                 Save changes
               </Button>
             </div>

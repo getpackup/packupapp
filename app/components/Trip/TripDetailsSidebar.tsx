@@ -24,6 +24,8 @@ import {
 import { Separator } from '../ui/separator'
 import UserMediaObject from '../UserMediaObject'
 import { AddTripPartyMember } from './AddTripPartyMember'
+import { EditTripDates } from './EditTripDates'
+import { EditTripLocation } from './EditTripLocation'
 import { EditTripName } from './EditTripName'
 import TripPartyMemberBadge from './TripPartyMemberBadge'
 
@@ -144,18 +146,22 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
               </div>
             </SidebarItem>
           </EditTripName>
-          <SidebarItem>
-            <div className="flex items-center gap-2 text-sm">
-              <CalendarIcon className="h-4 w-4" />
-              {formattedDateRange(trip.startDate.seconds * 1000, trip.endDate.seconds * 1000)}
-            </div>
-          </SidebarItem>
-          <SidebarItem>
-            <div className="flex items-center gap-2 text-sm">
-              <MapPinIcon className="h-4 w-4" />
-              {trip.startingPoint}
-            </div>
-          </SidebarItem>
+          <EditTripDates startDate={trip.startDate} endDate={trip.endDate}>
+            <SidebarItem>
+              <div className="flex items-center gap-2 text-sm">
+                <CalendarIcon className="h-4 w-4" />
+                {formattedDateRange(trip.startDate.seconds * 1000, trip.endDate.seconds * 1000)}
+              </div>
+            </SidebarItem>
+          </EditTripDates>
+          <EditTripLocation lat={trip.lat} lng={trip.lng} startingPoint={trip.startingPoint}>
+            <SidebarItem>
+              <div className="flex items-center gap-2 text-sm">
+                <MapPinIcon className="h-4 w-4" />
+                {trip.startingPoint}
+              </div>
+            </SidebarItem>
+          </EditTripLocation>
           {trip.description && (
             <SidebarItem>
               <div className="flex items-center gap-2 text-base">
