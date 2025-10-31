@@ -1,6 +1,7 @@
 import { format } from 'date-fns'
 import {
   EllipsisVertical,
+  Files,
   HelpCircleIcon,
   Loader2,
   LogOut,
@@ -63,6 +64,7 @@ export function Sidebar({ className }: SidebarProps) {
     { icon: PlusCircle, label: 'New Trip', href: '/trips/new' },
     { icon: MapIcon, label: 'Trips', href: '/trips' },
     { icon: ShirtIcon, label: 'Gear Closet', href: '/gear-closet' },
+    { icon: Files, label: 'Packing List Templates', href: '/templates' },
     { icon: ShoppingCartIcon, label: 'Shopping List', href: '/shopping-list' },
     { icon: UsersIcon, label: 'Friends', href: '/friends' },
   ]

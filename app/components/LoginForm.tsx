@@ -86,7 +86,7 @@ export function LoginForm() {
   return (
     <div className="flex flex-col items-center">
       <AnimatePresence mode="wait">
-        {!sent ? (
+        {sent ? (
           <AnimatedContainer
             key="sent"
             className="flex flex-col space-y-8 text-center"
