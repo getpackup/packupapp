@@ -329,7 +329,7 @@ const TripPackingListCategory = ({
                           className="gap-2"
                         >
                           {selectedItems.length} selected
-                          <Separator orientation="vertical" className="!h-4" />{' '}
+                          <Separator orientation="vertical" className="h-4" />{' '}
                           <X className="size-4" />
                         </Button>
                       </TooltipTrigger>

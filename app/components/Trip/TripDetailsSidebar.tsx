@@ -27,6 +27,7 @@ import { AddTripPartyMember } from './AddTripPartyMember'
 import { EditTripDates } from './EditTripDates'
 import { EditTripLocation } from './EditTripLocation'
 import { EditTripName } from './EditTripName'
+import { EditTripTags } from './EditTripTags'
 import TripPartyMemberBadge from './TripPartyMemberBadge'
 
 type TripDetailsSidebarProps = {
@@ -42,15 +43,13 @@ export const acceptedTripMembersOnly = (tripMembers: TripMember[]) =>
 
 const SidebarItem = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg px-3 py-2 transition-colors">
-      {children}
-    </div>
+    <div className="text-sidebar-foreground rounded-lg px-3 py-2 transition-colors">{children}</div>
   )
 }
 
 const SubHeading = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="text-sidebar-foreground/70 ring-sidebar-ring flex h-8 shrink-0 items-center justify-between rounded-md px-3 text-xs font-medium outline-hidden transition-[margin,opacity] duration-200 ease-linear group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0">
+    <div className="text-sidebar-foreground ring-sidebar-ring flex h-8 shrink-0 items-center justify-between rounded-md px-3 text-xs font-medium outline-hidden transition-[margin,opacity] duration-200 ease-linear group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0">
       {children}
     </div>
   )
@@ -63,21 +62,19 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
     : acceptedTripMembersOnly(Object.values(trip.tripMembers))
 
   const onlyActivityTags = trip
-    ? trip.tags.filter((item) => gearListActivities.some((activity) => item === activity.label))
+    ? trip.tags.filter((item) => gearListActivities.some((tag) => item === tag.label))
     : []
 
   const onlyAccommodationOrCampKitchenTags = trip
     ? trip.tags.filter(
         (item) =>
-          gearListAccommodations.some((activity) => item === activity.label) ||
-          gearListCampKitchen.some((activity) => item === activity.label)
+          gearListAccommodations.some((tag) => item === tag.label) ||
+          gearListCampKitchen.some((tag) => item === tag.label)
       )
     : []
 
   const onlyOtherConsiderationsTags = trip
-    ? trip.tags.filter((item) =>
-        gearListOtherConsiderations.some((activity) => item === activity.label)
-      )
+    ? trip.tags.filter((item) => gearListOtherConsiderations.some((tag) => item === tag.label))
     : []
 
   return (
@@ -140,40 +137,60 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           <SubHeading>Details</SubHeading>
           <EditTripName tripName={trip.name}>
             <SidebarItem>
-              <div className="flex items-center gap-2 text-sm">
-                <BadgeInfo className="h-4 w-4" />
-                {trip.name}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2 text-left text-sm">
+                  <BadgeInfo className="mt-0.5 h-4 w-4" />
+                  {trip.name}
+                </div>
+                <p className="p-1 opacity-80 hover:opacity-100">
+                  <Ellipsis className="h-4 w-4" />
+                </p>
               </div>
             </SidebarItem>
           </EditTripName>
           <EditTripDates startDate={trip.startDate} endDate={trip.endDate}>
             <SidebarItem>
-              <div className="flex items-center gap-2 text-sm">
-                <CalendarIcon className="h-4 w-4" />
-                {formattedDateRange(trip.startDate.seconds * 1000, trip.endDate.seconds * 1000)}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2 text-left text-sm">
+                  <CalendarIcon className="mt-0.5 h-4 w-4" />
+                  {formattedDateRange(trip.startDate.seconds * 1000, trip.endDate.seconds * 1000)}
+                </div>
+                <p className="p-1 opacity-80 hover:opacity-100">
+                  <Ellipsis className="h-4 w-4" />
+                </p>
               </div>
             </SidebarItem>
           </EditTripDates>
           <EditTripLocation lat={trip.lat} lng={trip.lng} startingPoint={trip.startingPoint}>
             <SidebarItem>
-              <div className="flex items-center gap-2 text-sm">
-                <MapPinIcon className="h-4 w-4" />
-                {trip.startingPoint}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2 text-left text-sm">
+                  <MapPinIcon className="mt-0.5 h-4 w-4" />
+                  {trip.startingPoint}
+                </div>
+                <p className="p-1 opacity-80 hover:opacity-100">
+                  <Ellipsis className="h-4 w-4" />
+                </p>
               </div>
             </SidebarItem>
           </EditTripLocation>
           {trip.description && (
             <SidebarItem>
-              <div className="flex items-center gap-2 text-base">
-                <Info className="h-4 w-4" />
+              <div className="flex items-start gap-2 text-base">
+                <Info className="mt-1 h-4 w-4" />
                 {trip.description}
               </div>
             </SidebarItem>
           )}
           <Separator className="mt-4" />
-          <SubHeading>
-            Activities <Ellipsis className="h-4 w-4" />
-          </SubHeading>
+          <EditTripTags tags={onlyActivityTags} options={gearListActivities} name="Activities">
+            <SubHeading>
+              Activities{' '}
+              <p className="p-1 opacity-80 hover:opacity-100">
+                <Ellipsis className="h-4 w-4" />
+              </p>
+            </SubHeading>
+          </EditTripTags>
           <SidebarItem>
             <div className="flex flex-wrap items-center gap-2">
               {onlyActivityTags.map((tag: string) => (
@@ -183,9 +200,18 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
               ))}
             </div>
           </SidebarItem>
-          <SubHeading>
-            Accommodations/Kitchen <Ellipsis className="h-4 w-4" />
-          </SubHeading>
+          <EditTripTags
+            tags={onlyAccommodationOrCampKitchenTags}
+            options={[...gearListAccommodations, ...gearListCampKitchen]}
+            name="Accommodations/Kitchen"
+          >
+            <SubHeading>
+              Accommodations/Kitchen{' '}
+              <p className="p-1 opacity-80 hover:opacity-100">
+                <Ellipsis className="h-4 w-4" />
+              </p>
+            </SubHeading>
+          </EditTripTags>
           <SidebarItem>
             <div className="flex flex-wrap items-center gap-2">
               {onlyAccommodationOrCampKitchenTags.map((tag: string) => (
@@ -195,9 +221,18 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
               ))}
             </div>
           </SidebarItem>
-          <SubHeading>
-            Other Considerations <Ellipsis className="h-4 w-4" />
-          </SubHeading>
+          <EditTripTags
+            tags={onlyOtherConsiderationsTags}
+            options={gearListOtherConsiderations}
+            name="Other Considerations"
+          >
+            <SubHeading>
+              Other Considerations{' '}
+              <p className="p-1 opacity-80 hover:opacity-100">
+                <Ellipsis className="h-4 w-4" />
+              </p>
+            </SubHeading>
+          </EditTripTags>
           <SidebarItem>
             <div className="flex flex-wrap items-center gap-2">
               {onlyOtherConsiderationsTags.map((tag: string) => (
@@ -210,7 +245,15 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           <Separator className="mt-4" />
 
           {!!trip && !!trip.created && (
-            <SubHeading>Created {formattedDate(new Date(trip.created.seconds * 1000))}</SubHeading>
+            <SubHeading>
+              Created {formattedDate(new Date(trip.created.seconds * 1000))}
+              {!!trip.updated && (
+                <>
+                  <br />
+                  Last updated {formattedDate(new Date(trip.updated.seconds * 1000))}
+                </>
+              )}
+            </SubHeading>
           )}
         </div>
       </div>

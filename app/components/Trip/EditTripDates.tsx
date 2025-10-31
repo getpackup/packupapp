@@ -46,7 +46,6 @@ export function EditTripDates({
     const newDates = {
       startDate: Timestamp.fromDate(startOfDay(dateRange?.from ?? startDate.toDate())),
       endDate: Timestamp.fromDate(endOfDay(dateRange?.to ?? endDate.toDate())),
-      updatedAt: Timestamp.fromDate(new Date()),
     }
 
     const previousTripData = queryClient.getQueryData<Trip>(firebaseKeys.doc('trips', id))

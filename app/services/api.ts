@@ -18,6 +18,7 @@ import {
   type QueryConstraint,
   setDoc,
   startAfter,
+  Timestamp,
   updateDoc,
 } from 'firebase/firestore'
 import { useEffect, useRef } from 'react'
@@ -231,7 +232,7 @@ export function useUpdateSubCollectionDocument(collectionName: string, subCollec
       data: any
     }) => {
       const docRef = doc(firestoreDb, collectionName, parentDocId, subCollection, id)
-      const updateData = { ...data, updatedAt: new Date() }
+      const updateData = { ...data, updated: Timestamp.fromDate(new Date()) }
 
       await updateDoc(docRef, updateData)
       return { id, ...updateData }
@@ -369,7 +370,7 @@ export function useUpdateDocument(collection: string) {
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       const docRef = doc(firestoreDb, collection, id)
-      const updateData = { ...data, updatedAt: new Date() }
+      const updateData = { ...data, updated: Timestamp.fromDate(new Date()) }
 
       await updateDoc(docRef, updateData)
       return { id, ...updateData }

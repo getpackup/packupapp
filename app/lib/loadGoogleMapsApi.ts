@@ -32,7 +32,7 @@ export function loadGoogleMapsApi(): Promise<typeof window | null> {
     script.async = true
     script.defer = true
     script.dataset.googleMapsScript = 'true'
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places` // no callback needed
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`
 
     script.onload = () => resolve(window)
     script.onerror = (e) => reject(e)

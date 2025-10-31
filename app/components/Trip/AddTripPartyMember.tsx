@@ -288,7 +288,7 @@ export function AddTripPartyMember({
 
   return (
     <Popover>
-      <PopoverTrigger>
+      <PopoverTrigger className="p-1 opacity-80 hover:opacity-100">
         <>
           <Plus className="size-4" />
           <span className="sr-only">Add member</span>

@@ -39,20 +39,11 @@ export default function Signin() {
     // The client SDK will parse the code from the link for you.
     if (email) {
       signInWithEmailLink(firebaseAuth, email, window.location.href)
-        .then((result) => {
-          // if (client.location) {
-          //   trackEvent('User Logged In and Needed Redirection', {
-          //     location: client.location,
-          //     email: result.user?.email,
-          //   })
-          //   dispatch(removeAttemptedPrivatePage())
-          //   router.push(client.location)
-          // } else {
+        .then(() => {
           //   trackEvent('User Logged In', {
           //     email: result.user?.email,
           //   })
-          //   router.push('/')
-          // }
+
           navigate('/trips')
         })
         .catch((error) => {

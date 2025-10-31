@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PopoverClose } from '@radix-ui/react-popover'
 import { useQueryClient } from '@tanstack/react-query'
-import { Timestamp } from 'firebase/firestore'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useParams } from 'react-router'
@@ -91,8 +90,9 @@ export function EditTripLocation({
           containerForPlacesRef.current = div
         }
 
-        autocompleteServiceRef.current = new g.maps.places.AutocompleteService()
-        placesServiceRef.current = new g.maps.places.PlacesService(containerForPlacesRef.current)
+        autocompleteServiceRef.current =
+          new g.maps.places.AutocomplAutocompleteSuggestioneteService()
+        placesServiceRef.current = new g.maps.places.Places(containerForPlacesRef.current)
         setIsPlacesReady(true)
       })
       .catch(() => {
@@ -169,7 +169,6 @@ export function EditTripLocation({
         lat: values.lat,
         lng: values.lng,
         startingPoint: values.name,
-        updatedAt: Timestamp.fromDate(new Date()),
       }
     })
 
@@ -182,7 +181,6 @@ export function EditTripLocation({
             lat: values.lat,
             lng: values.lng,
             startingPoint: values.name,
-            updatedAt: Timestamp.fromDate(new Date()),
           },
         },
         {
@@ -196,7 +194,6 @@ export function EditTripLocation({
             //   lat: values.lat,
             //   lng: values.lng,
             //   startingPoint: values.name,
-            //   updatedAt: Timestamp.fromDate(new Date()),
             // })
           },
           onError: (err: Error) => {

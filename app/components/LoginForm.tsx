@@ -86,14 +86,17 @@ export function LoginForm() {
   return (
     <div className="flex flex-col items-center">
       <AnimatePresence mode="wait">
-        {sent ? (
+        {!sent ? (
           <AnimatedContainer
             key="sent"
             className="flex flex-col space-y-8 text-center"
             animation="scaleAndFadeIn"
           >
             <h2 className="text-xl font-bold">Check your email</h2>
-            <p>Tap on the link and you'll be logged in instantly.</p>
+            <p>We've sent you an email with a magic link that'll log you in instantly.</p>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              You can close this tab now, if you want.
+            </p>
 
             <Button
               variant="accent"
