@@ -14,18 +14,18 @@ import {
   FormLabel,
   FormMessage,
 } from '~/components/ui/form'
-import { Input } from '~/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { firebaseKeys, useUpdateDocument } from '~/services/api'
 import type { Trip } from '~/types/Trip'
 
 import { Button } from '../ui/button'
+import { Textarea } from '../ui/textarea'
 
-export function EditTripName({
-  tripName,
+export function EditTripDescription({
+  description,
   children,
 }: {
-  tripName: string
+  description: string
   children: React.ReactNode
 }) {
   const { mutateAsync: updateDocument } = useUpdateDocument('trips')
@@ -33,16 +33,15 @@ export function EditTripName({
   const queryClient = useQueryClient()
 
   const formSchema = z.object({
-    name: z
+    description: z
       .string()
-      .min(5, { message: 'Trip name must be at least 5 characters' })
-      .max(50, { message: 'Trip name must be less than 50 characters' }),
+      .max(500, { message: 'Trip description must be less than 500 characters' }),
   })
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: tripName,
+      description: description || '',
     },
   })
 
@@ -51,7 +50,7 @@ export function EditTripName({
 
     // mock esc keypress to close the popover
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
-    form.reset({ name: values.name })
+    form.reset({ description: values.description })
 
     await queryClient.cancelQueries({ queryKey: firebaseKeys.doc('trips', id) })
 
@@ -60,7 +59,7 @@ export function EditTripName({
       if (!old) return old
       return {
         ...old,
-        name: values.name,
+        description: values.description,
       }
     })
 
@@ -70,18 +69,18 @@ export function EditTripName({
           id: id,
           data: {
             ...previousTripData,
-            name: values.name,
+            description: values.description || '',
           },
         },
         {
           onSuccess: async () => {
             queryClient.invalidateQueries({ queryKey: firebaseKeys.doc('trips', id) })
 
-            toast.success(`Trip name successfully updated`)
-            // trackEvent('Trip Name Updated Successfully', {
+            toast.success(`Trip description successfully updated`)
+            // trackEvent('Trip Description Updated Successfully', {
             //   tripId: id,
             //   ...previousTripData,
-            //   name: values.name,
+            //   description: values.description,
             // })
           },
           onError: (err: Error) => {
@@ -89,7 +88,7 @@ export function EditTripName({
             if (previousTripData) {
               queryClient.setQueryData(firebaseKeys.doc('trips', id), previousTripData)
             }
-            // trackEvent(`Trip Name Update Failure`, {
+            // trackEvent(`Trip Description Update Failure`, {
             // tripId: id,
             //   ...previousTripData,
             // error: err,
@@ -103,28 +102,29 @@ export function EditTripName({
       if (previousTripData) {
         queryClient.setQueryData(firebaseKeys.doc('trips', id), previousTripData)
       }
-      toast.error('Error updating trip name: ' + (error as Error).message)
-      console.error('Error updating trip name:', error)
+      toast.error('Error updating trip description: ' + (error as Error).message)
+      console.error('Error updating trip description:', error)
     }
   }
 
   return (
     <Popover>
-      <PopoverTrigger>{children}</PopoverTrigger>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <FormLabel className="mb-2">Update trip name</FormLabel>
+            <FormLabel className="mb-2">Update trip description</FormLabel>
 
             <FormField
               control={form.control}
-              name="name"
+              name="description"
               render={({ field }) => (
                 <FormItem className="mb-2 w-full">
                   <FormControl>
-                    <Input
+                    <Textarea
                       {...field}
-                      placeholder="What do you want to call this trip?"
+                      rows={4}
+                      placeholder="Describe your trip in a few words..."
                       onFocus={(e) => {
                         field.onBlur()
                         // Move cursor to the end instead of selecting all text

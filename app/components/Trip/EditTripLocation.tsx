@@ -225,8 +225,8 @@ export function EditTripLocation({
 
   return (
     <Popover>
-      <PopoverTrigger className="w-full">{children}</PopoverTrigger>
-      <PopoverContent className="PopoverContent">
+      <PopoverTrigger>{children}</PopoverTrigger>
+      <PopoverContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <FormLabel className="mb-2">Update trip location</FormLabel>

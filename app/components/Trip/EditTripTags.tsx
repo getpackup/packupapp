@@ -120,8 +120,8 @@ export function EditTripTags({
 
   return (
     <Popover>
-      <PopoverTrigger className="w-full">{children}</PopoverTrigger>
-      <PopoverContent className="PopoverContent">
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <FormLabel className="mb-2">Update {name} tags</FormLabel>

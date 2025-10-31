@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from 'date-fns'
 import { limit, where } from 'firebase/firestore'
-import { CalendarIcon, Check, Info, MapPinIcon, X } from 'lucide-react'
+import { CalendarIcon, Check, MapPinIcon, MessageSquareMore, X } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 import { toast } from 'sonner'
 
@@ -175,17 +175,20 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
             <StackedAvatars tripMembers={Object.values(trip.tripMembers)} users={users} />
           </div>
           <div className="flex items-center gap-2 text-base">
-            <CalendarIcon className="h-4 w-4" />
+            <CalendarIcon className="h-4 w-4 shrink-0" />
+            <span className="truncate">
+              {formattedDateRange(trip.startDate.seconds * 1000, trip.endDate.seconds * 1000)}
+            </span>
             {formattedDateRange(trip.startDate.seconds * 1000, trip.endDate.seconds * 1000)}
           </div>
           <div className="flex items-center gap-2 text-base">
-            <MapPinIcon className="h-4 w-4" />
-            {trip.startingPoint}
+            <MapPinIcon className="h-4 w-4 shrink-0" />
+            <span className="truncate">{trip.startingPoint}</span>
           </div>
           {trip.description && (
             <div className="flex items-center gap-2 text-base">
-              <Info className="h-4 w-4" />
-              {trip.description}
+              <MessageSquareMore className="h-4 w-4 shrink-0" />
+              <span className="truncate">{trip.description}</span>
             </div>
           )}
         </div>

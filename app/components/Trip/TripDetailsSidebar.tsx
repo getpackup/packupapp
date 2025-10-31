@@ -1,4 +1,4 @@
-import { BadgeInfo, CalendarIcon, Ellipsis, Info, MapPinIcon } from 'lucide-react'
+import { BadgeInfo, CalendarIcon, Ellipsis, MapPinIcon, MessageSquareMore } from 'lucide-react'
 import { useState } from 'react'
 
 import { formattedDate, formattedDateRange } from '~/lib/date'
@@ -15,6 +15,7 @@ import type { User } from '~/types/User'
 import StaticMapImage from '../StaticMapImage'
 import { AspectRatio } from '../ui/aspect-ratio'
 import { Badge } from '../ui/badge'
+import { Button } from '../ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,7 @@ import { Separator } from '../ui/separator'
 import UserMediaObject from '../UserMediaObject'
 import { AddTripPartyMember } from './AddTripPartyMember'
 import { EditTripDates } from './EditTripDates'
+import { EditTripDescription } from './EditTripDescription'
 import { EditTripLocation } from './EditTripLocation'
 import { EditTripName } from './EditTripName'
 import { EditTripTags } from './EditTripTags'
@@ -49,7 +51,7 @@ const SidebarItem = ({ children }: { children: React.ReactNode }) => {
 
 const SubHeading = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="text-sidebar-foreground ring-sidebar-ring flex h-8 shrink-0 items-center justify-between rounded-md px-3 text-xs font-medium outline-hidden transition-[margin,opacity] duration-200 ease-linear group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0">
+    <div className="text-sidebar-foreground ring-sidebar-ring flex h-8 shrink-0 items-center justify-between rounded-md px-3 text-xs leading-relaxed font-medium outline-hidden transition-[margin,opacity] duration-200 ease-linear group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0">
       {children}
     </div>
   )
@@ -135,53 +137,61 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
             })}
 
           <SubHeading>Details</SubHeading>
-          <EditTripName tripName={trip.name}>
-            <SidebarItem>
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-start gap-2 text-left text-sm">
-                  <BadgeInfo className="mt-0.5 h-4 w-4" />
-                  {trip.name}
-                </div>
-                <p className="p-1 opacity-80 hover:opacity-100">
+          <SidebarItem>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2 text-left text-sm">
+                <BadgeInfo className="mt-0.5 h-4 w-4" />
+                {trip.name}
+              </div>
+              <EditTripName tripName={trip.name}>
+                <Button variant="ghost" size="icon-sm">
                   <Ellipsis className="h-4 w-4" />
-                </p>
+                </Button>
+              </EditTripName>
+            </div>
+          </SidebarItem>
+          <SidebarItem>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2 text-left text-sm">
+                <CalendarIcon className="mt-0.5 h-4 w-4" />
+                {formattedDateRange(trip.startDate.seconds * 1000, trip.endDate.seconds * 1000)}
               </div>
-            </SidebarItem>
-          </EditTripName>
-          <EditTripDates startDate={trip.startDate} endDate={trip.endDate}>
-            <SidebarItem>
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-start gap-2 text-left text-sm">
-                  <CalendarIcon className="mt-0.5 h-4 w-4" />
-                  {formattedDateRange(trip.startDate.seconds * 1000, trip.endDate.seconds * 1000)}
-                </div>
-                <p className="p-1 opacity-80 hover:opacity-100">
+              <EditTripDates startDate={trip.startDate} endDate={trip.endDate}>
+                <Button variant="ghost" size="icon-sm">
                   <Ellipsis className="h-4 w-4" />
-                </p>
+                </Button>
+              </EditTripDates>
+            </div>
+          </SidebarItem>
+
+          <SidebarItem>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2 text-left text-sm">
+                <MapPinIcon className="mt-0.5 h-4 w-4" />
+                {trip.startingPoint}
               </div>
-            </SidebarItem>
-          </EditTripDates>
-          <EditTripLocation lat={trip.lat} lng={trip.lng} startingPoint={trip.startingPoint}>
-            <SidebarItem>
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-start gap-2 text-left text-sm">
-                  <MapPinIcon className="mt-0.5 h-4 w-4" />
-                  {trip.startingPoint}
-                </div>
-                <p className="p-1 opacity-80 hover:opacity-100">
+              <EditTripLocation lat={trip.lat} lng={trip.lng} startingPoint={trip.startingPoint}>
+                <Button variant="ghost" size="icon-sm">
                   <Ellipsis className="h-4 w-4" />
-                </p>
+                </Button>
+              </EditTripLocation>
+            </div>
+          </SidebarItem>
+
+          <SidebarItem>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2 text-left text-sm">
+                <MessageSquareMore className="mt-1 h-4 w-4" />
+                {trip.description || 'No description provided'}
               </div>
-            </SidebarItem>
-          </EditTripLocation>
-          {trip.description && (
-            <SidebarItem>
-              <div className="flex items-start gap-2 text-base">
-                <Info className="mt-1 h-4 w-4" />
-                {trip.description}
-              </div>
-            </SidebarItem>
-          )}
+              <EditTripDescription description={trip.description}>
+                <Button variant="ghost" size="icon-sm">
+                  <Ellipsis className="h-4 w-4" />
+                </Button>
+              </EditTripDescription>
+            </div>
+          </SidebarItem>
+
           <Separator className="mt-4" />
           <EditTripTags tags={onlyActivityTags} options={gearListActivities} name="Activities">
             <SubHeading>
@@ -242,7 +252,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
               ))}
             </div>
           </SidebarItem>
-          <Separator className="mt-4" />
+          <Separator className="my-4" />
 
           {!!trip && !!trip.created && (
             <SubHeading>
