@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import type { SearchResponse } from 'algoliasearch'
+import { Timestamp } from 'firebase/firestore'
 import { Loader2, Plus } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -22,7 +23,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover
 import { useAuth } from '~/contexts/auth/useAuth'
 import { formattedDateRange } from '~/lib/date'
 import { algoliaSearch } from '~/services/algoliaSearch'
-import { firebaseKeys, useUpdateDocument } from '~/services/api'
+import { firebaseKeys, useCreateSubCollectionDocument, useUpdateDocument } from '~/services/api'
+import type { ChatMessage } from '~/types/Chat'
 import type { Trip } from '~/types/Trip'
 import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
@@ -39,6 +41,10 @@ export function AddTripPartyMember({
   tripMembers: TripMember[]
 }) {
   const { mutateAsync: updateDocument } = useUpdateDocument('trips')
+  const { mutateAsync: createMessage } = useCreateSubCollectionDocument<ChatMessage>(
+    'trips',
+    'messages'
+  )
   const { user } = useAuth()
   const { id } = useParams()
   const fetcher = useFetcher()
@@ -159,6 +165,21 @@ export function AddTripPartyMember({
     },
   })
 
+  const sendTripMemberInvitationMessage = (hitName: string) => {
+    if (!user?.uid || !user?.username) return
+
+    const newMessage: Omit<ChatMessage, 'id'> = {
+      userId: user.uid,
+      content: `@${user.username.toLowerCase()} has invited @${hitName.toLowerCase()} to the trip.`,
+      createdAt: Timestamp.now(),
+      isEdited: false,
+      isDeleted: false,
+      type: 'system',
+      userName: user.username,
+    }
+    createMessage({ parentDocId: trip.tripId, data: newMessage })
+  }
+
   const addMemberToTrip = async (hitUserId: string, hitEmail: string, hitName: string) => {
     if (!user || !id || !hitUserId || !hitEmail || !hitName) return
 
@@ -209,6 +230,7 @@ export function AddTripPartyMember({
         { id: id, data: payload },
         {
           onSuccess: async () => {
+            sendTripMemberInvitationMessage(hitName)
             queryClient.invalidateQueries({ queryKey: firebaseKeys.doc('trips', id) })
             queryClient.invalidateQueries({
               queryKey: ['firebase', 'docs', 'trips', id, 'tripMembers'],
@@ -358,7 +380,7 @@ export function AddTripPartyMember({
                             type="button"
                             variant="outline"
                             size="icon"
-                            onClick={() => addMemberToTrip(hit.uid, hit.email, hit.displayName)}
+                            onClick={() => addMemberToTrip(hit.uid, hit.email, hit.username)}
                             disabled={isAddingMember === hit.uid}
                           >
                             {isAddingMember === hit.uid ? (
@@ -366,7 +388,7 @@ export function AddTripPartyMember({
                             ) : (
                               <Plus />
                             )}
-                            <span className="sr-only">Add {hit.displayName} to trip</span>
+                            <span className="sr-only">Add {hit.username} to trip</span>
                           </Button>
                         )}
                       </div>

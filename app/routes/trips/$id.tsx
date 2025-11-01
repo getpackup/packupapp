@@ -1,6 +1,7 @@
 import { limit, where } from 'firebase/firestore'
 import { useEffect } from 'react'
 
+import ChatSheet from '~/components/Chat/ChatSheet'
 import FullPageSpinner from '~/components/FullPageSpinner'
 import PageContent from '~/components/PageContent'
 import PageHeader from '~/components/PageHeader'
@@ -51,12 +52,15 @@ export default function TripDetails({ params }: Route.ComponentProps) {
         {!trip ? (
           <FullPageSpinner what="trip details" />
         ) : (
-          <div className="flex h-full min-h-0">
+          <div className="relative flex h-full min-h-0">
             <div className="w-2/3 overflow-y-auto p-8">
               <TripPackingList tripId={id} users={users} />
             </div>
             <div className="bg-sidebar border-sidebar-border w-1/3 overflow-y-auto border-l">
               <TripDetailsSidebar trip={trip} users={users} />
+            </div>
+            <div className="absolute right-4 bottom-4">
+              {users && <ChatSheet trip={trip} users={users} />}
             </div>
           </div>
         )}

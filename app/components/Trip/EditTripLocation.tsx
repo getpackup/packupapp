@@ -225,7 +225,7 @@ export function EditTripLocation({
 
   return (
     <Popover>
-      <PopoverTrigger>{children}</PopoverTrigger>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>

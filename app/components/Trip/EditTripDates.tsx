@@ -100,7 +100,7 @@ export function EditTripDates({
 
   return (
     <Popover>
-      <PopoverTrigger>{children}</PopoverTrigger>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent className="">
         <Label className="mb-2">Update trip date</Label>
 

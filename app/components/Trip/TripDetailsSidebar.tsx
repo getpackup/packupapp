@@ -44,14 +44,12 @@ export const acceptedTripMembersOnly = (tripMembers: TripMember[]) =>
   )
 
 const SidebarItem = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <div className="text-sidebar-foreground rounded-lg px-3 py-2 transition-colors">{children}</div>
-  )
+  return <div className="text-sidebar-foreground rounded-lg px-3 py-2">{children}</div>
 }
 
 const SubHeading = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="text-sidebar-foreground ring-sidebar-ring flex h-8 shrink-0 items-center justify-between rounded-md px-3 text-xs leading-relaxed font-medium outline-hidden transition-[margin,opacity] duration-200 ease-linear group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0">
+    <div className="text-sidebar-foreground ring-sidebar-ring mt-2 flex h-8 shrink-0 items-center justify-between rounded-md px-3 text-xs leading-relaxed font-medium outline-hidden transition-[margin,opacity] duration-200 ease-linear group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0">
       {children}
     </div>
   )
@@ -95,7 +93,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
         {trip.headerImage && <img src={trip?.headerImage} alt={trip?.name} />}
       </AspectRatio>
       <div className="p-2">
-        <div className="space-y-2">
+        <div className="">
           <SubHeading>
             <span>Trip Members</span>
             <div className="flex items-center gap-2">
@@ -128,7 +126,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
 
               return (
                 <SidebarItem key={member.uid}>
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="mb-2 flex items-center justify-between gap-2">
                     <UserMediaObject user={user} />
                     <TripPartyMemberBadge member={member} />
                   </div>

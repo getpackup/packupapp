@@ -110,7 +110,7 @@ export function EditTripName({
 
   return (
     <Popover>
-      <PopoverTrigger>{children}</PopoverTrigger>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>

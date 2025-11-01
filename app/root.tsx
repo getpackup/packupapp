@@ -118,7 +118,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body className={bodyClassNames}>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>{children}</TooltipProvider>
-          <ReactQueryDevtools initialIsOpen={false} />
+          <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
         </QueryClientProvider>
         <Toaster position="bottom-right" richColors />
         <ScrollRestoration />
