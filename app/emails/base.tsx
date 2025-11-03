@@ -25,7 +25,9 @@ export const BaseEmailTemplate = ({
   heading,
   children,
   preview,
-  url = 'https://new.packupapp.com/',
+  url = process.env.NODE_ENV === 'production'
+    ? (import.meta.env.VITE_PUBLIC_URL ?? process.env.VITE_PUBLIC_URL)
+    : 'http://localhost:5173',
 }: BaseEmailTemplateProps) => {
   return (
     <Tailwind

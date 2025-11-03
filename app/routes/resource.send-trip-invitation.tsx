@@ -48,7 +48,11 @@ export const action: ActionFunction = async ({ request }) => {
         why={why ?? ''}
         when={when}
         tags={tags ?? ''}
-        url={request.headers.get('origin') ?? 'https://new.packupapp.com'}
+        url={
+          process.env.NODE_ENV === 'production'
+            ? (import.meta.env.VITE_PUBLIC_URL ?? process.env.VITE_PUBLIC_URL)
+            : 'http://localhost:5173'
+        }
       />
     )
     const text = toPlainText(html)

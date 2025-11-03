@@ -60,9 +60,15 @@ export const action: ActionFunction = async ({ request }) => {
     const auth = getAuth(app)
 
     const actionCodeSettings = {
-      url: `${request.headers.get('origin')}/signin`,
+      url: `${
+        process.env.NODE_ENV === 'production'
+          ? (import.meta.env.VITE_PUBLIC_URL ?? process.env.VITE_PUBLIC_URL)
+          : 'http://localhost:5173'
+      }/signin`,
       handleCodeInApp: true,
     }
+
+    console.log('actionCodeSettings', actionCodeSettings)
 
     const signinUrl = await auth
       .generateSignInWithEmailLink(email, actionCodeSettings)
@@ -91,7 +97,11 @@ export const action: ActionFunction = async ({ request }) => {
         ipAddress={ipAddress}
         device={device}
         timestamp={utcTime}
-        url={request.headers.get('origin') ?? 'https://new.packupapp.com'}
+        url={
+          process.env.NODE_ENV === 'production'
+            ? (import.meta.env.VITE_PUBLIC_URL ?? process.env.VITE_PUBLIC_URL)
+            : 'http://localhost:5173'
+        }
       />
     )
     const text = toPlainText(html)
