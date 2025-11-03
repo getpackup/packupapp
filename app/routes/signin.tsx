@@ -65,10 +65,11 @@ export default function Signin() {
                 }
               )
             } else {
-              navigate(`/signup?email=${encodeURIComponent(email)}`)
-              toast(`Looks like you don't have an account yet. Let's get you signed up!`, {
-                icon: '👋',
-              })
+              toast.error(`${error.code}: ${error.message}`)
+              // navigate(`/signup?email=${encodeURIComponent(email)}`)
+              // toast(`Looks like you don't have an account yet. Let's get you signed up!`, {
+              //   icon: '👋',
+              // })
             }
           } else {
             toast.error('Unable to log in with those credentials. Please try again.')
