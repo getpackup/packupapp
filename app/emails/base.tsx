@@ -21,14 +21,7 @@ interface BaseEmailTemplateProps {
   url: string
 }
 
-export const BaseEmailTemplate = ({
-  heading,
-  children,
-  preview,
-  url = process.env.NODE_ENV === 'production'
-    ? 'https://new.packupapp.com'
-    : 'http://localhost:5173',
-}: BaseEmailTemplateProps) => {
+export const BaseEmailTemplate = ({ heading, children, preview, url }: BaseEmailTemplateProps) => {
   return (
     <Tailwind
       config={{

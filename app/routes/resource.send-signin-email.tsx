@@ -59,11 +59,11 @@ export const action: ActionFunction = async ({ request }) => {
 
     const auth = getAuth(app)
 
+    const url = new URL(request.url)
+    const baseUrl = url.origin
+
     const actionCodeSettings = {
-      url:
-        process.env.NODE_ENV === 'production'
-          ? 'https://new.packupapp.com/signin'
-          : 'http://localhost:5173/signin',
+      url: `${baseUrl}/signin`,
       handleCodeInApp: true,
     }
 
@@ -94,11 +94,7 @@ export const action: ActionFunction = async ({ request }) => {
         ipAddress={ipAddress}
         device={device}
         timestamp={utcTime}
-        url={
-          process.env.NODE_ENV === 'production'
-            ? 'https://new.packupapp.com'
-            : 'http://localhost:5173'
-        }
+        url={baseUrl}
       />
     )
     const text = toPlainText(html)

@@ -38,6 +38,9 @@ export const action: ActionFunction = async ({ request }) => {
 
     sgMail.setApiKey(process.env.SENDGRID_API_KEY!)
 
+    const url = new URL(request.url)
+    const baseUrl = url.origin
+
     const html = await render(
       <InviteToTripEmail
         greetingName={greetingName}
@@ -48,11 +51,7 @@ export const action: ActionFunction = async ({ request }) => {
         why={why ?? ''}
         when={when}
         tags={tags ?? ''}
-        url={
-          process.env.NODE_ENV === 'production'
-            ? 'https://new.packupapp.com'
-            : 'http://localhost:5173'
-        }
+        url={baseUrl}
       />
     )
     const text = toPlainText(html)
