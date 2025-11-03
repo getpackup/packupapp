@@ -26,7 +26,7 @@ export const BaseEmailTemplate = ({
   children,
   preview,
   url = process.env.NODE_ENV === 'production'
-    ? (import.meta.env.VITE_PUBLIC_URL ?? process.env.VITE_PUBLIC_URL)
+    ? 'https://new.packupapp.com'
     : 'http://localhost:5173',
 }: BaseEmailTemplateProps) => {
   return (

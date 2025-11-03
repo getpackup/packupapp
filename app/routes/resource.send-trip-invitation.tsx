@@ -50,7 +50,7 @@ export const action: ActionFunction = async ({ request }) => {
         tags={tags ?? ''}
         url={
           process.env.NODE_ENV === 'production'
-            ? (import.meta.env.VITE_PUBLIC_URL ?? process.env.VITE_PUBLIC_URL)
+            ? 'https://new.packupapp.com'
             : 'http://localhost:5173'
         }
       />
