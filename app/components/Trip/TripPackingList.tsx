@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react'
 import useAuth from '~/contexts/auth/useAuth'
 import { usePackingListState } from '~/contexts/globalState'
 import groupPackingList from '~/lib/groupPackingListItems'
+import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { useSubCollection } from '~/services/api'
 import type { PackingListItem } from '~/types/PackingListItem'
 import type { User } from '~/types/User'
@@ -22,6 +23,7 @@ type TripPackingListProps = {
 
 const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
   const { user } = useAuth()
+  const checkboxSounds = useCheckboxSounds()
   const { data: packingList, isLoading } = useSubCollection<PackingListItem[]>(
     'trips',
     'packing-list',
@@ -136,7 +138,12 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
         ) : (
           <div className="space-y-1">
             {users?.length && users?.length > 1 && (
-              <TripPackingListCategory categoryName="Group items" items={sharedItems} isGroup />
+              <TripPackingListCategory
+                categoryName="Group items"
+                items={sharedItems}
+                isGroup
+                sounds={checkboxSounds}
+              />
             )}
 
             {personalItems?.length === 0 ? (
@@ -170,6 +177,7 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
                             key={index}
                             categoryName={categoryName}
                             items={sortedItems}
+                            sounds={checkboxSounds}
                           />
                         )
                       }

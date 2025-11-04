@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router'
 import { toast } from 'sonner'
 
+import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { cn } from '~/lib/utils'
 import { useDeleteSubCollectionDocument, useUpdateSubCollectionDocument } from '~/services/api'
 import type { PackingListItem } from '~/types/PackingListItem'
@@ -42,12 +43,14 @@ type TripPackingListCategoryProps = {
   categoryName: string
   items: PackingListItem[]
   isGroup?: boolean
+  sounds?: ReturnType<typeof useCheckboxSounds>
 }
 
 const TripPackingListCategory = ({
   categoryName,
   items,
   isGroup,
+  sounds,
 }: TripPackingListCategoryProps) => {
   const [isMultiSelecting, setIsMultiSelecting] = useState(false)
   const [selectedItems, setSelectedItems] = useState<string[]>([])
@@ -513,6 +516,7 @@ const TripPackingListCategory = ({
                       isMultiSelecting={isMultiSelecting}
                       isSelected={selectedItems.includes(item.id)}
                       onItemSelection={handleItemSelection}
+                      sounds={sounds}
                     />
                   </AnimatedContainer>
                 )

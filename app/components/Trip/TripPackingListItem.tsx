@@ -14,8 +14,8 @@ import {
 import { useState } from 'react'
 import { useParams } from 'react-router'
 import { animated, useSpring } from 'react-spring'
-import useSound from 'use-sound'
 
+import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { cn } from '~/lib/utils'
 import { useDeleteSubCollectionDocument, useUpdateSubCollectionDocument } from '~/services/api'
 import { type PackingListItem } from '~/types/PackingListItem'
@@ -38,6 +38,7 @@ type TripPackingListItemProps = {
   isMultiSelecting: boolean
   isSelected: boolean
   onItemSelection: (itemId: string, isShiftClick: boolean, isCommandClick: boolean) => void
+  sounds?: ReturnType<typeof useCheckboxSounds>
 }
 
 const TripPackingListItem = ({
@@ -45,6 +46,7 @@ const TripPackingListItem = ({
   isMultiSelecting,
   isSelected,
   onItemSelection,
+  sounds,
 }: TripPackingListItemProps) => {
   const { id } = useParams()
 
@@ -59,16 +61,6 @@ const TripPackingListItem = ({
   }
 
   const [active, setActive] = useState(false)
-
-  const [playActive] = useSound('/sounds/pop-down.mp3', {
-    volume: 0.1,
-  })
-  const [playOn] = useSound('/sounds/pop-up-on.mp3', {
-    volume: 0.1,
-  })
-  const [playOff] = useSound('/sounds/pop-up-off.mp3', {
-    volume: 0.1,
-  })
 
   const filledScale = item.isPacked ? (active ? 1.4 : 1) : 0
   const filledSpring = useSpring({
@@ -170,11 +162,11 @@ const TripPackingListItem = ({
                 onClick={togglePacked}
                 onMouseDown={() => {
                   setActive(true)
-                  playActive()
+                  sounds?.playActive()
                 }}
                 onMouseUp={() => {
                   setActive(false)
-                  item.isPacked ? playOff() : playOn()
+                  item.isPacked ? sounds?.playOff() : sounds?.playOn()
                 }}
               >
                 {item.isPacked ? (
