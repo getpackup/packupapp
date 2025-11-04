@@ -27,16 +27,12 @@ import { getBodyClassNames } from './lib/getBodyClassNames'
 import { cn } from './lib/utils'
 
 export const links: Route.LinksFunction = () => [
-  { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-  {
-    rel: 'preconnect',
-    href: 'https://fonts.gstatic.com',
-    crossOrigin: 'anonymous',
-  },
-  {
-    rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap',
-  },
+  // { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+  // {
+  //   rel: 'preconnect',
+  //   href: 'https://fonts.gstatic.com',
+  //   crossOrigin: 'anonymous',
+  // },
 ]
 
 export type RootLoaderData = {
@@ -118,7 +114,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body className={bodyClassNames}>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>{children}</TooltipProvider>
-          <ReactQueryDevtools initialIsOpen={false} />
+          <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
         </QueryClientProvider>
         <Toaster position="bottom-right" richColors />
         <ScrollRestoration />

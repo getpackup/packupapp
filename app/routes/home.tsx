@@ -5,7 +5,6 @@ import { Link, useNavigate } from 'react-router'
 import FullPageSpinner from '~/components/FullPageSpinner'
 import { LoginForm } from '~/components/LoginForm'
 import { Logo } from '~/components/Logo'
-import { ThemeToggle } from '~/components/ThemeToggle'
 import { Separator } from '~/components/ui/separator'
 import { firebaseAuth } from '~/firebase/config'
 
@@ -43,9 +42,6 @@ export default function Home() {
 
   return (
     <div>
-      <div className="absolute top-4 left-4">
-        <ThemeToggle />
-      </div>
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center space-y-8 p-8">
         <Logo />
         <h1 className="text-2xl font-bold">Sign in to Packup</h1>

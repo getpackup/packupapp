@@ -39,20 +39,11 @@ export default function Signin() {
     // The client SDK will parse the code from the link for you.
     if (email) {
       signInWithEmailLink(firebaseAuth, email, window.location.href)
-        .then((result) => {
-          // if (client.location) {
-          //   trackEvent('User Logged In and Needed Redirection', {
-          //     location: client.location,
-          //     email: result.user?.email,
-          //   })
-          //   dispatch(removeAttemptedPrivatePage())
-          //   router.push(client.location)
-          // } else {
+        .then(() => {
           //   trackEvent('User Logged In', {
           //     email: result.user?.email,
           //   })
-          //   router.push('/')
-          // }
+
           navigate('/trips')
         })
         .catch((error) => {
@@ -65,15 +56,16 @@ export default function Signin() {
 
           if (error) {
             console.error(error)
-            navigate(`/signup?email=${encodeURIComponent(email)}`)
+            navigate(`/`)
             if (error.code === 'auth/invalid-action-code') {
               toast.error(
-                `That looks like an old link you tried to sign in with. Please check your email for the latest link we sent.`,
+                `It appears that this magic link has expired. Please request a new one by entering your email again.`,
                 {
                   icon: <TriangleAlert />,
                 }
               )
             } else {
+              navigate(`/signup?email=${encodeURIComponent(email)}`)
               toast(`Looks like you don't have an account yet. Let's get you signed up!`, {
                 icon: '👋',
               })

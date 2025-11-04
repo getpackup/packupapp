@@ -11,6 +11,7 @@ export const action: ActionFunction = async ({ request }) => {
     headers: {
       'Set-Cookie': await themePreferenceCookie.serialize({
         themePreference,
+        expires: new Date(Date.now() + 31536000000), // 1 year
       }),
     },
   })

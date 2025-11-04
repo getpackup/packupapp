@@ -1,25 +1,26 @@
 import { orderBy } from 'firebase/firestore'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import useAuth from '~/contexts/auth/useAuth'
 import { usePackingListState } from '~/contexts/globalState'
 import groupPackingList from '~/lib/groupPackingListItems'
 import { useSubCollection } from '~/services/api'
 import type { PackingListItem } from '~/types/PackingListItem'
+import type { User } from '~/types/User'
 
 import FullPageSpinner from '../FullPageSpinner'
 import { Input } from '../ui/input'
 import { Progress } from '../ui/progress'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
+import { Tabs } from '../ui/tabs'
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group'
 import TripPackingListCategory from './TripPackingListCategory'
-import TripPackingListItem from './TripPackingListItem'
 
 type TripPackingListProps = {
   tripId: string
+  users?: User[]
 }
 
-const TripPackingList = ({ tripId }: TripPackingListProps) => {
+const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
   const { user } = useAuth()
   const { data: packingList, isLoading } = useSubCollection<PackingListItem[]>(
     'trips',
@@ -30,8 +31,6 @@ const TripPackingList = ({ tripId }: TripPackingListProps) => {
       enabled: !!tripId,
     }
   )
-
-  const [packedPercent, setPackedPercent] = useState(0)
 
   const {
     activePackingListFilter,
@@ -44,41 +43,8 @@ const TripPackingList = ({ tripId }: TripPackingListProps) => {
   useEffect(() => {
     return () => {
       setPackingListSearchValue('')
-      setActivePackingListFilter('All')
     }
-  }, [setPackingListSearchValue, setActivePackingListFilter])
-
-  const personalItems = packingList?.filter(
-    (item) =>
-      (item &&
-        item.packedBy &&
-        item.packedBy.length > 0 &&
-        item.packedBy.some((item) => item.uid === user?.uid)) ||
-      []
-  )
-
-  // filter out only current user's items that are packed
-  const packedItemsLength =
-    personalItems && personalItems.length > 0
-      ? personalItems.filter((item) => item?.isPacked === true).length
-      : 0
-
-  useEffect(() => {
-    if (personalItems && personalItems.length > 0 && packedItemsLength) {
-      setPackedPercent(Number(((packedItemsLength / personalItems.length) * 100).toFixed(0)))
-    }
-  }, [personalItems, packedItemsLength])
-
-  const sharedItems =
-    packingList?.filter(
-      (item) => item.packedBy && item.packedBy.length > 0 && item.packedBy.some((i) => i.isShared)
-    ) || []
-
-  // // take into account if we are on the personal or shared list
-  // const items = useMemo(
-  //   () => (activePackingListTab === TabOptions.Personal ? personalItems : sharedItems),
-  //   [personalItems, sharedItems]
-  // )
+  }, [setPackingListSearchValue])
 
   // take into account if the unpacked or packed filters are selected
   const filteredItems =
@@ -98,10 +64,37 @@ const TripPackingList = ({ tripId }: TripPackingListProps) => {
     )
   }, [packingListSearchValue, finalItems])
 
-  const getGroupedFinalItems =
+  const personalItems =
     searchedItems && searchedItems.length > 0
-      ? groupPackingList(searchedItems, user?.uid ?? '', 'Personal')
+      ? searchedItems?.filter(
+          (item) =>
+            item.packedBy &&
+            item.packedBy.length > 0 &&
+            item.packedBy.some((i) => !i.isShared && i.uid === user?.uid)
+        )
       : []
+
+  const sharedItems =
+    searchedItems && searchedItems.length > 0
+      ? searchedItems?.filter(
+          (item) =>
+            item.packedBy && item.packedBy.length > 0 && item.packedBy.some((i) => i.isShared)
+        )
+      : []
+
+  const getGroupedFinalItems =
+    personalItems && personalItems.length > 0 ? groupPackingList(personalItems) : []
+
+  // filter out only current user's items that are packed
+  const packedItemsLength =
+    personalItems && personalItems.length > 0
+      ? personalItems.filter((item) => item?.isPacked === true).length
+      : 0
+
+  const packedPercent =
+    personalItems && personalItems.length > 0
+      ? Number(((packedItemsLength / personalItems.length) * 100).toFixed(0))
+      : 0
 
   return (
     <>
@@ -110,15 +103,7 @@ const TripPackingList = ({ tripId }: TripPackingListProps) => {
         <Progress value={packedPercent} aria-label="Packing progress" />
       </div>
       <Tabs defaultValue="personal">
-        <div className="flex items-center justify-between">
-          <TabsList>
-            <TabsTrigger value="personal" className="px-8">
-              Personal
-            </TabsTrigger>
-            <TabsTrigger value="group" className="px-8">
-              Group
-            </TabsTrigger>
-          </TabsList>
+        <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Input
               placeholder="Search items..."
@@ -126,87 +111,75 @@ const TripPackingList = ({ tripId }: TripPackingListProps) => {
               value={packingListSearchValue}
               onChange={(e) => setPackingListSearchValue(e.target.value)}
             />
-            <ToggleGroup
-              type="single"
-              variant="outline"
-              size="sm"
-              defaultValue="All"
-              onValueChange={setActivePackingListFilter}
-            >
-              <ToggleGroupItem value="All" aria-label="Toggle all" className="px-4">
-                All
-              </ToggleGroupItem>
-              <ToggleGroupItem value="Packed" aria-label="Toggle packed" className="px-4">
-                Packed
-              </ToggleGroupItem>
-              <ToggleGroupItem value="Unpacked" aria-label="Toggle unpacked" className="px-4">
-                Unpacked
-              </ToggleGroupItem>
-            </ToggleGroup>
           </div>
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            defaultValue="All"
+            onValueChange={setActivePackingListFilter}
+          >
+            <ToggleGroupItem value="All" aria-label="Toggle all" className="px-4">
+              All
+            </ToggleGroupItem>
+            <ToggleGroupItem value="Packed" aria-label="Toggle packed" className="px-4">
+              Packed
+            </ToggleGroupItem>
+            <ToggleGroupItem value="Unpacked" aria-label="Toggle unpacked" className="px-4">
+              Unpacked
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
-        <TabsContent value="personal">
-          {isLoading || packingList?.length === 0 ? (
-            <FullPageSpinner what="packing list" />
-          ) : (
-            <div className="space-y-1">
-              {personalItems?.length === 0 ? (
-                <div className="text-muted-foreground text-sm">No personal items</div>
-              ) : (
-                <>
-                  {getGroupedFinalItems &&
-                    getGroupedFinalItems.length > 0 &&
-                    getGroupedFinalItems.map(
-                      (
-                        [categoryName, packingListItems]: [string, PackingListItem[] | undefined],
-                        index
-                      ) => {
-                        if (packingListItems === undefined) return null
-                        if (categoryName && packingListItems.length > 0) {
-                          const sortedItems = packingListItems.sort((a, b) => {
-                            //if (a?.isPacked === b?.isPacked) {
-                            // sort by name
-                            if (a?.created?.seconds === b?.created?.seconds) {
-                              return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-                            }
-                            //}
-                            // sort by timestamp
-                            return b.created.toDate() > a.created.toDate() ? -1 : 1
-                            // sort by packed status, with checkedf items last
-                            // return a.isPacked > b.isPacked ? 1 : -1
-                          })
 
-                          return (
-                            <TripPackingListCategory
-                              key={index}
-                              categoryName={categoryName}
-                              items={sortedItems}
-                            />
-                          )
-                        }
-                        return null
+        {isLoading || packingList?.length === 0 ? (
+          <FullPageSpinner what="packing list" />
+        ) : (
+          <div className="space-y-1">
+            {users?.length && users?.length > 1 && (
+              <TripPackingListCategory categoryName="Group items" items={sharedItems} isGroup />
+            )}
+
+            {personalItems?.length === 0 ? (
+              <div className="text-muted-foreground text-sm">No personal items</div>
+            ) : (
+              <>
+                {getGroupedFinalItems &&
+                  getGroupedFinalItems.length > 0 &&
+                  getGroupedFinalItems.map(
+                    (
+                      [categoryName, packingListItems]: [string, PackingListItem[] | undefined],
+                      index
+                    ) => {
+                      if (packingListItems === undefined) return null
+                      if (categoryName && packingListItems.length > 0) {
+                        const sortedItems = packingListItems.sort((a, b) => {
+                          //if (a?.isPacked === b?.isPacked) {
+                          // sort by name
+                          if (a?.created?.seconds === b?.created?.seconds) {
+                            return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+                          }
+                          //}
+                          // sort by timestamp
+                          return b.created.toDate() > a.created.toDate() ? -1 : 1
+                          // sort by packed status, with checkedf items last
+                          // return a.isPacked > b.isPacked ? 1 : -1
+                        })
+
+                        return (
+                          <TripPackingListCategory
+                            key={index}
+                            categoryName={categoryName}
+                            items={sortedItems}
+                          />
+                        )
                       }
-                    )}
-                </>
-              )}
-            </div>
-          )}
-        </TabsContent>
-        <TabsContent value="group">
-          {sharedItems.length === 0 ? (
-            <div className="text-muted-foreground text-sm">No shared group items</div>
-          ) : (
-            sharedItems.map((item) => (
-              <TripPackingListItem
-                key={item.id}
-                item={item}
-                isMultiSelecting={false}
-                isSelected={false}
-                onItemSelection={() => {}}
-              />
-            ))
-          )}
-        </TabsContent>
+                      return null
+                    }
+                  )}
+              </>
+            )}
+          </div>
+        )}
       </Tabs>
     </>
   )

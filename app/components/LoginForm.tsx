@@ -1,15 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { sendSignInLinkToEmail } from 'firebase/auth'
 import { Loader2, Mail, WandSparkles } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
 import { useState } from 'react'
 import { type MouseEventHandler } from 'react'
 import { useForm } from 'react-hook-form'
+import { useFetcher } from 'react-router'
 import { animated } from 'react-spring'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
-import { firebaseAuth } from '~/firebase/config'
 import useBoop from '~/lib/useBoop'
 
 import AnimatedContainer from './AnimatedContainer'
@@ -29,6 +28,7 @@ export function LoginForm() {
   const [style, trigger] = useBoop({ scale: 1.1, rotation: 10 })
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
+  const fetcher = useFetcher()
 
   const formSchema = z.object({
     email: z.email(),
@@ -43,14 +43,19 @@ export function LoginForm() {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true)
-    const actionCodeSettings = {
-      url: `${window.location.origin}/signin`,
-      handleCodeInApp: true,
-    }
 
     window.localStorage.setItem('emailForSignIn', values.email)
 
-    sendSignInLinkToEmail(firebaseAuth, values.email, actionCodeSettings)
+    fetcher
+      .submit(
+        {
+          email: values.email,
+        },
+        {
+          method: 'POST',
+          action: '/resource/send-signin-email',
+        }
+      )
       .then(() => {
         setSent(true)
       })
@@ -88,7 +93,10 @@ export function LoginForm() {
             animation="scaleAndFadeIn"
           >
             <h2 className="text-xl font-bold">Check your email</h2>
-            <p>Tap on the link and you'll be logged in instantly.</p>
+            <p>We've sent you an email with a magic link that'll log you in instantly.</p>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              You can close this tab now, if you want.
+            </p>
 
             <Button
               variant="accent"
@@ -105,7 +113,7 @@ export function LoginForm() {
             <p className="text-muted-foreground text-sm leading-relaxed">
               If you don't see the email, check your spam folder. Wrong email?{' '}
               <span
-                className="text-accent cursor-pointer font-bold hover:underline"
+                className="text-muted-foreground cursor-pointer font-bold hover:underline"
                 onClick={() => setSent(false)}
               >
                 Please re-enter your email address.

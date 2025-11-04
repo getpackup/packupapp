@@ -1,4 +1,4 @@
-import Logout from '~/components/Logout'
+import Logout from '~/components/LogoutButton'
 import PageContent from '~/components/PageContent'
 import PageHeader from '~/components/PageHeader'
 import { SoundsToggle } from '~/components/SoundsToggle'

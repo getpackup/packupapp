@@ -1,15 +1,5 @@
-import {
-  BadgeCheck,
-  BadgeInfo,
-  CalendarIcon,
-  Contact,
-  Ellipsis,
-  Info,
-  MapPinIcon,
-  Plus,
-  Send,
-  UserX,
-} from 'lucide-react'
+import { BadgeInfo, CalendarIcon, Ellipsis, MapPinIcon, MessageSquareMore } from 'lucide-react'
+import { useState } from 'react'
 
 import { formattedDate, formattedDateRange } from '~/lib/date'
 import {
@@ -19,53 +9,72 @@ import {
   gearListOtherConsiderations,
 } from '~/lib/gearListItemEnum'
 import type { Trip } from '~/types/Trip'
-import { TripMemberStatus } from '~/types/TripMember'
+import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
 
 import StaticMapImage from '../StaticMapImage'
 import { AspectRatio } from '../ui/aspect-ratio'
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Badge } from '../ui/badge'
+import { Button } from '../ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
 import { Separator } from '../ui/separator'
+import UserMediaObject from '../UserMediaObject'
+import { AddTripPartyMember } from './AddTripPartyMember'
+import { EditTripDates } from './EditTripDates'
+import { EditTripDescription } from './EditTripDescription'
+import { EditTripLocation } from './EditTripLocation'
+import { EditTripName } from './EditTripName'
+import { EditTripTags } from './EditTripTags'
+import TripPartyMemberBadge from './TripPartyMemberBadge'
 
 type TripDetailsSidebarProps = {
   trip: Trip
   users?: User[]
 }
 
-const SidebarItem = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <div className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg px-3 py-2 transition-colors">
-      {children}
-    </div>
+export const acceptedTripMembersOnly = (tripMembers: TripMember[]) =>
+  tripMembers.filter(
+    (member) =>
+      member.status !== TripMemberStatus.Declined && member.status !== TripMemberStatus.Removed
   )
+
+const SidebarItem = ({ children }: { children: React.ReactNode }) => {
+  return <div className="text-sidebar-foreground rounded-lg px-3 py-2">{children}</div>
 }
 
 const SubHeading = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="text-sidebar-foreground/70 ring-sidebar-ring flex h-8 shrink-0 items-center justify-between rounded-md px-3 text-xs font-medium outline-hidden transition-[margin,opacity] duration-200 ease-linear group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0">
+    <div className="text-sidebar-foreground ring-sidebar-ring mt-2 flex h-8 shrink-0 items-center justify-between rounded-md px-3 text-xs leading-relaxed font-medium outline-hidden transition-[margin,opacity] duration-200 ease-linear group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0">
       {children}
     </div>
   )
 }
 
 const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
+  const [showAllMembers, setShowAllMembers] = useState(false)
+  const tripMembers = showAllMembers
+    ? Object.values(trip.tripMembers)
+    : acceptedTripMembersOnly(Object.values(trip.tripMembers))
+
   const onlyActivityTags = trip
-    ? trip.tags.filter((item) => gearListActivities.some((activity) => item === activity.label))
+    ? trip.tags.filter((item) => gearListActivities.some((tag) => item === tag.label))
     : []
 
   const onlyAccommodationOrCampKitchenTags = trip
     ? trip.tags.filter(
         (item) =>
-          gearListAccommodations.some((activity) => item === activity.label) ||
-          gearListCampKitchen.some((activity) => item === activity.label)
+          gearListAccommodations.some((tag) => item === tag.label) ||
+          gearListCampKitchen.some((tag) => item === tag.label)
       )
     : []
 
   const onlyOtherConsiderationsTags = trip
-    ? trip.tags.filter((item) =>
-        gearListOtherConsiderations.some((activity) => item === activity.label)
-      )
+    ? trip.tags.filter((item) => gearListOtherConsiderations.some((tag) => item === tag.label))
     : []
 
   return (
@@ -84,104 +93,112 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
         {trip.headerImage && <img src={trip?.headerImage} alt={trip?.name} />}
       </AspectRatio>
       <div className="p-2">
-        <div className="space-y-2">
+        <div className="">
           <SubHeading>
             <span>Trip Members</span>
             <div className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              {/* TODO: add action to show/hide declined and removed members */}
-              <Ellipsis className="h-4 w-4" />
+              <AddTripPartyMember tripMembers={Object.values(trip.tripMembers)} trip={trip} />
+              {Object.values(trip.tripMembers)?.some(
+                (member) =>
+                  member.status === TripMemberStatus.Declined ||
+                  member.status === TripMemberStatus.Removed
+              ) && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="p-1 opacity-80 hover:opacity-100">
+                    <Ellipsis className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => setShowAllMembers(!showAllMembers)}>
+                      Toggle declined & removed members {showAllMembers ? 'off' : 'on'}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </SubHeading>
-          {Object.values(trip.tripMembers).map((member) => {
-            const user = users?.find((user) => user.id === member.uid)
-            if (!user) {
-              return null
-            }
+          {tripMembers
+            .sort((a, b) => a.invitedAt.seconds - b.invitedAt.seconds)
+            .map((member) => {
+              const user = users?.find((user) => user.id === member.uid)
+              if (!user) {
+                return null
+              }
 
-            return (
-              <SidebarItem key={member.uid}>
-                <div key={member.uid} className="flex items-center justify-between gap-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="border">
-                      <AvatarImage
-                        src={user.photoURL}
-                        gravatarEmail={user.email}
-                        alt={`${user.username} avatar`}
-                      />
-                      <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                      <span>{user.displayName}</span>
-                      <span className="text-muted-foreground text-xs">
-                        @{user.username.toLocaleLowerCase()}
-                      </span>
-                    </div>
+              return (
+                <SidebarItem key={member.uid}>
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <UserMediaObject user={user} />
+                    <TripPartyMemberBadge member={member} />
                   </div>
-                  {member.status === TripMemberStatus.Owner && (
-                    <Badge variant="primary">
-                      <BadgeCheck /> Trip Creator
-                    </Badge>
-                  )}
-                  {member.status === TripMemberStatus.Pending && (
-                    <Badge variant="success">
-                      <Send />
-                      Invited
-                    </Badge>
-                  )}
-                  {member.status === TripMemberStatus.Accepted && (
-                    <Badge variant="secondary">
-                      <Contact /> Trip Member
-                    </Badge>
-                  )}
-                  {member.status === TripMemberStatus.Declined && (
-                    <Badge variant="destructive">
-                      <UserX /> Declined
-                    </Badge>
-                  )}
-                  {member.status === TripMemberStatus.Removed && (
-                    <Badge variant="destructive">
-                      <UserX /> Removed
-                    </Badge>
-                  )}
-                </div>
-              </SidebarItem>
-            )
-          })}
+                </SidebarItem>
+              )
+            })}
 
-          <SubHeading>
-            Details <Ellipsis className="h-4 w-4" />
-          </SubHeading>
+          <SubHeading>Details</SubHeading>
           <SidebarItem>
-            <div className="flex items-center gap-2 text-sm">
-              <BadgeInfo className="h-4 w-4" />
-              {trip.name}
-            </div>
-          </SidebarItem>
-          <SidebarItem>
-            <div className="flex items-center gap-2 text-sm">
-              <CalendarIcon className="h-4 w-4" />
-              {formattedDateRange(trip.startDate.seconds * 1000, trip.endDate.seconds * 1000)}
-            </div>
-          </SidebarItem>
-          <SidebarItem>
-            <div className="flex items-center gap-2 text-sm">
-              <MapPinIcon className="h-4 w-4" />
-              {trip.startingPoint}
-            </div>
-          </SidebarItem>
-          {trip.description && (
-            <SidebarItem>
-              <div className="flex items-center gap-2 text-base">
-                <Info className="h-4 w-4" />
-                {trip.description}
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2 text-left text-sm">
+                <BadgeInfo className="mt-0.5 h-4 w-4" />
+                {trip.name}
               </div>
-            </SidebarItem>
-          )}
+              <EditTripName tripName={trip.name}>
+                <Button variant="ghost" size="icon-sm">
+                  <Ellipsis className="h-4 w-4" />
+                </Button>
+              </EditTripName>
+            </div>
+          </SidebarItem>
+          <SidebarItem>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2 text-left text-sm">
+                <CalendarIcon className="mt-0.5 h-4 w-4" />
+                {formattedDateRange(trip.startDate.seconds * 1000, trip.endDate.seconds * 1000)}
+              </div>
+              <EditTripDates startDate={trip.startDate} endDate={trip.endDate}>
+                <Button variant="ghost" size="icon-sm">
+                  <Ellipsis className="h-4 w-4" />
+                </Button>
+              </EditTripDates>
+            </div>
+          </SidebarItem>
+
+          <SidebarItem>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2 text-left text-sm">
+                <MapPinIcon className="mt-0.5 h-4 w-4" />
+                {trip.startingPoint}
+              </div>
+              <EditTripLocation lat={trip.lat} lng={trip.lng} startingPoint={trip.startingPoint}>
+                <Button variant="ghost" size="icon-sm">
+                  <Ellipsis className="h-4 w-4" />
+                </Button>
+              </EditTripLocation>
+            </div>
+          </SidebarItem>
+
+          <SidebarItem>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2 text-left text-sm">
+                <MessageSquareMore className="mt-1 h-4 w-4" />
+                {trip.description || 'No description provided'}
+              </div>
+              <EditTripDescription description={trip.description}>
+                <Button variant="ghost" size="icon-sm">
+                  <Ellipsis className="h-4 w-4" />
+                </Button>
+              </EditTripDescription>
+            </div>
+          </SidebarItem>
+
           <Separator className="mt-4" />
-          <SubHeading>
-            Activities <Ellipsis className="h-4 w-4" />
-          </SubHeading>
+          <EditTripTags tags={onlyActivityTags} options={gearListActivities} name="Activities">
+            <SubHeading>
+              Activities{' '}
+              <p className="p-1 opacity-80 hover:opacity-100">
+                <Ellipsis className="h-4 w-4" />
+              </p>
+            </SubHeading>
+          </EditTripTags>
           <SidebarItem>
             <div className="flex flex-wrap items-center gap-2">
               {onlyActivityTags.map((tag: string) => (
@@ -191,9 +208,18 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
               ))}
             </div>
           </SidebarItem>
-          <SubHeading>
-            Accommodations/Kitchen <Ellipsis className="h-4 w-4" />
-          </SubHeading>
+          <EditTripTags
+            tags={onlyAccommodationOrCampKitchenTags}
+            options={[...gearListAccommodations, ...gearListCampKitchen]}
+            name="Accommodations/Kitchen"
+          >
+            <SubHeading>
+              Accommodations/Kitchen{' '}
+              <p className="p-1 opacity-80 hover:opacity-100">
+                <Ellipsis className="h-4 w-4" />
+              </p>
+            </SubHeading>
+          </EditTripTags>
           <SidebarItem>
             <div className="flex flex-wrap items-center gap-2">
               {onlyAccommodationOrCampKitchenTags.map((tag: string) => (
@@ -203,9 +229,18 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
               ))}
             </div>
           </SidebarItem>
-          <SubHeading>
-            Other Considerations <Ellipsis className="h-4 w-4" />
-          </SubHeading>
+          <EditTripTags
+            tags={onlyOtherConsiderationsTags}
+            options={gearListOtherConsiderations}
+            name="Other Considerations"
+          >
+            <SubHeading>
+              Other Considerations{' '}
+              <p className="p-1 opacity-80 hover:opacity-100">
+                <Ellipsis className="h-4 w-4" />
+              </p>
+            </SubHeading>
+          </EditTripTags>
           <SidebarItem>
             <div className="flex flex-wrap items-center gap-2">
               {onlyOtherConsiderationsTags.map((tag: string) => (
@@ -215,10 +250,18 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
               ))}
             </div>
           </SidebarItem>
-          <Separator className="mt-4" />
+          <Separator className="my-4" />
 
           {!!trip && !!trip.created && (
-            <SubHeading>Created {formattedDate(new Date(trip.created.seconds * 1000))}</SubHeading>
+            <SubHeading>
+              Created {formattedDate(new Date(trip.created.seconds * 1000))}
+              {!!trip.updated && (
+                <>
+                  <br />
+                  Last updated {formattedDate(new Date(trip.updated.seconds * 1000))}
+                </>
+              )}
+            </SubHeading>
           )}
         </div>
       </div>
