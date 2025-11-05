@@ -1,7 +1,7 @@
-import { formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow, isAfter, subSeconds } from 'date-fns'
 import { orderBy } from 'firebase/firestore'
-import { MessageCircleIcon, XIcon } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Dot, MessageCircleIcon, Reply, XIcon } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
 
 import { Button } from '~/components/ui/button'
 import {
@@ -15,8 +15,13 @@ import {
 } from '~/components/ui/sheet'
 import useAuth from '~/contexts/auth/useAuth'
 import { createChatMessage } from '~/lib/chat'
-import { useCreateSubCollectionDocument, useSubCollectionSubscription } from '~/services/api'
-import type { ChatMessage } from '~/types/Chat'
+import { cn } from '~/lib/utils'
+import {
+  useCreateSubCollectionDocument,
+  useSubCollectionSubscription,
+  useUpdateTypingStatus,
+} from '~/services/api'
+import type { ChatMessage, UserReadStatus } from '~/types/Chat'
 import type { Trip } from '~/types/Trip'
 import type { User } from '~/types/User'
 
@@ -53,24 +58,109 @@ function ChatSheet({ trip, users }: ChatSheetProps) {
     constraints
   )
 
+  const { data: typingStatuses } = useSubCollectionSubscription<UserReadStatus[]>(
+    'trips',
+    'chatReadStatus',
+    trip.tripId
+  )
+
   const { mutateAsync: sendMessage } = useCreateSubCollectionDocument<ChatMessage>(
     'trips',
     'messages'
   )
 
-  const handleSendMessage = async (text: string) => {
-    if (!user?.uid || !user?.username) return
+  const { mutateAsync: updateTypingStatus } = useUpdateTypingStatus(trip.tripId, user?.uid)
 
-    const newMessage = createChatMessage(
-      user.uid,
-      user.username,
-      text.trim(),
-      user.photoURL ?? undefined,
-      replyToMessageId ?? undefined
-    )
-    await sendMessage({ parentDocId: trip.tripId, data: newMessage })
-    setReplyToMessageId(null)
-  }
+  const handleSendMessage = useCallback(
+    async (text: string) => {
+      if (!user?.uid || !user?.username) return
+
+      await updateTypingStatus({ isTyping: false })
+
+      const newMessage = createChatMessage(
+        user.uid,
+        user.username,
+        text.trim(),
+        user.photoURL ?? undefined,
+        replyToMessageId ?? undefined
+      )
+      await sendMessage({ parentDocId: trip.tripId, data: newMessage })
+      setReplyToMessageId(null)
+    },
+    [
+      user?.uid,
+      user?.username,
+      user?.photoURL,
+      replyToMessageId,
+      updateTypingStatus,
+      sendMessage,
+      trip.tripId,
+    ]
+  )
+
+  const handleTypingChange = useCallback(
+    async (isTyping: boolean) => {
+      await updateTypingStatus({ isTyping })
+    },
+    [updateTypingStatus]
+  )
+
+  // Determine who is typing (excluding current user and expired statuses)
+  const typingUsers = useMemo(() => {
+    if (!typingStatuses || !user?.uid) return []
+
+    const now = new Date()
+    const fiveSecondsAgo = subSeconds(now, 5)
+
+    const activeTypingUsers: string[] = []
+
+    for (const status of typingStatuses) {
+      // Skip current user
+      if (status.userId === user.uid) continue
+
+      // Check if user has typingStartedAt and it's recent (within 5 seconds)
+      if (status.typingStartedAt) {
+        const typingStartTime = status.typingStartedAt.toDate()
+        if (isAfter(typingStartTime, fiveSecondsAgo)) {
+          activeTypingUsers.push(status.userId)
+        }
+      }
+    }
+
+    return activeTypingUsers
+  }, [typingStatuses, user?.uid])
+
+  // Format typing message based on number of users
+  const typingMessage = useMemo(() => {
+    if (typingUsers.length === 0) return null
+
+    const typingUsernames = typingUsers
+      .map((userId) => userMap.get(userId)?.username)
+      .filter((username): username is string => !!username)
+
+    if (typingUsernames.length === 0) return null
+
+    if (typingUsernames.length === 1) {
+      return (
+        <>
+          <span className="font-bold">@{typingUsernames[0]}</span> is typing
+        </>
+      )
+    } else if (typingUsernames.length === 2) {
+      return (
+        <>
+          <span className="font-bold">@{typingUsernames[0]}</span> and{' '}
+          <span className="font-bold">@{typingUsernames[1]}</span> are typing
+        </>
+      )
+    } else {
+      return (
+        <>
+          <span className="font-bold">Several people</span> are typing
+        </>
+      )
+    }
+  }, [typingUsers, userMap])
 
   const replyToMessageContent =
     useMemo(() => {
@@ -105,17 +195,52 @@ function ChatSheet({ trip, users }: ChatSheetProps) {
           setReplyToMessageId={setReplyToMessageId}
         />
         <SheetFooter className="border-t">
-          {replyToMessageContent && (
-            <div className="text-muted-foreground flex w-full items-center justify-between gap-2 text-sm">
-              <div className="min-w-0 truncate">
-                <span className="font-bold">Replying to:</span> {replyToMessageContent}
-              </div>
-              <Button variant="ghost" size="icon-sm" onClick={() => setReplyToMessageId(null)}>
-                <XIcon className="size-4" />
-              </Button>
+          <div>
+            <div
+              className={cn(
+                'grid w-full overflow-hidden transition-all duration-300 ease-in-out',
+                replyToMessageContent ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+              )}
+            >
+              {replyToMessageContent && (
+                <div className="text-muted-foreground flex w-full items-center justify-between gap-2 text-sm">
+                  <div className="flex max-w-72 items-center gap-1">
+                    <Reply className="text-muted-foreground size-3 shrink-0 scale-x-[-1]" />
+                    <div className="min-w-0 truncate">
+                      <span className="font-bold">Replying to:</span> {replyToMessageContent}
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="icon-sm" onClick={() => setReplyToMessageId(null)}>
+                    <XIcon className="size-4" />
+                  </Button>
+                </div>
+              )}
             </div>
-          )}
-          <MessageInput onSendMessage={handleSendMessage} replyToMessageId={replyToMessageId} />
+            <div
+              className={cn(
+                'grid overflow-hidden transition-all duration-300 ease-in-out',
+                typingMessage ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+              )}
+            >
+              <div className="min-h-0">
+                {typingMessage && (
+                  <div className="flex items-center gap-2 pb-2">
+                    <div className="flex -space-x-2.5">
+                      <Dot className="animate-typing-dot-bounce size-4" />
+                      <Dot className="animate-typing-dot-bounce size-4 [animation-delay:90ms]" />
+                      <Dot className="animate-typing-dot-bounce size-4 [animation-delay:180ms]" />
+                    </div>
+                    <p className="text-muted-foreground text-xs">{typingMessage}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <MessageInput
+              onSendMessage={handleSendMessage}
+              replyToMessageId={replyToMessageId}
+              onTypingChange={handleTypingChange}
+            />
+          </div>
         </SheetFooter>
       </SheetContent>
     </Sheet>

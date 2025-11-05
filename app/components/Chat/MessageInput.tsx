@@ -9,11 +9,19 @@ import { Textarea } from '../ui/textarea'
 interface MessageInputProps {
   onSendMessage: (text: string) => void
   replyToMessageId: string | null
+  onTypingChange?: (isTyping: boolean) => void
 }
 
-export default function MessageInput({ onSendMessage, replyToMessageId }: MessageInputProps) {
+export default function MessageInput({
+  onSendMessage,
+  replyToMessageId,
+  onTypingChange,
+}: MessageInputProps) {
   const [text, setText] = useState('')
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastTypingStateRef = useRef<boolean>(false)
 
   useEffect(() => {
     if (replyToMessageId) {
@@ -21,10 +29,56 @@ export default function MessageInput({ onSendMessage, replyToMessageId }: Messag
     }
   }, [replyToMessageId])
 
+  useEffect(() => {
+    // Determine if user is typing
+    const hasText = text.trim().length > 0
+
+    // Clear all existing timeouts
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+
+    if (hasText) {
+      // User is typing - update status after a short debounce to avoid too many Firestore writes
+      if (!lastTypingStateRef.current) {
+        // State changed from not typing to typing
+        debounceTimeoutRef.current = setTimeout(() => {
+          lastTypingStateRef.current = true
+          onTypingChange?.(true)
+        }, 300) // Small delay before marking as typing
+      }
+
+      // Reset the inactivity timeout - clear typing status after 5 seconds of no changes
+      typingTimeoutRef.current = setTimeout(() => {
+        lastTypingStateRef.current = false
+        onTypingChange?.(false)
+      }, 5000)
+    } else {
+      // User cleared the text - stop typing immediately
+      if (lastTypingStateRef.current) {
+        lastTypingStateRef.current = false
+        onTypingChange?.(false)
+      }
+    }
+
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+    }
+  }, [text, onTypingChange])
+
   const handleSend = () => {
     if (text.trim()) {
       onSendMessage(text)
       setText('')
+      onTypingChange?.(false)
       inputRef.current?.focus()
     }
   }

@@ -1,30 +1,19 @@
 import { Timestamp } from 'firebase/firestore'
 
-// ==========================================
-// CHAT MESSAGE MODEL
-// ==========================================
-// Stored in: trips/{tripId}/messages/{messageId}
 export interface ChatMessage {
   id: string
-  userId: string // ID of the user who sent the message
+  userId: string
   userName: string // Cached for display (avoids extra lookups)
-  userPhotoUrl?: string // Optional profile photo
+  userPhotoUrl?: string
   content: string
   createdAt: Timestamp
-  updatedAt?: Timestamp // For edited messages
+  updatedAt?: Timestamp
   isEdited: boolean
-  isDeleted: boolean // Soft delete - keeps message structure but hides content
-
-  // Message type support
-  type: 'text' | 'image' | 'system' // Extensible for future types
-  imageUrl?: string // If type is 'image'
-
-  // Reactions support
+  type: 'text' | 'image' | 'system'
+  imageUrl?: string
   reactions?: {
     [emoji: string]: string[] // emoji -> array of userIds who reacted
   }
-
-  // Reply/thread support (optional - for future enhancement)
   replyToMessageId?: string
 
   // Metadata

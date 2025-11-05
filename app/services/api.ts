@@ -9,6 +9,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -528,4 +529,31 @@ export function useSubCollectionSubscription<T>(
   }, [parentDocId, collectionName, subCollectionName, queryClient, queryKey])
 
   return queryResult
+}
+
+export function useUpdateTypingStatus(tripId: string, userId: string | undefined) {
+  return useMutation({
+    mutationFn: async ({ isTyping }: { isTyping: boolean }) => {
+      if (!userId || !tripId) return
+
+      const docRef = doc(firestoreDb, 'trips', tripId, 'chatReadStatus', userId)
+
+      if (isTyping) {
+        // Set typingStartedAt to current timestamp
+        await setDoc(
+          docRef,
+          {
+            userId,
+            typingStartedAt: Timestamp.now(),
+          },
+          { merge: true }
+        )
+      } else {
+        // Clear typingStartedAt
+        await updateDoc(docRef, {
+          typingStartedAt: deleteField(),
+        })
+      }
+    },
+  })
 }
