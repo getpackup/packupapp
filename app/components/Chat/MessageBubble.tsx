@@ -1,5 +1,16 @@
 import { format } from 'date-fns'
-import { Copy, MoreVertical, Reply, Trash2 } from 'lucide-react'
+import {
+  CircleAlert,
+  Copy,
+  Heart,
+  type LucideIcon,
+  MoreVertical,
+  Reply,
+  Smile,
+  ThumbsDown,
+  ThumbsUp,
+  Trash2,
+} from 'lucide-react'
 import { useParams } from 'react-router'
 
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
@@ -7,31 +18,92 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
+import useAuth from '~/contexts/auth/useAuth'
 import { cn } from '~/lib/utils'
-import { useDeleteSubCollectionDocument } from '~/services/api'
+import { useDeleteSubCollectionDocument, useUpdateSubCollectionDocument } from '~/services/api'
 import type { ChatMessage } from '~/types/Chat'
 import type { User } from '~/types/User'
 
 import { Button } from '../ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
+
+const iconMap: Record<string, LucideIcon> = {
+  Heart,
+  ThumbsUp,
+  ThumbsDown,
+  Smile,
+  CircleAlert,
+}
+
+const emojiNameMap: Record<string, string> = {
+  Heart: 'Heart',
+  ThumbsUp: 'Like',
+  ThumbsDown: 'Dislike',
+  Smile: 'Smile',
+  CircleAlert: 'Exclamation',
+}
 
 interface MessageBubbleProps {
   message: ChatMessage
   user: User
   isCurrentUser: boolean
+  userMap: Map<string, User>
 }
 
-export default function MessageBubble({ message, user, isCurrentUser }: MessageBubbleProps) {
+export default function MessageBubble({
+  message,
+  user,
+  isCurrentUser,
+  userMap,
+}: MessageBubbleProps) {
+  const { user: currentUser } = useAuth()
   const { id } = useParams()
   const { mutateAsync: deleteMessage } = useDeleteSubCollectionDocument('trips', 'messages')
+
+  const { mutateAsync: updateMessage } = useUpdateSubCollectionDocument('trips', 'messages')
+
+  const onReact = (emoji: string) => {
+    if (!id || !message.id || !currentUser?.uid) return
+
+    const existingReactions = message.reactions || {}
+    const existingUsers = existingReactions[emoji] || []
+    const userIndex = existingUsers.indexOf(currentUser.uid)
+
+    let updatedUsers: string[]
+    if (userIndex > -1) {
+      // User already reacted - remove them (toggle off)
+      updatedUsers = existingUsers.filter((uid) => uid !== currentUser.uid)
+    } else {
+      // User hasn't reacted - add them (toggle on)
+      updatedUsers = [...existingUsers, currentUser.uid]
+    }
+
+    const updatedReactions = { ...existingReactions }
+
+    if (updatedUsers.length === 0) {
+      // If no users left for this emoji, remove the key entirely
+      delete updatedReactions[emoji]
+    } else {
+      // Update the emoji with the new user array
+      updatedReactions[emoji] = updatedUsers
+    }
+
+    updateMessage({
+      parentDocId: id,
+      id: message.id,
+      data: { reactions: updatedReactions },
+    })
+  }
 
   const onDelete = () => {
     if (!id || !message.id) return
     deleteMessage({ parentDocId: id, id: message.id })
   }
   return (
-    <div className="flex w-full gap-2">
+    <div className="group flex w-full gap-2">
       {message.type === 'system' ? (
         <Avatar className="mt-1 size-8 border">
           <AvatarImage
@@ -53,48 +125,145 @@ export default function MessageBubble({ message, user, isCurrentUser }: MessageB
 
       <div className="flex w-full flex-col items-start gap-1">
         <div className="flex items-center gap-2">
-          <span className="text-sidebar-foreground text-sm font-bold">
-            {message.type === 'system' ? 'Packup Yak' : user.username}
-          </span>
+          <span className="text-sidebar-foreground text-sm font-bold">{user.username}</span>
           <span className="text-muted-foreground text-xs">
             {format(message.createdAt.toDate(), 'MMM d, yyyy h:mm a')}
           </span>
         </div>
 
-        <div className="flex max-w-[95%] min-w-0 items-center gap-2">
+        <div className="group flex max-w-[95%] min-w-0 items-center gap-2">
           <div
-            className={cn('bg-muted max-w-[75%] min-w-0 flex-1 rounded-lg px-4 py-2', {
+            className={cn('bg-muted relative max-w-[75%] min-w-0 flex-1 rounded-lg px-4 py-2', {
               'bg-accent text-accent-foreground': isCurrentUser && message.type !== 'system',
               'max-w-full': message.type === 'system',
             })}
           >
             <p className="text-sm wrap-break-word whitespace-pre-wrap">{message.content}</p>
+            {message.reactions && (
+              <div className="bg-muted absolute -bottom-3 left-2 flex gap-2 rounded-lg border px-2 py-1">
+                {Object.entries(message.reactions)
+                  .sort(([emojiA], [emojiB]) => {
+                    const iconOrder = Object.keys(iconMap)
+                    const indexA = iconOrder.indexOf(emojiA)
+                    const indexB = iconOrder.indexOf(emojiB)
+                    // If emoji not found in iconMap, put it at the end
+                    if (indexA === -1) return 1
+                    if (indexB === -1) return -1
+                    return indexA - indexB
+                  })
+                  .map(([emoji, users]) => {
+                    const usernames = users.map((user) => userMap.get(user)?.username)
+                    const IconComponent = iconMap[emoji]
+
+                    return (
+                      <div key={emoji}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div
+                              onClick={() => onReact(emoji)}
+                              className={cn('rounded-full', {
+                                '*:fill-accent/20 *:stroke-accent': message.reactions?.[
+                                  emoji
+                                ]?.includes(currentUser?.uid ?? ''),
+                              })}
+                            >
+                              <IconComponent className="size-3 text-gray-700 opacity-80 hover:opacity-100 dark:text-gray-300" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <div className="flex flex-col">
+                              <span className="text-sm font-bold">{emojiNameMap[emoji]}</span>
+                              {usernames.map((username) => (
+                                <span key={username}>{username}</span>
+                              ))}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    )
+                  })}
+              </div>
+            )}
           </div>
 
           {message.type !== 'system' && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="animate-in fade-in opacity-0 duration-300 ease-in-out group-hover:opacity-100"
+                >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem
+                  asChild
+                  className="p-0 hover:bg-transparent! focus:bg-transparent!"
+                >
                   <div>
-                    <Button variant="ghost" size="icon">
-                      🧡
+                    <Button
+                      variant={
+                        message.reactions?.Heart?.includes(currentUser?.uid ?? '')
+                          ? 'outline'
+                          : 'ghost'
+                      }
+                      size="icon-sm"
+                      onClick={() => onReact('Heart')}
+                    >
+                      <Heart />
                     </Button>
-                    <Button variant="ghost" size="icon">
-                      👍
+                    <Button
+                      variant={
+                        message.reactions?.ThumbsUp?.includes(currentUser?.uid ?? '')
+                          ? 'outline'
+                          : 'ghost'
+                      }
+                      size="icon-sm"
+                      onClick={() => onReact('ThumbsUp')}
+                    >
+                      <ThumbsUp />
                     </Button>
-                    <Button variant="ghost" size="icon">
-                      👎
+                    <Button
+                      variant={
+                        message.reactions?.ThumbsDown?.includes(currentUser?.uid ?? '')
+                          ? 'outline'
+                          : 'ghost'
+                      }
+                      size="icon-sm"
+                      onClick={() => onReact('ThumbsDown')}
+                    >
+                      <ThumbsDown />
+                    </Button>
+                    <Button
+                      variant={
+                        message.reactions?.Smile?.includes(currentUser?.uid ?? '')
+                          ? 'outline'
+                          : 'ghost'
+                      }
+                      size="icon-sm"
+                      onClick={() => onReact('Smile')}
+                    >
+                      <Smile />
+                    </Button>
+                    <Button
+                      variant={
+                        message.reactions?.CircleAlert?.includes(currentUser?.uid ?? '')
+                          ? 'outline'
+                          : 'ghost'
+                      }
+                      size="icon-sm"
+                      onClick={() => onReact('CircleAlert')}
+                    >
+                      <CircleAlert />
                     </Button>
                   </div>
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigator.clipboard.writeText(message.content)}>
                   <Copy className="mr-2 h-4 w-4" />
-                  Copy
+                  Copy text
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Reply className="mr-2 h-4 w-4" />

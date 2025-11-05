@@ -21,6 +21,7 @@ export default function MessageList({ messages, currentUserId, userMap }: Messag
             key={message.id}
             message={message}
             user={user}
+            userMap={userMap}
             isCurrentUser={isCurrentUser}
           />
         )

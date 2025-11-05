@@ -174,7 +174,7 @@ const TripPackingListItem = ({
                     style={filledSpring}
                     className="bg-success/80 hover:bg-success flex h-6 w-6 items-center justify-center rounded-full transition-colors"
                   >
-                    <Check className="text-foreground h-4 w-4" strokeWidth={3} />
+                    <Check className="text-muted dark:text-foreground h-4 w-4" strokeWidth={3} />
                   </animated.span>
                 ) : (
                   <Circle className="text-muted-foreground/80 hover:text-muted-foreground h-6 w-6" />
