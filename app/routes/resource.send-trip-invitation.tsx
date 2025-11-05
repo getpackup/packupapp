@@ -58,7 +58,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     const msg = {
       to: email,
-      from: 'The Packup Team <hello@getpackup.com>',
+      from: 'Packup <noreply@getpackup.com>',
       subject: `@${invitedBy} has invited you on a trip 🏕️`,
       html: html,
       text: text,

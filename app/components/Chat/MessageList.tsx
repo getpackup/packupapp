@@ -13,7 +13,7 @@ export default function MessageList({ messages, currentUserId, userMap }: Messag
   return (
     <div className="flex flex-col gap-4">
       {messages.map((message) => {
-        const user = userMap.get(message.userId)
+        const user = userMap.get(message.userId)!
         const isCurrentUser = message.userId === currentUserId
 
         return (

@@ -136,7 +136,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
 
           <SubHeading>Details</SubHeading>
           <SidebarItem>
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-start gap-2 text-left text-sm">
                 <BadgeInfo className="mt-0.5 h-4 w-4" />
                 {trip.name}
@@ -149,7 +149,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
             </div>
           </SidebarItem>
           <SidebarItem>
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-start gap-2 text-left text-sm">
                 <CalendarIcon className="mt-0.5 h-4 w-4" />
                 {formattedDateRange(trip.startDate.seconds * 1000, trip.endDate.seconds * 1000)}
@@ -163,7 +163,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           </SidebarItem>
 
           <SidebarItem>
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-start gap-2 text-left text-sm">
                 <MapPinIcon className="mt-0.5 h-4 w-4" />
                 {trip.startingPoint}
@@ -177,7 +177,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           </SidebarItem>
 
           <SidebarItem>
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-start gap-2 text-left text-sm">
                 <MessageSquareMore className="mt-1 h-4 w-4" />
                 {trip.description || 'No description provided'}

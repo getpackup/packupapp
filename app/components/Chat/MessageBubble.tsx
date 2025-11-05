@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { Copy, Loader2, MoreVertical, Reply, Trash2 } from 'lucide-react'
+import { Copy, MoreVertical, Reply, Trash2 } from 'lucide-react'
 import { useParams } from 'react-router'
 
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
@@ -18,7 +18,7 @@ import { Button } from '../ui/button'
 
 interface MessageBubbleProps {
   message: ChatMessage
-  user?: User
+  user: User
   isCurrentUser: boolean
 }
 
@@ -43,21 +43,18 @@ export default function MessageBubble({ message, user, isCurrentUser }: MessageB
       ) : (
         <Avatar className="mt-1 size-8 border">
           <AvatarImage
-            src={user?.photoURL ?? ''}
-            alt={`${user?.username.toLocaleLowerCase()} avatar`}
-            gravatarEmail={user?.email}
+            src={user.photoURL ?? ''}
+            alt={`${user.username.toLocaleLowerCase()} avatar`}
+            gravatarEmail={user.email}
           />
-          <AvatarFallback>
-            {user?.displayName?.charAt(0) ??
-              (user ? <Loader2 className="h-4 w-4 animate-spin" /> : '?')}
-          </AvatarFallback>
+          <AvatarFallback>{user.displayName.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
       )}
 
       <div className="flex w-full flex-col items-start gap-1">
         <div className="flex items-center gap-2">
           <span className="text-sidebar-foreground text-sm font-bold">
-            {message.type === 'system' ? 'Packup Yakbot' : user?.username}
+            {message.type === 'system' ? 'Packup Yak' : user.username}
           </span>
           <span className="text-muted-foreground text-xs">
             {format(message.createdAt.toDate(), 'MMM d, yyyy h:mm a')}
@@ -81,7 +78,20 @@ export default function MessageBubble({ message, user, isCurrentUser }: MessageB
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align={isCurrentUser ? 'end' : 'start'}>
+              <DropdownMenuContent>
+                <DropdownMenuItem asChild>
+                  <div>
+                    <Button variant="ghost" size="icon">
+                      🧡
+                    </Button>
+                    <Button variant="ghost" size="icon">
+                      👍
+                    </Button>
+                    <Button variant="ghost" size="icon">
+                      👎
+                    </Button>
+                  </div>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigator.clipboard.writeText(message.content)}>
                   <Copy className="mr-2 h-4 w-4" />
                   Copy
