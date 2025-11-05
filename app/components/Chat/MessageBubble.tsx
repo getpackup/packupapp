@@ -103,25 +103,15 @@ export default function MessageBubble({
     deleteMessage({ parentDocId: id, id: message.id })
   }
   return (
-    <div className="group flex w-full gap-2">
-      {message.type === 'system' ? (
-        <Avatar className="mt-1 size-8 border">
-          <AvatarImage
-            src="/icons/icon-192x192.png"
-            alt="Packup yak logomark"
-            gravatarEmail={undefined}
-          />
-        </Avatar>
-      ) : (
-        <Avatar className="mt-1 size-8 border">
-          <AvatarImage
-            src={user.photoURL ?? ''}
-            alt={`${user.username.toLocaleLowerCase()} avatar`}
-            gravatarEmail={user.email}
-          />
-          <AvatarFallback>{user.displayName.charAt(0).toUpperCase()}</AvatarFallback>
-        </Avatar>
-      )}
+    <div className="group flex w-full gap-2 last:pb-4">
+      <Avatar className="mt-1 size-8 border">
+        <AvatarImage
+          src={user.photoURL ?? ''}
+          alt={`${user.username?.toLocaleLowerCase()} avatar`}
+          gravatarEmail={user.email}
+        />
+        <AvatarFallback>{user.displayName.charAt(0).toUpperCase()}</AvatarFallback>
+      </Avatar>
 
       <div className="flex w-full flex-col items-start gap-1">
         <div className="flex items-center gap-2">
@@ -139,7 +129,7 @@ export default function MessageBubble({
             })}
           >
             <p className="text-sm wrap-break-word whitespace-pre-wrap">{message.content}</p>
-            {message.reactions && (
+            {message.reactions && Object.keys(message.reactions).length > 0 && (
               <div className="bg-muted absolute -bottom-3 left-2 flex gap-2 rounded-lg border px-2 py-1">
                 {Object.entries(message.reactions)
                   .sort(([emojiA], [emojiB]) => {
@@ -161,7 +151,7 @@ export default function MessageBubble({
                           <TooltipTrigger asChild>
                             <div
                               onClick={() => onReact(emoji)}
-                              className={cn('rounded-full', {
+                              className={cn('', {
                                 '*:fill-accent/20 *:stroke-accent': message.reactions?.[
                                   emoji
                                 ]?.includes(currentUser?.uid ?? ''),
@@ -204,57 +194,61 @@ export default function MessageBubble({
                 >
                   <div>
                     <Button
-                      variant={
-                        message.reactions?.Heart?.includes(currentUser?.uid ?? '')
-                          ? 'outline'
-                          : 'ghost'
-                      }
+                      variant="ghost"
                       size="icon-sm"
                       onClick={() => onReact('Heart')}
+                      className={cn('', {
+                        '*:fill-accent/20 *:stroke-accent': message.reactions?.Heart?.includes(
+                          currentUser?.uid ?? ''
+                        ),
+                      })}
                     >
                       <Heart />
                     </Button>
                     <Button
-                      variant={
-                        message.reactions?.ThumbsUp?.includes(currentUser?.uid ?? '')
-                          ? 'outline'
-                          : 'ghost'
-                      }
+                      variant="ghost"
                       size="icon-sm"
                       onClick={() => onReact('ThumbsUp')}
+                      className={cn('', {
+                        '*:fill-accent/20 *:stroke-accent': message.reactions?.ThumbsUp?.includes(
+                          currentUser?.uid ?? ''
+                        ),
+                      })}
                     >
                       <ThumbsUp />
                     </Button>
                     <Button
-                      variant={
-                        message.reactions?.ThumbsDown?.includes(currentUser?.uid ?? '')
-                          ? 'outline'
-                          : 'ghost'
-                      }
+                      variant="ghost"
                       size="icon-sm"
                       onClick={() => onReact('ThumbsDown')}
+                      className={cn('', {
+                        '*:fill-accent/20 *:stroke-accent': message.reactions?.ThumbsDown?.includes(
+                          currentUser?.uid ?? ''
+                        ),
+                      })}
                     >
                       <ThumbsDown />
                     </Button>
                     <Button
-                      variant={
-                        message.reactions?.Smile?.includes(currentUser?.uid ?? '')
-                          ? 'outline'
-                          : 'ghost'
-                      }
+                      variant="ghost"
                       size="icon-sm"
                       onClick={() => onReact('Smile')}
+                      className={cn('', {
+                        '*:fill-accent/20 *:stroke-accent': message.reactions?.Smile?.includes(
+                          currentUser?.uid ?? ''
+                        ),
+                      })}
                     >
                       <Smile />
                     </Button>
                     <Button
-                      variant={
-                        message.reactions?.CircleAlert?.includes(currentUser?.uid ?? '')
-                          ? 'outline'
-                          : 'ghost'
-                      }
+                      variant="ghost"
                       size="icon-sm"
                       onClick={() => onReact('CircleAlert')}
+                      className={cn('', {
+                        '*:fill-accent/20 *:stroke-accent':
+                          message.reactions?.CircleAlert?.includes(currentUser?.uid ?? ''),
+                      })}
                     >
                       <CircleAlert />
                     </Button>

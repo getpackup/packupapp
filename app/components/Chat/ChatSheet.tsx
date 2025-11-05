@@ -6,7 +6,6 @@ import { useMemo, useState } from 'react'
 import { Button } from '~/components/ui/button'
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetDescription,
   SheetFooter,
@@ -29,9 +28,20 @@ type ChatSheetProps = {
   users: User[]
 }
 
+const systemUser: User = {
+  id: 'system',
+  username: 'Packup Yak',
+  photoURL: '/icons/icon-192x192.png',
+  email: 'hello@getpackup.com',
+  displayName: 'Packup Yak',
+  uid: 'system',
+}
+
 function ChatSheet({ trip, users }: ChatSheetProps) {
   const { user } = useAuth()
-  const [userMap] = useState<Map<string, User>>(new Map(users.map((u) => [u.id, u]) ?? []))
+  const [userMap] = useState<Map<string, User>>(
+    new Map([...(users || []).map((u): [string, User] => [u.id, u]), [systemUser.id, systemUser]])
+  )
 
   const constraints = useMemo(() => [orderBy('createdAt', 'asc')], [])
 
@@ -71,11 +81,13 @@ function ChatSheet({ trip, users }: ChatSheetProps) {
         <SheetHeader className="border-b">
           <SheetTitle>Trip Chat</SheetTitle>
           <SheetDescription>
-            Last message sent{' '}
-            {formatDistanceToNow(
+            {(messages?.length ?? 0 > 0)
+              ? `Last message sent 
+            ${formatDistanceToNow(
               messages?.[messages.length - 1]?.createdAt.toDate() ?? new Date(),
               { addSuffix: true }
-            )}
+            )}`
+              : `Planning and discussion for ${trip.name}`}
           </SheetDescription>
         </SheetHeader>
         <ChatContainer
@@ -85,9 +97,6 @@ function ChatSheet({ trip, users }: ChatSheetProps) {
         />
         <SheetFooter className="border-t">
           <MessageInput onSendMessage={handleSendMessage} />
-          <SheetClose asChild>
-            <Button variant="outline">Close chat</Button>
-          </SheetClose>
         </SheetFooter>
       </SheetContent>
     </Sheet>
