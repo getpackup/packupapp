@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from 'date-fns'
 import { orderBy } from 'firebase/firestore'
-import { MessageCircleIcon } from 'lucide-react'
+import { MessageCircleIcon, XIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { Button } from '~/components/ui/button'
@@ -42,6 +42,7 @@ function ChatSheet({ trip, users }: ChatSheetProps) {
   const [userMap] = useState<Map<string, User>>(
     new Map([...(users || []).map((u): [string, User] => [u.id, u]), [systemUser.id, systemUser]])
   )
+  const [replyToMessageId, setReplyToMessageId] = useState<string | null>(null)
 
   const constraints = useMemo(() => [orderBy('createdAt', 'asc')], [])
 
@@ -64,10 +65,17 @@ function ChatSheet({ trip, users }: ChatSheetProps) {
       user.uid,
       user.username,
       text.trim(),
-      user.photoURL ?? undefined
+      user.photoURL ?? undefined,
+      replyToMessageId ?? undefined
     )
     await sendMessage({ parentDocId: trip.tripId, data: newMessage })
+    setReplyToMessageId(null)
   }
+
+  const replyToMessageContent =
+    useMemo(() => {
+      return messages?.find((message) => message.id === replyToMessageId)?.content ?? null
+    }, [messages, replyToMessageId]) ?? null
 
   return (
     <Sheet>
@@ -94,9 +102,20 @@ function ChatSheet({ trip, users }: ChatSheetProps) {
           messages={messages ?? []}
           currentUserId={user?.uid ?? ''}
           userMap={userMap}
+          setReplyToMessageId={setReplyToMessageId}
         />
         <SheetFooter className="border-t">
-          <MessageInput onSendMessage={handleSendMessage} />
+          {replyToMessageContent && (
+            <div className="text-muted-foreground flex w-full items-center justify-between gap-2 text-sm">
+              <div className="min-w-0 truncate">
+                <span className="font-bold">Replying to:</span> {replyToMessageContent}
+              </div>
+              <Button variant="ghost" size="icon-sm" onClick={() => setReplyToMessageId(null)}>
+                <XIcon className="size-4" />
+              </Button>
+            </div>
+          )}
+          <MessageInput onSendMessage={handleSendMessage} replyToMessageId={replyToMessageId} />
         </SheetFooter>
       </SheetContent>
     </Sheet>

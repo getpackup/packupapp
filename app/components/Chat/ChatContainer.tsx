@@ -9,9 +9,15 @@ interface ChatContainerProps {
   messages: ChatMessage[]
   currentUserId: string
   userMap: Map<string, User>
+  setReplyToMessageId: (messageId: string) => void
 }
 
-export default function ChatContainer({ messages, currentUserId, userMap }: ChatContainerProps) {
+export default function ChatContainer({
+  messages,
+  currentUserId,
+  userMap,
+  setReplyToMessageId,
+}: ChatContainerProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true)
 
@@ -43,7 +49,12 @@ export default function ChatContainer({ messages, currentUserId, userMap }: Chat
       onScroll={handleScroll}
       className="flex-1 overflow-x-hidden overflow-y-auto p-4"
     >
-      <MessageList messages={messages} currentUserId={currentUserId} userMap={userMap} />
+      <MessageList
+        messages={messages}
+        currentUserId={currentUserId}
+        userMap={userMap}
+        setReplyToMessageId={setReplyToMessageId}
+      />
     </div>
   )
 }

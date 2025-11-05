@@ -51,6 +51,8 @@ interface MessageBubbleProps {
   user: User
   isCurrentUser: boolean
   userMap: Map<string, User>
+  setReplyToMessageId: (messageId: string) => void
+  replyToMessageContent: string | null
 }
 
 export default function MessageBubble({
@@ -58,6 +60,8 @@ export default function MessageBubble({
   user,
   isCurrentUser,
   userMap,
+  setReplyToMessageId,
+  replyToMessageContent,
 }: MessageBubbleProps) {
   const { user: currentUser } = useAuth()
   const { id } = useParams()
@@ -114,16 +118,28 @@ export default function MessageBubble({
       </Avatar>
 
       <div className="flex w-full flex-col items-start gap-1">
-        <div className="flex items-center gap-2">
-          <span className="text-sidebar-foreground text-sm font-bold">{user.username}</span>
-          <span className="text-muted-foreground text-xs">
+        <div className="flex w-full items-center gap-2">
+          <span className="text-sidebar-foreground max-w-1/2 truncate text-sm font-bold">
+            {user.username}
+          </span>
+          <span className="text-muted-foreground max-w-1/2 shrink-0 text-xs">
             {format(message.createdAt.toDate(), 'MMM d, yyyy h:mm a')}
           </span>
         </div>
 
-        <div className="group flex max-w-[95%] min-w-0 items-center gap-2">
+        {message.replyToMessageId && typeof replyToMessageContent === 'string' && (
+          <div className="flex w-full max-w-[95%] items-end justify-start gap-2">
+            <Reply className="text-muted-foreground size-4 scale-x-[-1]" />
+            <div className="bg-muted relative max-w-[80%] min-w-0 rounded-lg px-4 py-2">
+              <p className="text-sm wrap-break-word whitespace-pre-wrap italic">
+                {replyToMessageContent}
+              </p>
+            </div>
+          </div>
+        )}
+        <div className="group flex w-full max-w-[95%] min-w-0 items-center gap-2">
           <div
-            className={cn('bg-muted relative max-w-[75%] min-w-0 flex-1 rounded-lg px-4 py-2', {
+            className={cn('bg-muted relative max-w-[75%] min-w-0 rounded-lg px-4 py-2', {
               'bg-accent text-accent-foreground': isCurrentUser && message.type !== 'system',
               'max-w-full': message.type === 'system',
             })}
@@ -162,7 +178,10 @@ export default function MessageBubble({
                           </TooltipTrigger>
                           <TooltipContent>
                             <div className="flex flex-col">
-                              <span className="text-sm font-bold">{emojiNameMap[emoji]}</span>
+                              <div className="flex items-center gap-1 text-sm font-bold">
+                                <IconComponent className="size-3" />
+                                {emojiNameMap[emoji]}
+                              </div>
                               {usernames.map((username) => (
                                 <span key={username}>{username}</span>
                               ))}
@@ -259,7 +278,7 @@ export default function MessageBubble({
                   <Copy className="mr-2 h-4 w-4" />
                   Copy text
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setReplyToMessageId(message.id)}>
                   <Reply className="mr-2 h-4 w-4" />
                   Reply
                 </DropdownMenuItem>

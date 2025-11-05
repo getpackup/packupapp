@@ -1,6 +1,6 @@
 import { Send } from 'lucide-react'
 import type React from 'react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { Button } from '~/components/ui/button'
 
@@ -8,11 +8,18 @@ import { Textarea } from '../ui/textarea'
 
 interface MessageInputProps {
   onSendMessage: (text: string) => void
+  replyToMessageId: string | null
 }
 
-export default function MessageInput({ onSendMessage }: MessageInputProps) {
+export default function MessageInput({ onSendMessage, replyToMessageId }: MessageInputProps) {
   const [text, setText] = useState('')
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (replyToMessageId) {
+      inputRef.current?.focus()
+    }
+  }, [replyToMessageId])
 
   const handleSend = () => {
     if (text.trim()) {

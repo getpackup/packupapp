@@ -6,7 +6,8 @@ export const createChatMessage = (
   userId: string,
   userName: string,
   content: string,
-  userPhotoUrl?: string
+  userPhotoUrl?: string,
+  replyToMessageId?: string
 ): Omit<ChatMessage, 'id'> => ({
   userId,
   userName,
@@ -17,6 +18,7 @@ export const createChatMessage = (
   isDeleted: false,
   type: 'text',
   reactions: {},
+  replyToMessageId: replyToMessageId ?? '',
 })
 
 export const createSystemMessage = (content: string): Omit<ChatMessage, 'id'> => ({
