@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useQueryClient } from '@tanstack/react-query'
 import type { SearchResponse } from 'algoliasearch'
 import { Loader2, Plus } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
@@ -23,8 +22,7 @@ import { useAuth } from '~/contexts/auth/useAuth'
 import { createSystemMessage } from '~/lib/chat'
 import { formattedDateRange } from '~/lib/date'
 import { algoliaSearch } from '~/services/algoliaSearch'
-import { firebaseKeys, useCreateSubCollectionDocument, useUpdateDocument } from '~/services/api'
-import type { ChatMessage } from '~/types/Chat'
+import { useCreateChatMessage, useUpdateTrip } from '~/services/trips'
 import type { Trip } from '~/types/Trip'
 import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
@@ -40,15 +38,11 @@ export function AddTripPartyMember({
   trip: Trip
   tripMembers: TripMember[]
 }) {
-  const { mutateAsync: updateDocument } = useUpdateDocument('trips')
-  const { mutateAsync: sendMessage } = useCreateSubCollectionDocument<ChatMessage>(
-    'trips',
-    'messages'
-  )
+  const { mutateAsync: updateTrip } = useUpdateTrip(trip.tripId)
+  const { mutateAsync: sendMessage } = useCreateChatMessage()
   const { user } = useAuth()
   const { id } = useParams()
   const fetcher = useFetcher()
-  const queryClient = useQueryClient()
 
   const [searchValueTimeout, setSearchValueTimeout] = useState<NodeJS.Timeout | null>(null)
   const [isLoadingSearchResults, setIsLoadingSearchResults] = useState(false)
@@ -171,7 +165,7 @@ export function AddTripPartyMember({
     const newMessage = createSystemMessage(
       `@${user.username.toLowerCase()} has invited @${hitName.toLowerCase()} to the trip.`
     )
-    await sendMessage({ parentDocId: trip.tripId, data: newMessage })
+    await sendMessage({ tripId: trip.tripId, data: newMessage })
   }
 
   const addMemberToTrip = async (hitUserId: string, hitEmail: string, hitName: string) => {
@@ -179,123 +173,93 @@ export function AddTripPartyMember({
 
     setIsAddingMember(hitUserId)
 
-    const newMember = {
-      uid: hitUserId,
-      invitedAt: new Date(),
-      status: TripMemberStatus.Pending,
-      invitedBy: user.uid,
-    }
-
     const payload = {
-      [`tripMembers.${hitUserId}`]: newMember,
+      [`tripMembers.${hitUserId}`]: {
+        uid: hitUserId,
+        invitedAt: new Date(),
+        status: TripMemberStatus.Pending,
+        invitedBy: user.uid,
+      },
     }
 
-    await queryClient.cancelQueries({ queryKey: firebaseKeys.doc('trips', id) })
+    // await queryClient.cancelQueries({ queryKey: firebaseKeys.doc('trips', id) })
 
-    const previousTripData = queryClient.getQueryData(firebaseKeys.doc('trips', id))
-    queryClient.setQueryData(firebaseKeys.doc('trips', id), (old: any) => {
-      if (!old) return old
-      return {
-        ...old,
-        tripMembers: {
-          ...old.tripMembers,
-          [hitUserId]: newMember,
-        },
-      }
-    })
+    // const previousTripData = queryClient.getQueryData(firebaseKeys.doc('trips', id))
+    // queryClient.setQueryData(firebaseKeys.doc('trips', id), (old: any) => {
+    //   if (!old) return old
+    //   return {
+    //     ...old,
+    //     tripMembers: {
+    //       ...old.tripMembers,
+    //       [hitUserId]: newMember,
+    //     },
+    //   }
+    // })
 
-    const previousUsersData = queryClient.getQueryData<User[]>([
-      'firebase',
-      'docs',
-      'trips',
-      id,
-      'tripMembers',
-    ])
-    const foundUser = hits.find((hit) => hit.uid === hitUserId)
-    if (foundUser && previousUsersData) {
-      queryClient.setQueryData<User[]>(
-        ['firebase', 'docs', 'trips', id, 'tripMembers'],
-        [...previousUsersData, foundUser]
-      )
-    }
+    // const previousUsersData = queryClient.getQueryData<User[]>([
+    //   'firebase',
+    //   'docs',
+    //   'trips',
+    //   id,
+    //   'tripMembers',
+    // ])
+    // const foundUser = hits.find((hit) => hit.uid === hitUserId)
+    // if (foundUser && previousUsersData) {
+    //   queryClient.setQueryData<User[]>(
+    //     ['firebase', 'docs', 'trips', id, 'tripMembers'],
+    //     [...previousUsersData, foundUser]
+    //   )
+    // }
 
     try {
-      await updateDocument(
-        { id: id, data: payload },
-        {
-          onSuccess: async () => {
-            await sendTripMemberInvitationMessage(hitName)
-            queryClient.invalidateQueries({ queryKey: firebaseKeys.doc('trips', id) })
-            queryClient.invalidateQueries({
-              queryKey: ['firebase', 'docs', 'trips', id, 'tripMembers'],
-            })
+      await updateTrip({ data: payload })
+        .then(async () => {
+          await sendTripMemberInvitationMessage(hitName)
 
-            fetcher
-              .submit(
-                {
-                  invitedBy: user.username,
-                  email: hitEmail,
-                  greetingName: hitName || '',
-                  tripName: trip.name,
-                  where: trip.startingPoint,
-                  why: trip.description,
-                  when: formattedDateRange(
-                    trip.startDate.seconds * 1000,
-                    trip.endDate.seconds * 1000
-                  ),
-                  tags: trip.tags,
-                },
-                {
-                  method: 'POST',
-                  action: '/resource/send-trip-invitation',
-                }
-              )
-              .then(() => {
-                toast.success(`${hitName} has been invited to the trip`)
-                // trackEvent('Trip Party Search User Added', {
-                //   tripId: id,
-                //   ...payload,
-                // })
-              })
-              .catch((err) => {
-                toast.error(err.message)
-              })
-              .finally(() => {
-                setIsAddingMember(null)
-              })
-          },
-          onError: (err: Error) => {
-            // Rollback optimistic updates on error
-            if (previousTripData) {
-              queryClient.setQueryData(firebaseKeys.doc('trips', id), previousTripData)
-            }
-            if (previousUsersData) {
-              queryClient.setQueryData(
-                ['firebase', 'docs', 'trips', id, 'tripMembers'],
-                previousUsersData
-              )
-            }
-            // trackEvent(`Trip Party Member Add Failure`, {
-            //   ...payload,
-            // tripId: id,
-            // error: err,
-            // })
-            toast.error(err.message)
-            setIsAddingMember(null)
-          },
-        }
-      )
+          fetcher
+            .submit(
+              {
+                invitedBy: user.username,
+                email: hitEmail,
+                greetingName: hitName || '',
+                tripName: trip.name,
+                where: trip.startingPoint,
+                why: trip.description,
+                when: formattedDateRange(
+                  trip.startDate.seconds * 1000,
+                  trip.endDate.seconds * 1000
+                ),
+                tags: trip.tags,
+              },
+              {
+                method: 'POST',
+                action: '/resource/send-trip-invitation',
+              }
+            )
+            .then(() => {
+              toast.success(`${hitName} has been invited to the trip`)
+              // trackEvent('Trip Party Search User Added', {
+              //   tripId: id,
+              //   ...payload,
+              // })
+            })
+            .catch((err) => {
+              toast.error(err.message)
+            })
+            .finally(() => {
+              setIsAddingMember(null)
+            })
+        })
+        .catch((err) => {
+          // trackEvent(`Trip Party Member Add Failure`, {
+          //   ...payload,
+          // tripId: id,
+          // error: err,
+          // })
+          toast.error(err.message)
+          setIsAddingMember(null)
+        })
     } catch (error) {
-      // Rollback optimistic updates on error
-      if (previousTripData) {
-        queryClient.setQueryData(firebaseKeys.doc('trips', id), previousTripData)
-      }
-      if (previousUsersData) {
-        queryClient.setQueryData(
-          ['firebase', 'docs', 'trips', id, 'tripMembers'],
-          previousUsersData
-        )
-      }
       toast.error('Error adding member to trip: ' + (error as Error).message)
       console.error('Error adding member to trip:', error)
       setIsAddingMember(null)

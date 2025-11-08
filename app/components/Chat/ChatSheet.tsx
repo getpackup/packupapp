@@ -17,11 +17,11 @@ import useAuth from '~/contexts/auth/useAuth'
 import { createChatMessage } from '~/lib/chat'
 import { cn } from '~/lib/utils'
 import {
-  useCreateSubCollectionDocument,
-  useSubCollectionSubscription,
+  useCreateChatMessage,
+  useTripChatMessagesQuery,
+  useTripChatReadStatusQuery,
   useUpdateTypingStatus,
-} from '~/services/api'
-import type { ChatMessage, UserReadStatus } from '~/types/Chat'
+} from '~/services/trips'
 import type { Trip } from '~/types/Trip'
 import type { User } from '~/types/User'
 
@@ -51,23 +51,19 @@ function ChatSheet({ trip, users }: ChatSheetProps) {
 
   const constraints = useMemo(() => [orderBy('createdAt', 'asc')], [])
 
-  const { data: messages } = useSubCollectionSubscription<ChatMessage[]>(
-    'trips',
-    'messages',
-    trip.tripId,
-    constraints
-  )
+  const { data: messages } = useTripChatMessagesQuery({
+    tripId: trip.tripId,
+    constraints,
+    queryOptions: {
+      enabled: !!trip?.tripId && trip?.tripMembers && Object.keys(trip.tripMembers).length > 0,
+    },
+  })
 
-  const { data: typingStatuses } = useSubCollectionSubscription<UserReadStatus[]>(
-    'trips',
-    'chatReadStatus',
-    trip.tripId
-  )
+  const { data: typingStatuses } = useTripChatReadStatusQuery({
+    tripId: trip.tripId,
+  })
 
-  const { mutateAsync: sendMessage } = useCreateSubCollectionDocument<ChatMessage>(
-    'trips',
-    'messages'
-  )
+  const { mutateAsync: sendMessage } = useCreateChatMessage()
 
   const { mutateAsync: updateTypingStatus } = useUpdateTypingStatus(trip.tripId, user?.uid)
 
@@ -84,7 +80,7 @@ function ChatSheet({ trip, users }: ChatSheetProps) {
         user.photoURL ?? undefined,
         replyToMessageId ?? undefined
       )
-      await sendMessage({ parentDocId: trip.tripId, data: newMessage })
+      await sendMessage({ tripId: trip.tripId, data: newMessage })
       setReplyToMessageId(null)
     },
     [

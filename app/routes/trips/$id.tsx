@@ -7,9 +7,7 @@ import PageContent from '~/components/PageContent'
 import PageHeader from '~/components/PageHeader'
 import TripDetailsSidebar from '~/components/Trip/TripDetailsSidebar'
 import TripPackingList from '~/components/Trip/TripPackingList'
-import { useCollection, useDocument } from '~/services/api'
-import type { Trip } from '~/types/Trip'
-import type { User } from '~/types/User'
+import { useTripByIdQuery, useTripMembersQuery } from '~/services/trips'
 
 import type { Route } from './+types/$id'
 
@@ -20,7 +18,20 @@ export function meta({}: Route.MetaArgs) {
 export default function TripDetails({ params }: Route.ComponentProps) {
   const { id } = params
 
-  const { data: trip } = useDocument<Trip>('trips', id)
+  const { data: trip } = useTripByIdQuery({ tripId: id })
+
+  const constraints =
+    trip?.tripMembers && Object.keys(trip.tripMembers).length > 0
+      ? [where('uid', 'in', Object.keys(trip.tripMembers)), limit(10)]
+      : []
+
+  const { data: users } = useTripMembersQuery({
+    tripId: id,
+    constraints,
+    queryOptions: {
+      enabled: trip?.tripMembers && Object.keys(trip.tripMembers).length > 0,
+    },
+  })
 
   useEffect(() => {
     if (trip?.name) {
@@ -29,16 +40,6 @@ export default function TripDetails({ params }: Route.ComponentProps) {
       document.title = 'Trip Details | Packup'
     }
   }, [trip?.name])
-
-  const constraints =
-    trip?.tripMembers && Object.keys(trip.tripMembers).length > 0
-      ? [where('uid', 'in', Object.keys(trip.tripMembers)), limit(6)]
-      : undefined
-
-  const { data: users } = useCollection<User[]>('users', constraints, {
-    enabled: trip?.tripMembers && Object.keys(trip.tripMembers).length > 0,
-    queryKey: ['firebase', 'docs', 'trips', trip?.tripId, 'tripMembers'],
-  })
 
   return (
     <>

@@ -23,7 +23,7 @@ import {
 } from '~/components/ui/dropdown-menu'
 import useAuth from '~/contexts/auth/useAuth'
 import { cn } from '~/lib/utils'
-import { useDeleteSubCollectionDocument, useUpdateSubCollectionDocument } from '~/services/api'
+import { useDeleteChatMessage, useUpdateChatMessage } from '~/services/trips'
 import type { ChatMessage } from '~/types/Chat'
 import type { User } from '~/types/User'
 
@@ -65,9 +65,12 @@ export default function MessageBubble({
 }: MessageBubbleProps) {
   const { user: currentUser } = useAuth()
   const { id } = useParams()
-  const { mutateAsync: deleteMessage } = useDeleteSubCollectionDocument('trips', 'messages')
+  const { mutateAsync: deleteMessageAsync } = useDeleteChatMessage()
 
-  const { mutateAsync: updateMessage } = useUpdateSubCollectionDocument('trips', 'messages')
+  const { mutateAsync: updateMessage } = useUpdateChatMessage({
+    tripId: id ?? '',
+    chatMessageId: message.id,
+  })
 
   const onReact = (emoji: string) => {
     if (!id || !message.id || !currentUser?.uid) return
@@ -96,16 +99,15 @@ export default function MessageBubble({
     }
 
     updateMessage({
-      parentDocId: id,
-      id: message.id,
       data: { reactions: updatedReactions },
     })
   }
 
   const onDelete = () => {
     if (!id || !message.id) return
-    deleteMessage({ parentDocId: id, id: message.id })
+    deleteMessageAsync({ tripId: id, chatMessageId: message.id })
   }
+
   return (
     <div className="group flex w-full gap-2 last:pb-4">
       <Avatar className="mt-1 size-8 border">

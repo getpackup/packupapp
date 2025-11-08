@@ -17,7 +17,7 @@ import { animated, useSpring } from 'react-spring'
 
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { cn } from '~/lib/utils'
-import { useDeleteSubCollectionDocument, useUpdateSubCollectionDocument } from '~/services/api'
+import { useDeletePackingListItem, useUpdatePackingListItem } from '~/services/trips'
 import { type PackingListItem } from '~/types/PackingListItem'
 import type { User } from '~/types/User'
 
@@ -74,19 +74,13 @@ const TripPackingListItem = ({
     config: springConfig,
   })
 
-  const { mutate: updatePackingListItem } = useUpdateSubCollectionDocument('trips', 'packing-list')
-  const { mutate: deletePackingListItem } = useDeleteSubCollectionDocument('trips', 'packing-list')
+  const { mutateAsync: updatePackingListItemAsync } = useUpdatePackingListItem({ tripId: id ?? '' })
+  const { mutateAsync: deletePackingListItemAsync } = useDeletePackingListItem()
 
   const togglePacked = () => {
     if (!id || !item.id) return
 
-    updatePackingListItem({
-      parentDocId: id,
-      id: item.id,
-      data: {
-        isPacked: !item.isPacked,
-      },
-    })
+    updatePackingListItemAsync({ data: { id: item.id, isPacked: !item.isPacked } })
   }
 
   const handleQuantityChange = (change: number) => {
@@ -96,13 +90,7 @@ const TripPackingListItem = ({
 
     if (newQuantity < 1) return
 
-    updatePackingListItem({
-      parentDocId: id,
-      id: item.id,
-      data: {
-        quantity: newQuantity,
-      },
-    })
+    updatePackingListItemAsync({ data: { id: item.id, quantity: newQuantity } })
   }
 
   const handleMoveToOrFromGroupItems = () => {
@@ -110,27 +98,17 @@ const TripPackingListItem = ({
 
     const isAlreadyShared = item.packedBy[0].isShared
 
-    updatePackingListItem({
-      parentDocId: id,
-      id: item.id,
-      data: {
-        ...item,
-        packedBy: [
-          {
-            ...item.packedBy[0],
-            isShared: !isAlreadyShared,
-          },
-        ],
-      },
+    updatePackingListItemAsync({
+      data: { id: item.id, packedBy: [{ ...item.packedBy[0], isShared: !isAlreadyShared }] },
     })
   }
 
   const handleDelete = () => {
     if (!id || !item.id) return
 
-    deletePackingListItem({
-      parentDocId: id,
-      id: item.id,
+    deletePackingListItemAsync({
+      tripId: id,
+      packingListItemId: item.id,
     })
   }
 

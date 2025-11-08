@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PopoverClose } from '@radix-ui/react-popover'
-import { useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { useParams } from 'react-router'
 import { toast } from 'sonner'
@@ -15,8 +14,7 @@ import {
   FormMessage,
 } from '~/components/ui/form'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
-import { firebaseKeys, useUpdateDocument } from '~/services/api'
-import type { Trip } from '~/types/Trip'
+import { useUpdateTrip } from '~/services/trips'
 
 import { Button } from '../ui/button'
 import { Textarea } from '../ui/textarea'
@@ -28,9 +26,8 @@ export function EditTripDescription({
   description: string
   children: React.ReactNode
 }) {
-  const { mutateAsync: updateDocument } = useUpdateDocument('trips')
   const { id } = useParams()
-  const queryClient = useQueryClient()
+  const { mutateAsync: updateTripAsync } = useUpdateTrip(String(id))
 
   const formSchema = z.object({
     description: z
@@ -52,56 +49,11 @@ export function EditTripDescription({
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     form.reset({ description: values.description })
 
-    await queryClient.cancelQueries({ queryKey: firebaseKeys.doc('trips', id) })
-
-    const previousTripData = queryClient.getQueryData<Trip>(firebaseKeys.doc('trips', id))
-    queryClient.setQueryData<Trip>(firebaseKeys.doc('trips', id), (old: Trip | undefined) => {
-      if (!old) return old
-      return {
-        ...old,
-        description: values.description,
-      }
-    })
-
     try {
-      await updateDocument(
-        {
-          id: id,
-          data: {
-            ...previousTripData,
-            description: values.description || '',
-          },
-        },
-        {
-          onSuccess: async () => {
-            queryClient.invalidateQueries({ queryKey: firebaseKeys.doc('trips', id) })
-
-            toast.success(`Trip description successfully updated`)
-            // trackEvent('Trip Description Updated Successfully', {
-            //   tripId: id,
-            //   ...previousTripData,
-            //   description: values.description,
-            // })
-          },
-          onError: (err: Error) => {
-            // Rollback optimistic updates on error
-            if (previousTripData) {
-              queryClient.setQueryData(firebaseKeys.doc('trips', id), previousTripData)
-            }
-            // trackEvent(`Trip Description Update Failure`, {
-            // tripId: id,
-            //   ...previousTripData,
-            // error: err,
-            // })
-            toast.error(err.message)
-          },
-        }
-      )
+      await updateTripAsync({
+        data: { description: values.description },
+      })
     } catch (error) {
-      // Rollback optimistic updates on error
-      if (previousTripData) {
-        queryClient.setQueryData(firebaseKeys.doc('trips', id), previousTripData)
-      }
       toast.error('Error updating trip description: ' + (error as Error).message)
       console.error('Error updating trip description:', error)
     }

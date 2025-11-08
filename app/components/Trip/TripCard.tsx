@@ -8,11 +8,9 @@ import useAuth from '~/contexts/auth/useAuth'
 import { createSystemMessage } from '~/lib/chat'
 import { formattedDate, formattedDateRange } from '~/lib/date'
 import { cn } from '~/lib/utils'
-import { useCollection, useCreateSubCollectionDocument, useUpdateDocument } from '~/services/api'
-import type { ChatMessage } from '~/types/Chat'
+import { useCreateChatMessage, useTripMembersQuery, useUpdateTrip } from '~/services/trips'
 import type { Trip } from '~/types/Trip'
 import { TripMemberStatus } from '~/types/TripMember'
-import type { User } from '~/types/User'
 
 import StackedAvatars from '../StackedAvatars'
 import StaticMapImage from '../StaticMapImage'
@@ -34,20 +32,20 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
 
   const { user } = useAuth()
 
-  const { mutateAsync: updateDocument } = useUpdateDocument('trips')
-  const { mutateAsync: sendMessage } = useCreateSubCollectionDocument<ChatMessage>(
-    'trips',
-    'messages'
-  )
+  const { mutateAsync: updateTripAsync } = useUpdateTrip(trip.tripId)
+  const { mutateAsync: sendMessage } = useCreateChatMessage()
 
   const constraints =
     trip?.tripMembers && Object.keys(trip.tripMembers).length > 0
-      ? [where('uid', 'in', Object.keys(trip.tripMembers)), limit(6)]
-      : undefined
+      ? [where('uid', 'in', Object.keys(trip.tripMembers)), limit(10)]
+      : []
 
-  const { data: users } = useCollection<User[]>('users', constraints, {
-    enabled: trip?.tripMembers && Object.keys(trip.tripMembers).length > 0,
-    queryKey: ['firebase', 'docs', 'trips', trip?.tripId, 'tripMembers'],
+  const { data: users } = useTripMembersQuery({
+    tripId: trip.tripId,
+    constraints,
+    queryOptions: {
+      enabled: trip?.tripMembers && Object.keys(trip.tripMembers).length > 0,
+    },
   })
 
   const getInvitedByText = () => {
@@ -82,10 +80,10 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
     const newMessage = createSystemMessage(
       `@${user.username} has ${status.toLowerCase()} the trip invitation.`
     )
-    await sendMessage({ parentDocId: trip.tripId, data: newMessage })
+    await sendMessage({ tripId: trip.tripId, data: newMessage })
   }
 
-  const acceptOrDeclineInvitation = (status: TripMemberStatus) => {
+  const acceptOrDeclineInvitation = async (status: TripMemberStatus) => {
     if (trip && user?.uid) {
       const payload = {
         [`tripMembers.${user.uid}`]: {
@@ -97,39 +95,18 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
         },
       }
 
-      updateDocument(
-        { id: trip.tripId, data: payload },
-        {
-          onSuccess: async () => {
-            // trackEvent(`Trip Party Member ${status}`, {
-            //   ...trip,
-            //   acceptedMember: user.uid,
-            //   status,
-            // })
-            await sendTripMemberStatusMessage(status)
-            if (status === TripMemberStatus.Accepted) {
-              toast.success(
-                `Excellent! Let's start thinking about what you'll need to bring next 🤙`
-              )
-              navigate(`/trips/${trip.tripId}/generator`)
-            }
-            if (status === TripMemberStatus.Declined) {
-              toast.success(`Bummer... You have successfully declined to go on the trip 😔`)
-              // refetch the trips collection so the pending trip is removed
-              refetch?.()
-            }
-          },
-          onError: (err: Error) => {
-            // trackEvent(`Trip Party Member ${status} Failure`, {
-            //   ...trip,
-            //   acceptedMember: user.uid,
-            //   status,
-            // error: err,
-            // })
-            toast.error(err.message)
-          },
+      await updateTripAsync({ data: payload }).then(async () => {
+        await sendTripMemberStatusMessage(status)
+        if (status === TripMemberStatus.Accepted) {
+          toast.success(`Excellent! Let's start thinking about what you'll need to bring next 🤙`)
+          navigate(`/trips/${trip.tripId}/generator`)
         }
-      )
+        if (status === TripMemberStatus.Declined) {
+          toast.success(`Bummer... You have successfully declined to go on the trip 😔`)
+          // refetch the trips collection so the pending trip is removed
+          refetch?.()
+        }
+      })
     }
   }
 
@@ -143,7 +120,7 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
         }
       )}
       tabIndex={0}
-      onClick={() => (isPending ? null : navigate(`/trips/${trip.id}`))}
+      onClick={() => (isPending ? null : navigate(`/trips/${trip.tripId}`))}
     >
       <div className="relative w-2/5">
         {showRemaining && (
@@ -183,7 +160,7 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
             {isPending ? (
               <h2 className="mb-2 text-2xl font-bold">{trip.name}</h2>
             ) : (
-              <Link to={`/trips/${trip.id}`}>
+              <Link to={`/trips/${trip.tripId}`}>
                 <h2 className="mb-2 text-2xl font-bold">{trip.name}</h2>
               </Link>
             )}
@@ -213,7 +190,7 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
 
           <div className="flex flex-wrap gap-2">
             {trip.tags.map((tag: string) => (
-              <Badge key={`${trip.id}-${tag}-tag`} variant="outline">
+              <Badge key={`${trip.tripId}-${tag}-tag`} variant="outline">
                 {tag}
               </Badge>
             ))}

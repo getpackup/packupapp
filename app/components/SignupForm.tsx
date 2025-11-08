@@ -18,7 +18,7 @@ import { firebaseAuth } from '~/firebase/config'
 import { generatePassword } from '~/lib/generatePassword'
 import useBoop from '~/lib/useBoop'
 import { cn } from '~/lib/utils'
-import { useCreateUser } from '~/services/api'
+import { useCreateUser } from '~/services/users'
 
 import AnimatedContainer from './AnimatedContainer'
 import { Button } from './ui/button'
