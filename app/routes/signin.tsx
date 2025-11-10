@@ -1,17 +1,23 @@
 import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth'
 import { Loader2, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import { toast } from 'sonner'
 
 import { Logo } from '~/components/Logo'
 import { firebaseAuth } from '~/firebase/config'
+import { trackPage } from '~/lib/analytics'
 
 export default function Signin() {
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [isSigningInWithEmail, setIsSigningInWithEmail] = useState(false)
   const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    trackPage('Signing In', location.pathname, document.title)
+  }, [location.pathname])
 
   useEffect(() => {
     setIsClient(true)

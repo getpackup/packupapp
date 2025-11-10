@@ -4,6 +4,7 @@ import './app.css'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 // import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
+import { useEffect } from 'react'
 import {
   data,
   isRouteErrorResponse,
@@ -23,6 +24,7 @@ import { Toaster } from '~/components/ui/sonner'
 import type { Route } from './+types/root'
 import { TooltipProvider } from './components/ui/tooltip'
 import { gdprConsent, themePreferenceCookie } from './cookies.server'
+import { trackPageLeave } from './lib/analytics'
 import { getBodyClassNames } from './lib/getBodyClassNames'
 import { cn } from './lib/utils'
 
@@ -83,6 +85,11 @@ const queryClient = new QueryClient({
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const loaderData = useLoaderData<RootLoaderData>()
+
+  useEffect(() => {
+    // if (loaderData.showCookieBanner) return
+    return trackPageLeave()
+  }, [])
 
   const bodyClassNames = cn(
     `transition-colors duration-500 ease-in-out min-h-screen font-sans-serif min-h-screen relative`,

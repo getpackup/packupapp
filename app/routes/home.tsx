@@ -1,12 +1,13 @@
 import { onAuthStateChanged } from 'firebase/auth'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 
 import FullPageSpinner from '~/components/FullPageSpinner'
 import { LoginForm } from '~/components/LoginForm'
 import { Logo } from '~/components/Logo'
 import { Separator } from '~/components/ui/separator'
 import { firebaseAuth } from '~/firebase/config'
+import { trackPage } from '~/lib/analytics'
 
 import type { Route } from './+types/home'
 
@@ -24,6 +25,11 @@ export function meta({}: Route.MetaArgs) {
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true)
   const navigate = useNavigate()
+  const location = useLocation()
+
+  useEffect(() => {
+    trackPage('Log In', location.pathname, document.title)
+  }, [location.pathname])
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {

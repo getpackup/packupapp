@@ -1,4 +1,7 @@
-import { redirect } from 'react-router'
+import { useEffect } from 'react'
+import { redirect, useLocation } from 'react-router'
+
+import { trackPage } from '~/lib/analytics'
 
 export async function loader() {
   return redirect('/')
@@ -9,6 +12,12 @@ export default function CatchAll() {
 }
 
 export function ErrorBoundary() {
+  const location = useLocation()
+
+  useEffect(() => {
+    trackPage('Page Not Found', location.pathname, document.title)
+  }, [location.pathname])
+
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">

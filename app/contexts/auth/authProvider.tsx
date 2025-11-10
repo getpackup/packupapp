@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import FullPageSpinner from '~/components/FullPageSpinner'
 import { firebaseAuth } from '~/firebase/config'
+import { identify } from '~/lib/analytics'
 import { useUserByIdQuery } from '~/services/users'
 import type { User } from '~/types/User'
 
@@ -67,7 +68,16 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   }, [isInitialized])
 
   useEffect(() => {
-    setUser(currentUser)
+    if (currentUser) {
+      setUser(currentUser)
+      identify(
+        currentUser.email,
+        currentUser.uid,
+        currentUser.displayName,
+        currentUser.createdAt?.toDate().toISOString() ?? '',
+        currentUser?.username
+      )
+    }
   }, [currentUser])
 
   // Don't show loading spinner if we already have a user
