@@ -25,7 +25,9 @@ export default function MessageInput({
 
   useEffect(() => {
     if (replyToMessageId) {
-      inputRef.current?.focus()
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 500)
     }
   }, [replyToMessageId])
 

@@ -15,11 +15,6 @@ export interface ChatMessage {
     [emoji: string]: string[] // emoji -> array of userIds who reacted
   }
   replyToMessageId?: string
-
-  // Metadata
-  metadata?: {
-    [key: string]: any // For future extensions
-  }
 }
 
 // ==========================================

@@ -25,6 +25,13 @@ export default function ChatContainer({
   const lastMessageCountRef = useRef(messages.length)
 
   useEffect(() => {
+    // instantly scroll to bottom on mount
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight
+    }
+  }, [])
+
+  useEffect(() => {
     if (!scrollContainerRef.current) return
 
     const container = scrollContainerRef.current
