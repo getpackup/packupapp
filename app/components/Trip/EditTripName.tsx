@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PopoverClose } from '@radix-ui/react-popover'
-import { useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { useParams } from 'react-router'
 import { toast } from 'sonner'
@@ -16,8 +15,7 @@ import {
 } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
-import { firebaseKeys, useUpdateDocument } from '~/services/api'
-import type { Trip } from '~/types/Trip'
+import { useUpdateTrip } from '~/services/trips'
 
 import { Button } from '../ui/button'
 
@@ -28,9 +26,8 @@ export function EditTripName({
   tripName: string
   children: React.ReactNode
 }) {
-  const { mutateAsync: updateDocument } = useUpdateDocument('trips')
   const { id } = useParams()
-  const queryClient = useQueryClient()
+  const { mutateAsync: updateTripAsync } = useUpdateTrip(String(id))
 
   const formSchema = z.object({
     name: z
@@ -53,56 +50,11 @@ export function EditTripName({
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     form.reset({ name: values.name })
 
-    await queryClient.cancelQueries({ queryKey: firebaseKeys.doc('trips', id) })
-
-    const previousTripData = queryClient.getQueryData<Trip>(firebaseKeys.doc('trips', id))
-    queryClient.setQueryData<Trip>(firebaseKeys.doc('trips', id), (old: Trip | undefined) => {
-      if (!old) return old
-      return {
-        ...old,
-        name: values.name,
-      }
-    })
-
     try {
-      await updateDocument(
-        {
-          id: id,
-          data: {
-            ...previousTripData,
-            name: values.name,
-          },
-        },
-        {
-          onSuccess: async () => {
-            queryClient.invalidateQueries({ queryKey: firebaseKeys.doc('trips', id) })
-
-            toast.success(`Trip name successfully updated`)
-            // trackEvent('Trip Name Updated Successfully', {
-            //   tripId: id,
-            //   ...previousTripData,
-            //   name: values.name,
-            // })
-          },
-          onError: (err: Error) => {
-            // Rollback optimistic updates on error
-            if (previousTripData) {
-              queryClient.setQueryData(firebaseKeys.doc('trips', id), previousTripData)
-            }
-            // trackEvent(`Trip Name Update Failure`, {
-            // tripId: id,
-            //   ...previousTripData,
-            // error: err,
-            // })
-            toast.error(err.message)
-          },
-        }
-      )
+      await updateTripAsync({
+        data: { name: values.name },
+      })
     } catch (error) {
-      // Rollback optimistic updates on error
-      if (previousTripData) {
-        queryClient.setQueryData(firebaseKeys.doc('trips', id), previousTripData)
-      }
       toast.error('Error updating trip name: ' + (error as Error).message)
       console.error('Error updating trip name:', error)
     }

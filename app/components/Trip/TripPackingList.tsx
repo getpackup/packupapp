@@ -5,7 +5,7 @@ import useAuth from '~/contexts/auth/useAuth'
 import { usePackingListState } from '~/contexts/globalState'
 import groupPackingList from '~/lib/groupPackingListItems'
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
-import { useSubCollection } from '~/services/api'
+import { useTripPackingListQuery } from '~/services/trips'
 import type { PackingListItem } from '~/types/PackingListItem'
 import type { User } from '~/types/User'
 
@@ -24,15 +24,13 @@ type TripPackingListProps = {
 const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
   const { user } = useAuth()
   const checkboxSounds = useCheckboxSounds()
-  const { data: packingList, isLoading } = useSubCollection<PackingListItem[]>(
-    'trips',
-    'packing-list',
+  const { data: packingList, isLoading } = useTripPackingListQuery({
     tripId,
-    [orderBy('category', 'asc')],
-    {
+    constraints: [orderBy('category', 'asc')],
+    queryOptions: {
       enabled: !!tripId,
-    }
-  )
+    },
+  })
 
   const {
     activePackingListFilter,

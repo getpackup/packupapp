@@ -1,5 +1,4 @@
 import { PopoverClose } from '@radix-ui/react-popover'
-import { useQueryClient } from '@tanstack/react-query'
 import { endOfDay, startOfDay } from 'date-fns'
 import { Timestamp } from 'firebase/firestore'
 import { useState } from 'react'
@@ -8,8 +7,7 @@ import { useParams } from 'react-router'
 import { toast } from 'sonner'
 
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
-import { firebaseKeys, useUpdateDocument } from '~/services/api'
-import type { Trip } from '~/types/Trip'
+import { useUpdateTrip } from '~/services/trips'
 
 import { Button } from '../ui/button'
 import { Calendar } from '../ui/calendar'
@@ -24,13 +22,12 @@ export function EditTripDates({
   startDate: Timestamp
   endDate: Timestamp
 }) {
+  const { id } = useParams()
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: startDate.toDate(),
     to: endDate.toDate(),
   })
-  const { mutateAsync: updateDocument } = useUpdateDocument('trips')
-  const { id } = useParams()
-  const queryClient = useQueryClient()
+  const { mutateAsync: updateTripAsync } = useUpdateTrip(String(id))
 
   const startDateHasChanged = dateRange?.from !== startDate.toDate()
   const endDateHasChanged = dateRange?.to !== endDate.toDate()
@@ -41,58 +38,16 @@ export function EditTripDates({
     // mock esc keypress to close the popover
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
 
-    await queryClient.cancelQueries({ queryKey: firebaseKeys.doc('trips', id) })
-
     const newDates = {
       startDate: Timestamp.fromDate(startOfDay(dateRange?.from ?? startDate.toDate())),
       endDate: Timestamp.fromDate(endOfDay(dateRange?.to ?? endDate.toDate())),
     }
 
-    const previousTripData = queryClient.getQueryData<Trip>(firebaseKeys.doc('trips', id))
-    queryClient.setQueryData<Trip>(firebaseKeys.doc('trips', id), (old: Trip | undefined) => {
-      if (!old) return old
-      return {
-        ...old,
-        ...newDates,
-      }
-    })
-
     try {
-      await updateDocument(
-        {
-          id: id,
-          data: { ...previousTripData, ...newDates },
-        },
-        {
-          onSuccess: async () => {
-            queryClient.invalidateQueries({ queryKey: firebaseKeys.doc('trips', id) })
-
-            toast.success(`Trip dates successfully updated`)
-            // trackEvent('Trip Date Updated Successfully', {
-            //   tripId: id,
-            //   ...previousTripData,
-            //   ...newDates,
-            // })
-          },
-          onError: (err: Error) => {
-            // Rollback optimistic updates on error
-            if (previousTripData) {
-              queryClient.setQueryData(firebaseKeys.doc('trips', id), previousTripData)
-            }
-            // trackEvent(`Trip Dates Update Failure`, {
-            // tripId: id,
-            //   ...previousTripData,
-            // error: err,
-            // })
-            toast.error(err.message)
-          },
-        }
-      )
+      await updateTripAsync({
+        data: { ...newDates },
+      })
     } catch (error) {
-      // Rollback optimistic updates on error
-      if (previousTripData) {
-        queryClient.setQueryData(firebaseKeys.doc('trips', id), previousTripData)
-      }
       toast.error('Error updating trip dates: ' + (error as Error).message)
       console.error('Error updating trip dates:', error)
     }

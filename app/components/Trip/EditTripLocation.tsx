@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PopoverClose } from '@radix-ui/react-popover'
-import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useParams } from 'react-router'
@@ -18,8 +17,7 @@ import {
 import { Input } from '~/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { loadGoogleMapsApi } from '~/lib/loadGoogleMapsApi'
-import { firebaseKeys, useUpdateDocument } from '~/services/api'
-import type { Trip } from '~/types/Trip'
+import { useUpdateTrip } from '~/services/trips'
 
 import { Button } from '../ui/button'
 
@@ -42,9 +40,8 @@ export function EditTripLocation({
   startingPoint: string
   children: React.ReactNode
 }) {
-  const { mutateAsync: updateDocument } = useUpdateDocument('trips')
   const { id } = useParams()
-  const queryClient = useQueryClient()
+  const { mutateAsync: updateTripAsync } = useUpdateTrip(String(id))
 
   const [predictions, setPredictions] = useState<any[]>([])
   const [isPlacesReady, setIsPlacesReady] = useState(false)
@@ -159,65 +156,15 @@ export function EditTripLocation({
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     form.reset({ lat: values.lat, lng: values.lng, name: values.name })
 
-    await queryClient.cancelQueries({ queryKey: firebaseKeys.doc('trips', id) })
-
-    const previousTripData = queryClient.getQueryData<Trip>(firebaseKeys.doc('trips', id))
-    queryClient.setQueryData<Trip>(firebaseKeys.doc('trips', id), (old: Trip | undefined) => {
-      if (!old) return old
-      return {
-        ...old,
-        lat: values.lat,
-        lng: values.lng,
-        startingPoint: values.name,
-      }
-    })
-
     try {
-      await updateDocument(
-        {
-          id: id,
-          data: {
-            ...previousTripData,
-            lat: values.lat,
-            lng: values.lng,
-            startingPoint: values.name,
-          },
+      await updateTripAsync({
+        data: {
+          lat: values.lat,
+          lng: values.lng,
+          startingPoint: values.name,
         },
-        {
-          onSuccess: async () => {
-            queryClient.invalidateQueries({ queryKey: firebaseKeys.doc('trips', id) })
-
-            toast.success(`Trip location successfully updated`)
-            // trackEvent('Trip Location Updated Successfully', {
-            //   tripId: id,
-            //   ...previousTripData,
-            //   lat: values.lat,
-            //   lng: values.lng,
-            //   startingPoint: values.name,
-            // })
-          },
-          onError: (err: Error) => {
-            // Rollback optimistic updates on error
-            if (previousTripData) {
-              queryClient.setQueryData(firebaseKeys.doc('trips', id), previousTripData)
-            }
-            // trackEvent(`Trip Location Update Failure`, {
-            // tripId: id,
-            //   ...previousTripData,
-            //   lat: values.lat,
-            //   lng: values.lng,
-            //   startingPoint: values.name,
-            // error: err,
-            // })
-            toast.error(err.message)
-          },
-        }
-      )
+      })
     } catch (error) {
-      // Rollback optimistic updates on error
-      if (previousTripData) {
-        queryClient.setQueryData(firebaseKeys.doc('trips', id), previousTripData)
-      }
       toast.error('Error updating trip location: ' + (error as Error).message)
       console.error('Error updating trip location:', error)
     }
