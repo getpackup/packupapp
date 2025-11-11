@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Timestamp } from 'firebase/firestore'
 import { Loader2, Plus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { useParams } from 'react-router'
@@ -25,8 +26,7 @@ import {
 } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import useAuth from '~/contexts/auth/useAuth'
-import { useCreateSubCollectionDocument } from '~/services/api'
-import type { PackingListItem } from '~/types/PackingListItem'
+import { useCreatePackingListItem } from '~/services/trips'
 
 import { Checkbox } from '../ui/checkbox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
@@ -40,8 +40,7 @@ function AddPackingListDialog({ categoryName, onItemCreated }: AddPackingListDia
   const { id } = useParams()
   const { user } = useAuth()
 
-  const { mutateAsync: createPackingListItem, isPending } =
-    useCreateSubCollectionDocument<PackingListItem>('trips', 'packing-list')
+  const { mutateAsync: createPackingListItem, isPending } = useCreatePackingListItem()
 
   const formSchema = z.object({
     name: z.string().min(3, 'Item name must be at least 3 characters'),
@@ -63,8 +62,9 @@ function AddPackingListDialog({ categoryName, onItemCreated }: AddPackingListDia
     //TODO: Add save to gear closet logic
 
     const result = await createPackingListItem({
-      parentDocId: id,
+      tripId: id,
       data: {
+        created: Timestamp.now(),
         category: categoryName,
         description: '',
         isEssential: false,

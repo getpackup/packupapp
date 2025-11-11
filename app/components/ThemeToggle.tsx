@@ -9,7 +9,7 @@ import { useAuth } from '~/contexts/auth/useAuth'
 import { useSoundsState } from '~/contexts/globalState'
 import useBoop from '~/lib/useBoop'
 import { useRootLoaderData } from '~/lib/useRootLoaderData'
-import { useUpdateDocument } from '~/services/api'
+import { useUpdateUser } from '~/services/users'
 
 export function ThemeToggle() {
   const { soundsEnabled } = useSoundsState()
@@ -24,7 +24,7 @@ export function ThemeToggle() {
 
   const { themePreference } = useRootLoaderData()
   const { user } = useAuth()
-  const updateUser = useUpdateDocument('users')
+  const { mutateAsync: updateUserAsync } = useUpdateUser(user?.uid ?? '')
 
   const isDarkMode = themePreference === 'dark'
 
@@ -36,10 +36,11 @@ export function ThemeToggle() {
     // Update theme preference in Firebase
     if (user?.uid) {
       const newTheme = isDarkMode ? 'light' : 'dark'
-      updateUser.mutate({
-        id: user.uid,
+      updateUserAsync({
         data: {
-          'preferences.theme': newTheme,
+          preferences: {
+            theme: newTheme,
+          },
         },
       })
     }

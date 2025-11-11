@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 
 import FullPageSpinner from '~/components/FullPageSpinner'
 import { firebaseAuth } from '~/firebase/config'
-import { useGetUser } from '~/services/api'
+import { identify } from '~/lib/analytics'
+import { useUserByIdQuery } from '~/services/users'
 import type { User } from '~/types/User'
 
 import AuthContext from './authContext'
@@ -14,7 +15,9 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const [user, setUser] = useState<User | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
 
-  const { data: userData, isLoading: userDataLoading } = useGetUser(firebaseUser?.uid ?? '')
+  const { data: userData, isLoading: userDataLoading } = useUserByIdQuery({
+    userId: firebaseUser?.uid ?? '',
+  })
 
   // Memoize the user object to prevent unnecessary re-renders
   const currentUser = useMemo((): User | null => {
@@ -32,6 +35,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       }
     } else {
       return {
+        id: firebaseUser.uid,
         email: firebaseUser.email ?? '',
         uid: firebaseUser.uid,
         displayName: firebaseUser.displayName ?? '',
@@ -64,7 +68,16 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   }, [isInitialized])
 
   useEffect(() => {
-    setUser(currentUser)
+    if (currentUser) {
+      setUser(currentUser)
+      identify(
+        currentUser.email,
+        currentUser.uid,
+        currentUser.displayName,
+        currentUser.createdAt?.toDate().toISOString() ?? '',
+        currentUser?.username
+      )
+    }
   }, [currentUser])
 
   // Don't show loading spinner if we already have a user

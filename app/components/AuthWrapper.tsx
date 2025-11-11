@@ -1,11 +1,29 @@
 import { useEffect } from 'react'
-import { Outlet, redirect, useNavigate } from 'react-router'
+import { Outlet, redirect, useLocation, useNavigate } from 'react-router'
 
 import AuthProvider from '~/contexts/auth/authProvider'
 import { firebaseAuth } from '~/firebase/config'
+import { trackPage } from '~/lib/analytics'
 import { isAuth } from '~/services/auth'
 
 import { Sidebar } from './Sidebar'
+
+const pageNameMap = (id?: string) => ({
+  '/': 'Home',
+  '/signin': 'Sign In',
+  '/signup': 'Sign Up',
+  '/feedback': 'Feedback',
+  '/friends': 'Friends',
+  '/gear-closet': 'Gear Closet',
+  '/profile': 'Profile',
+  '/settings': 'Settings',
+  '/shopping-list': 'Shopping List',
+  '/support': 'Support',
+  '/templates': 'Templates',
+  '/trips': 'Trips',
+  [`/trips/${id}`]: `Trip By ID: ${id}`,
+  '/trips/new': 'New Trip',
+})
 
 export async function clientLoader() {
   const isLogged = await isAuth()
@@ -16,6 +34,7 @@ export async function clientLoader() {
 
 export default function AuthWrapper() {
   const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     const unsubscribe = firebaseAuth.onAuthStateChanged((user) => {
@@ -26,6 +45,14 @@ export default function AuthWrapper() {
 
     return () => unsubscribe()
   }, [navigate])
+
+  useEffect(() => {
+    trackPage(
+      pageNameMap(location.pathname.split('/')[2])[location.pathname as keyof typeof pageNameMap],
+      location.pathname,
+      document.title
+    )
+  }, [location.pathname])
 
   return (
     <AuthProvider>

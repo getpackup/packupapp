@@ -69,6 +69,19 @@ body {
   }
 }
 
+@theme {
+  --animate-typing-dot-bounce: typing-dot-bounce 1.25s ease-out infinite;
+  @keyframes typing-dot-bounce {
+    0%,
+    40% {
+      transform: translateY(0);
+    }
+    20% {
+      transform: translateY(-0.25rem);
+    }
+  }
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

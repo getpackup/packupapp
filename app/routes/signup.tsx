@@ -1,11 +1,12 @@
 import { onAuthStateChanged } from 'firebase/auth'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 
 import { Logo } from '~/components/Logo'
 import { SignupForm } from '~/components/SignupForm'
 import { Separator } from '~/components/ui/separator'
 import { firebaseAuth } from '~/firebase/config'
+import { trackPage } from '~/lib/analytics'
 
 import type { Route } from './+types/home'
 
@@ -23,6 +24,11 @@ export function meta({}: Route.MetaArgs) {
 export default function Signup() {
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
+
+  useEffect(() => {
+    trackPage('Sign Up', location.pathname, document.title)
+  }, [location.pathname])
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {

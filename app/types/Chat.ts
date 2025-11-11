@@ -1,36 +1,20 @@
 import { Timestamp } from 'firebase/firestore'
 
-// ==========================================
-// CHAT MESSAGE MODEL
-// ==========================================
-// Stored in: trips/{tripId}/messages/{messageId}
 export interface ChatMessage {
   id: string
-  userId: string // ID of the user who sent the message
+  userId: string
   userName: string // Cached for display (avoids extra lookups)
-  userPhotoUrl?: string // Optional profile photo
+  userPhotoUrl?: string
   content: string
   createdAt: Timestamp
-  updatedAt?: Timestamp // For edited messages
+  updatedAt?: Timestamp
   isEdited: boolean
-  isDeleted: boolean // Soft delete - keeps message structure but hides content
-
-  // Message type support
-  type: 'text' | 'image' | 'system' // Extensible for future types
-  imageUrl?: string // If type is 'image'
-
-  // Reactions support
+  type: 'text' | 'image' | 'system'
+  imageUrl?: string
   reactions?: {
     [emoji: string]: string[] // emoji -> array of userIds who reacted
   }
-
-  // Reply/thread support (optional - for future enhancement)
   replyToMessageId?: string
-
-  // Metadata
-  metadata?: {
-    [key: string]: any // For future extensions
-  }
 }
 
 // ==========================================
@@ -79,55 +63,6 @@ export interface UnreadInfo {
   lastUnreadMessage?: ChatMessage
   hasUnread: boolean
 }
-
-// ==========================================
-// FIRESTORE HELPERS
-// ==========================================
-// Example helper functions for common operations
-
-export const createChatMessage = (
-  userId: string,
-  userName: string,
-  content: string,
-  userPhotoUrl?: string
-): Omit<ChatMessage, 'id'> => ({
-  userId,
-  userName,
-  userPhotoUrl,
-  content,
-  createdAt: Timestamp.now(),
-  isEdited: false,
-  isDeleted: false,
-  type: 'text',
-  reactions: {},
-})
-
-export const createSystemMessage = (content: string): Omit<ChatMessage, 'id'> => ({
-  userId: 'system',
-  userName: 'System',
-  content,
-  createdAt: Timestamp.now(),
-  isEdited: false,
-  isDeleted: false,
-  type: 'system',
-})
-
-export const initializeChatMetadata = (): ChatMetadata => ({
-  lastMessageAt: Timestamp.now(),
-  lastMessageContent: '',
-  lastMessageUserId: '',
-  lastMessageUserName: '',
-  messageCount: 0,
-  createdAt: Timestamp.now(),
-})
-
-export const initializeUserReadStatus = (userId: string): UserReadStatus => ({
-  userId,
-  lastReadAt: Timestamp.now(),
-  lastReadMessageId: '',
-  unreadCount: 0,
-  isTyping: false,
-})
 
 // ==========================================
 // USAGE NOTES

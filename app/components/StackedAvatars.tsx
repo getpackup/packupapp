@@ -36,8 +36,8 @@ const StackedAvatars = ({ tripMembers, users }: StackedAvatarsProps) => {
         return (
           <Tooltip key={tripMember.uid}>
             <TooltipTrigger>
-              <div className="*:data-[slot=avatar]:ring-sidebar *:data-[slot=avatar]:ring-2">
-                <Avatar>
+              <div>
+                <Avatar className="border">
                   <AvatarImage
                     src={user.photoURL}
                     gravatarEmail={user.email}

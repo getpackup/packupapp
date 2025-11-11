@@ -8,7 +8,7 @@ import z from 'zod'
 
 import { Form, FormLabel } from '~/components/ui/form'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
-import { firebaseKeys, useUpdateDocument } from '~/services/api'
+import { tripKeys, useUpdateTrip } from '~/services/trips'
 import type { GearListEnumType } from '~/types/GearItem'
 import type { Trip } from '~/types/Trip'
 
@@ -33,8 +33,8 @@ export function EditTripTags({
   options: GearListEnumType
   children: React.ReactNode
 }) {
-  const { mutateAsync: updateDocument } = useUpdateDocument('trips')
   const { id } = useParams()
+  const { mutateAsync: updateTripAsync } = useUpdateTrip(String(id))
   const queryClient = useQueryClient()
 
   const formKeys = options.map((option) => option.label)
@@ -55,9 +55,7 @@ export function EditTripTags({
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     form.reset({ ...Object.fromEntries(formKeys.map((key) => [key, values[key]])) })
 
-    await queryClient.cancelQueries({ queryKey: firebaseKeys.doc('trips', id) })
-
-    const previousTripData = queryClient.getQueryData<Trip>(firebaseKeys.doc('trips', id))
+    const previousTripData = queryClient.getQueryData<Trip>(tripKeys.byId(id))
     const tagsFromOtherGroups = (previousTripData?.tags ?? []).filter(
       (tag) => !formKeys.includes(tag)
     )
@@ -66,53 +64,13 @@ export function EditTripTags({
     )
     const updatedTags = [...tagsFromOtherGroups, ...updatedTagsFromThisGroup]
 
-    queryClient.setQueryData<Trip>(firebaseKeys.doc('trips', id), (old: Trip | undefined) => {
-      if (!old) return old
-      return {
-        ...old,
-        tags: updatedTags,
-      }
-    })
-
     try {
-      await updateDocument(
-        {
-          id: id,
-          data: {
-            ...previousTripData,
-            tags: updatedTags,
-          },
+      await updateTripAsync({
+        data: {
+          tags: updatedTags,
         },
-        {
-          onSuccess: async () => {
-            queryClient.invalidateQueries({ queryKey: firebaseKeys.doc('trips', id) })
-
-            toast.success(`${name} tags successfully updated`)
-            // trackEvent('Trip Name Updated Successfully', {
-            //   tripId: id,
-            //   ...previousTripData,
-            //   tags: updatedTags,
-            // })
-          },
-          onError: (err: Error) => {
-            // Rollback optimistic updates on error
-            if (previousTripData) {
-              queryClient.setQueryData(firebaseKeys.doc('trips', id), previousTripData)
-            }
-            // trackEvent(`Trip Name Update Failure`, {
-            // tripId: id,
-            //   ...previousTripData,
-            // error: err,
-            // })
-            toast.error(err.message)
-          },
-        }
-      )
+      })
     } catch (error) {
-      // Rollback optimistic updates on error
-      if (previousTripData) {
-        queryClient.setQueryData(firebaseKeys.doc('trips', id), previousTripData)
-      }
       toast.error(`Error updating trip ${name} tags: ` + (error as Error).message)
       console.error(`Error updating trip ${name} tags:`, error)
     }

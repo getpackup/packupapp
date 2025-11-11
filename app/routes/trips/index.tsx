@@ -9,7 +9,6 @@ import TripCard from '~/components/Trip/TripCard'
 import { useAuth } from '~/contexts/auth/useAuth'
 import { isBeforeToday } from '~/lib/date'
 import { isAfterToday } from '~/lib/date'
-import { useCollection } from '~/services/api'
 import type { Trip } from '~/types/Trip'
 import { TripMemberStatus } from '~/types/TripMember'
 
@@ -34,6 +33,7 @@ import { Link } from 'react-router'
 import { Logo } from '~/components/Logo'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
+import { useTripsQuery } from '~/services/trips'
 
 import type { Route } from './+types/index'
 
@@ -49,19 +49,17 @@ export default function Trips() {
     isLoading,
     error,
     refetch,
-  } = useCollection<Trip[]>(
-    'trips',
-    [
+  } = useTripsQuery({
+    constraints: [
       where(`tripMembers.${user?.uid}.status`, 'not-in', [
         TripMemberStatus.Declined,
         TripMemberStatus.Removed,
       ]),
     ],
-    {
+    queryOptions: {
       enabled: !!user?.uid,
-      queryKey: ['firebase', 'docs', 'trips'],
-    }
-  )
+    },
+  })
 
   const nonArchivedTrips = trips
     ?.filter((trip) => !trip.archived && trip.startDate)
@@ -117,7 +115,7 @@ export default function Trips() {
                     <div className="space-y-4">
                       {pendingTrips.map((trip: Trip) => (
                         <TripCard
-                          key={trip.id}
+                          key={trip.tripId}
                           trip={trip}
                           isPending
                           showCountdown
@@ -134,7 +132,7 @@ export default function Trips() {
                     <h2 className="text-2xl font-bold">In Progress</h2>
                     <div className="space-y-4">
                       {inProgressTrips.map((trip: Trip) => (
-                        <TripCard key={trip.id} trip={trip} showRemaining />
+                        <TripCard key={trip.tripId} trip={trip} showRemaining />
                       ))}
                     </div>
                   </div>
@@ -146,7 +144,7 @@ export default function Trips() {
                     <h2 className="text-2xl font-bold">Upcoming</h2>
                     <div className="space-y-4">
                       {upcomingTrips.map((trip: Trip) => (
-                        <TripCard key={trip.id} trip={trip} showCountdown />
+                        <TripCard key={trip.tripId} trip={trip} showCountdown />
                       ))}
                     </div>
                   </div>
@@ -165,7 +163,7 @@ export default function Trips() {
                             {pastTripsByYear[year]
                               .sort((a, b) => b.startDate.seconds - a.startDate.seconds) // Sort chronologically within year
                               .map((trip: Trip) => (
-                                <TripCard key={trip.id} trip={trip} />
+                                <TripCard key={trip.tripId} trip={trip} />
                               ))}
                           </div>
                         </div>
@@ -191,7 +189,7 @@ export default function Trips() {
                 </p>
                 <Button asChild variant="accent" className="group">
                   <Link to="/trips/new">
-                    <PlusCircle className="h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:rotate-90" />
+                    <PlusCircle className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:rotate-90" />
 
                     <span className="truncate">Create a new trip</span>
                   </Link>

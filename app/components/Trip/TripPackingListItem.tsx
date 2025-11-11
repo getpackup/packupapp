@@ -14,11 +14,11 @@ import {
 import { useState } from 'react'
 import { useParams } from 'react-router'
 import { animated, useSpring } from 'react-spring'
-import useSound from 'use-sound'
 
 import { useSoundsState } from '~/contexts/globalState'
+import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { cn } from '~/lib/utils'
-import { useDeleteSubCollectionDocument, useUpdateSubCollectionDocument } from '~/services/api'
+import { useDeletePackingListItem, useUpdatePackingListItem } from '~/services/trips'
 import { type PackingListItem } from '~/types/PackingListItem'
 import type { User } from '~/types/User'
 
@@ -39,6 +39,7 @@ type TripPackingListItemProps = {
   isMultiSelecting: boolean
   isSelected: boolean
   onItemSelection: (itemId: string, isShiftClick: boolean, isCommandClick: boolean) => void
+  sounds?: ReturnType<typeof useCheckboxSounds>
 }
 
 const TripPackingListItem = ({
@@ -46,6 +47,7 @@ const TripPackingListItem = ({
   isMultiSelecting,
   isSelected,
   onItemSelection,
+  sounds,
 }: TripPackingListItemProps) => {
   const { id } = useParams()
   const { soundsEnabled } = useSoundsState()
@@ -62,16 +64,6 @@ const TripPackingListItem = ({
 
   const [active, setActive] = useState(false)
 
-  const [playActive] = useSound('/sounds/pop-down.mp3', {
-    volume: 0.1,
-  })
-  const [playOn] = useSound('/sounds/pop-up-on.mp3', {
-    volume: 0.1,
-  })
-  const [playOff] = useSound('/sounds/pop-up-off.mp3', {
-    volume: 0.1,
-  })
-
   const filledScale = item.isPacked ? (active ? 1.4 : 1) : 0
   const filledSpring = useSpring({
     transform: `scale(${filledScale})`,
@@ -84,19 +76,13 @@ const TripPackingListItem = ({
     config: springConfig,
   })
 
-  const { mutate: updatePackingListItem } = useUpdateSubCollectionDocument('trips', 'packing-list')
-  const { mutate: deletePackingListItem } = useDeleteSubCollectionDocument('trips', 'packing-list')
+  const { mutateAsync: updatePackingListItemAsync } = useUpdatePackingListItem({ tripId: id ?? '' })
+  const { mutateAsync: deletePackingListItemAsync } = useDeletePackingListItem()
 
   const togglePacked = () => {
     if (!id || !item.id) return
 
-    updatePackingListItem({
-      parentDocId: id,
-      id: item.id,
-      data: {
-        isPacked: !item.isPacked,
-      },
-    })
+    updatePackingListItemAsync({ data: { id: item.id, isPacked: !item.isPacked } })
   }
 
   const handleQuantityChange = (change: number) => {
@@ -106,13 +92,7 @@ const TripPackingListItem = ({
 
     if (newQuantity < 1) return
 
-    updatePackingListItem({
-      parentDocId: id,
-      id: item.id,
-      data: {
-        quantity: newQuantity,
-      },
-    })
+    updatePackingListItemAsync({ data: { id: item.id, quantity: newQuantity } })
   }
 
   const handleMoveToOrFromGroupItems = () => {
@@ -120,27 +100,17 @@ const TripPackingListItem = ({
 
     const isAlreadyShared = item.packedBy[0].isShared
 
-    updatePackingListItem({
-      parentDocId: id,
-      id: item.id,
-      data: {
-        ...item,
-        packedBy: [
-          {
-            ...item.packedBy[0],
-            isShared: !isAlreadyShared,
-          },
-        ],
-      },
+    updatePackingListItemAsync({
+      data: { id: item.id, packedBy: [{ ...item.packedBy[0], isShared: !isAlreadyShared }] },
     })
   }
 
   const handleDelete = () => {
     if (!id || !item.id) return
 
-    deletePackingListItem({
-      parentDocId: id,
-      id: item.id,
+    deletePackingListItemAsync({
+      tripId: id,
+      packingListItemId: item.id,
     })
   }
 
@@ -173,13 +143,13 @@ const TripPackingListItem = ({
                 onMouseDown={() => {
                   setActive(true)
                   if (soundsEnabled) {
-                    playActive()
+                    sounds?.playActive()
                   }
                 }}
                 onMouseUp={() => {
                   setActive(false)
                   if (soundsEnabled) {
-                    item.isPacked ? playOff() : playOn()
+                    item.isPacked ? sounds?.playOff() : sounds?.playOn()
                   }
                 }}
               >
@@ -188,7 +158,7 @@ const TripPackingListItem = ({
                     style={filledSpring}
                     className="bg-success/80 hover:bg-success flex h-6 w-6 items-center justify-center rounded-full transition-colors"
                   >
-                    <Check className="text-foreground h-4 w-4" strokeWidth={3} />
+                    <Check className="text-muted dark:text-foreground h-4 w-4" strokeWidth={3} />
                   </animated.span>
                 ) : (
                   <Circle className="text-muted-foreground/80 hover:text-muted-foreground h-6 w-6" />

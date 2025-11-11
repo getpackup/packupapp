@@ -101,7 +101,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     const msg = {
       to: email,
-      from: 'The Packup Team <noreply@getpackup.com>',
+      from: 'Packup <noreply@getpackup.com>',
       subject: `🪄 Your requested Packup sign in link`,
       html: html,
       text: text,

@@ -15,8 +15,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router'
 import { toast } from 'sonner'
 
+import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { cn } from '~/lib/utils'
-import { useDeleteSubCollectionDocument, useUpdateSubCollectionDocument } from '~/services/api'
+import { useDeletePackingListItem, useUpdatePackingListItem } from '~/services/trips'
 import type { PackingListItem } from '~/types/PackingListItem'
 
 import AnimatedContainer from '../AnimatedContainer'
@@ -42,12 +43,14 @@ type TripPackingListCategoryProps = {
   categoryName: string
   items: PackingListItem[]
   isGroup?: boolean
+  sounds?: ReturnType<typeof useCheckboxSounds>
 }
 
 const TripPackingListCategory = ({
   categoryName,
   items,
   isGroup,
+  sounds,
 }: TripPackingListCategoryProps) => {
   const [isMultiSelecting, setIsMultiSelecting] = useState(false)
   const [selectedItems, setSelectedItems] = useState<string[]>([])
@@ -58,9 +61,9 @@ const TripPackingListCategory = ({
 
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  const { mutate: updatePackingListItem } = useUpdateSubCollectionDocument('trips', 'packing-list')
-  const { mutate: deletePackingListItem } = useDeleteSubCollectionDocument('trips', 'packing-list')
   const { id } = useParams()
+  const { mutateAsync: updatePackingListItemAsync } = useUpdatePackingListItem({ tripId: id ?? '' })
+  const { mutateAsync: deletePackingListItemAsync } = useDeletePackingListItem()
 
   const handleItemCreated = (itemId: string) => {
     if (newlyAddedItem) {
@@ -110,7 +113,7 @@ const TripPackingListCategory = ({
     selectedItems.forEach((item) => {
       const itemData = items.find((i) => i.id === item)
       if (!itemData) return
-      updatePackingListItem({ parentDocId: id, id: item, data: { isPacked: true } })
+      updatePackingListItemAsync({ data: { id: item, isPacked: true } })
     })
     toast.success(
       `${selectedItems.length} ${selectedItems.length === 1 ? 'item' : 'items'} marked as packed`
@@ -124,7 +127,7 @@ const TripPackingListCategory = ({
     if (!id || !selectedItems.length) return
     selectedItems.forEach((item) => {
       if (!item) return
-      deletePackingListItem({ parentDocId: id, id: item })
+      deletePackingListItemAsync({ tripId: id, packingListItemId: item })
     })
     setSelectedItems([])
     setActionsMenuOpen(false)
@@ -138,7 +141,7 @@ const TripPackingListCategory = ({
     if (!id || !items.length) return
     items.forEach((item) => {
       if (!item.id) return
-      deletePackingListItem({ parentDocId: id, id: item.id })
+      deletePackingListItemAsync({ tripId: id, packingListItemId: item.id })
     })
 
     toast.success(`All items in ${categoryName} deleted`)
@@ -154,11 +157,7 @@ const TripPackingListCategory = ({
     const newState = areAllPacked ? false : true
     items.forEach((item) => {
       if (!item.id) return
-      updatePackingListItem({
-        parentDocId: id,
-        id: item.id,
-        data: { isPacked: newState },
-      })
+      updatePackingListItemAsync({ data: { id: item.id, isPacked: newState } })
     })
   }
 
@@ -513,6 +512,7 @@ const TripPackingListCategory = ({
                       isMultiSelecting={isMultiSelecting}
                       isSelected={selectedItems.includes(item.id)}
                       onItemSelection={handleItemSelection}
+                      sounds={sounds}
                     />
                   </AnimatedContainer>
                 )
