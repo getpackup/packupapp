@@ -3,11 +3,10 @@ import { type MouseEventHandler } from 'react'
 import { animated } from 'react-spring'
 import useSound from 'use-sound'
 
+import onSound from '/sounds/switch-on.mp3'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip'
 import { useSoundsState } from '~/contexts/globalState'
 import useBoop from '~/lib/useBoop'
-
-import onSound from '../../sounds/switch-on.mp3'
 
 export function SoundsToggle() {
   const { soundsEnabled, toggleSounds } = useSoundsState()

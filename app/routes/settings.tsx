@@ -1,4 +1,3 @@
-import Logout from '~/components/LogoutButton'
 import PageContent from '~/components/PageContent'
 import PageHeader from '~/components/PageHeader'
 import { SoundsToggle } from '~/components/SoundsToggle'
@@ -17,7 +16,6 @@ export default function Settings() {
       <PageContent>
         <ThemeToggle />
         <SoundsToggle />
-        <Logout />
       </PageContent>
     </>
   )
