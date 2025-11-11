@@ -6,21 +6,21 @@ import useSound from 'use-sound'
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip'
 import { useAuth } from '~/contexts/auth/useAuth'
+import { useSoundsState } from '~/contexts/globalState'
 import useBoop from '~/lib/useBoop'
 import { useRootLoaderData } from '~/lib/useRootLoaderData'
 import { useUpdateUser } from '~/services/users'
 
 export function ThemeToggle() {
+  const { soundsEnabled } = useSoundsState()
+  const [style, trigger] = useBoop({ scale: 1.1, rotation: 10})
+
   const [switchOn] = useSound('/sounds/switch-on.mp3', {
     interrupt: true,
-    soundEnabled: true,
   })
   const [switchOff] = useSound('/sounds/switch-off.mp3', {
     interrupt: true,
-    soundEnabled: true,
   })
-
-  const [style, trigger] = useBoop({ scale: 1.1, rotation: 10 })
 
   const { themePreference } = useRootLoaderData()
   const { user } = useAuth()
@@ -29,7 +29,9 @@ export function ThemeToggle() {
   const isDarkMode = themePreference === 'dark'
 
   const handleThemeToggle = () => {
-    isDarkMode ? switchOn() : switchOff()
+    if (soundsEnabled) {
+      isDarkMode ? switchOn() : switchOff()
+    }
 
     // Update theme preference in Firebase
     if (user?.uid) {
@@ -45,7 +47,8 @@ export function ThemeToggle() {
   }
 
   return (
-    <Form method="post" action="/resource/toggle-theme">
+    <Form method="post" action="/resource/toggle-theme" className="flex items-center">
+      <span className="mr-5">Display Theme</span>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>

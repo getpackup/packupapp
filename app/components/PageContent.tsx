@@ -3,7 +3,7 @@ type PageContentProps = {
 }
 
 const PageContent = ({ children }: PageContentProps) => {
-  return <div className="flex-1 overflow-hidden">{children}</div>
+  return <div className="flex-1 overflow-hidden px-8 py-3 flex flex-col gap-[15px]">{children}</div>
 }
 
 export default PageContent

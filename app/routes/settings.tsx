@@ -1,6 +1,6 @@
-import Logout from '~/components/LogoutButton'
 import PageContent from '~/components/PageContent'
 import PageHeader from '~/components/PageHeader'
+import { SoundsToggle } from '~/components/SoundsToggle'
 import { ThemeToggle } from '~/components/ThemeToggle'
 
 import type { Route } from './+types/home'
@@ -15,7 +15,7 @@ export default function Settings() {
       <PageHeader crumbs={[{ label: 'Settings', href: '/settings' }]} />
       <PageContent>
         <ThemeToggle />
-        <Logout />
+        <SoundsToggle />
       </PageContent>
     </>
   )

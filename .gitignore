@@ -8,3 +8,5 @@
 .env
 # Local Netlify folder
 .netlify
+
+.idea
