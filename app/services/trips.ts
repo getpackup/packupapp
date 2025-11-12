@@ -28,16 +28,22 @@ import type { PackingListItem } from '~/types/PackingListItem'
 import type { Trip } from '~/types/Trip'
 import type { User } from '~/types/User'
 
+const tripRootKey = ['trips'] as const
+
 export const tripKeys = {
-  all: (constraints: QueryConstraint[]) => ['trips', ...constraints] as const,
-  byId: (tripId: string) => [...tripKeys.all([]), tripId] as const,
+  root: tripRootKey,
+  all: (constraints: QueryConstraint[]) => [...tripRootKey, ...constraints] as const,
+  byId: (tripId: string) => [...tripRootKey, tripId] as const,
+  packingListRoot: (tripId: string) => [...tripRootKey, tripId, 'packing-list'] as const,
   packingList: (tripId: string, constraints: QueryConstraint[]) =>
-    [...tripKeys.byId(tripId), 'packing-list', ...constraints] as const,
+    [...tripRootKey, tripId, 'packing-list', ...constraints] as const,
+  membersRoot: (tripId: string) => [...tripRootKey, tripId, 'trip-members'] as const,
   members: (tripId: string, constraints: QueryConstraint[]) =>
-    [...tripKeys.byId(tripId), 'trip-members', ...constraints] as const,
+    [...tripRootKey, tripId, 'trip-members', ...constraints] as const,
+  messagesRoot: (tripId: string) => [...tripRootKey, tripId, 'messages'] as const,
   messages: (tripId: string, constraints: QueryConstraint[]) =>
-    [...tripKeys.byId(tripId), 'messages', ...constraints] as const,
-  chatReadStatus: (tripId: string) => [...tripKeys.byId(tripId), 'chatReadStatus'] as const,
+    [...tripRootKey, tripId, 'messages', ...constraints] as const,
+  chatReadStatus: (tripId: string) => [...tripRootKey, tripId, 'chatReadStatus'] as const,
 }
 
 export function useTripsQuery({
@@ -292,10 +298,11 @@ export function useUpdateTrip(tripId: string) {
   return useMutation({
     mutationFn: async ({ data }: { data: Partial<Trip> }) => {
       const docRef = doc(firestoreDb, 'trips', tripId)
-      const updateData = { ...data, updated: Timestamp.fromDate(new Date()) }
+      const updateTimestamp = Timestamp.fromDate(new Date())
+      const updateData = { ...data, updated: updateTimestamp }
 
       await updateDoc(docRef, updateData)
-      return { ...updateData }
+      return { ...updateData, tripId }
     },
     onMutate: async ({ data }) => {
       await queryClient.cancelQueries({ queryKey: tripQueryKey })
@@ -303,9 +310,11 @@ export function useUpdateTrip(tripId: string) {
       const previousData = queryClient.getQueryData(tripQueryKey)
 
       // Optimistically update to the new value
-      queryClient.setQueryData(tripQueryKey, (old: any) => ({
-        ...old,
+      const updateTimestamp = Timestamp.fromDate(new Date())
+      queryClient.setQueryData(tripQueryKey, (old: Trip | undefined) => ({
+        ...(old ?? { tripId }),
         ...data,
+        updated: updateTimestamp,
       }))
 
       return { previousData }
@@ -332,7 +341,7 @@ export function useUpdateTrip(tripId: string) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: tripQueryKey })
       queryClient.invalidateQueries({
-        queryKey: tripKeys.members(tripId, []),
+        queryKey: tripKeys.membersRoot(tripId),
       })
     },
   })
@@ -356,12 +365,12 @@ export function useCreatePackingListItem() {
     onMutate: async ({ tripId, data }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({
-        queryKey: tripKeys.packingList(tripId, []),
+        queryKey: tripKeys.packingListRoot(tripId),
       })
 
       // Snapshot the previous value for rollback
       const previousQueries = queryClient.getQueriesData({
-        queryKey: tripKeys.packingList(tripId, []),
+        queryKey: tripKeys.packingListRoot(tripId),
       })
 
       // Generate a temporary ID for the optimistic document
@@ -390,7 +399,7 @@ export function useCreatePackingListItem() {
       // Replace temporary document with real one in all queries
       // This ensures consistency if subscription hasn't updated yet
       const previousQueries = queryClient.getQueriesData({
-        queryKey: tripKeys.packingList(variables.tripId, []),
+        queryKey: tripKeys.packingListRoot(variables.tripId),
       })
 
       if (context?.tempId) {
@@ -425,12 +434,12 @@ export function useCreateChatMessage() {
     onMutate: async ({ tripId, data }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({
-        queryKey: tripKeys.messages(tripId, []),
+        queryKey: tripKeys.messagesRoot(tripId),
       })
 
       // Snapshot the previous value for rollback
       const previousQueries = queryClient.getQueriesData({
-        queryKey: tripKeys.messages(tripId, []),
+        queryKey: tripKeys.messagesRoot(tripId),
       })
 
       // Generate a temporary ID for the optimistic document
@@ -459,7 +468,7 @@ export function useCreateChatMessage() {
       // Replace temporary document with real one in all queries
       // This ensures consistency if subscription hasn't updated yet
       const previousQueries = queryClient.getQueriesData({
-        queryKey: tripKeys.messages(variables.tripId, []),
+        queryKey: tripKeys.messagesRoot(variables.tripId),
       })
 
       if (context?.tempId) {
@@ -484,15 +493,16 @@ export function useUpdateChatMessage({
   chatMessageId: string
 }) {
   const queryClient = useQueryClient()
-  const chatMessagesQueryKey = tripKeys.messages(tripId, [])
+  const chatMessagesQueryKey = tripKeys.messagesRoot(tripId)
 
   return useMutation({
     mutationFn: async ({ data }: { data: Partial<ChatMessage> }) => {
       const docRef = doc(firestoreDb, 'trips', tripId, 'messages', chatMessageId)
-      const updateData = { ...data, updated: Timestamp.fromDate(new Date()) }
+      const updateTimestamp = Timestamp.fromDate(new Date())
+      const updateData = { ...data, updated: updateTimestamp }
 
       await updateDoc(docRef, updateData)
-      return { ...updateData }
+      return { id: chatMessageId, ...updateData }
     },
     onMutate: async ({ data }) => {
       // Cancel any outgoing refetches
@@ -506,10 +516,11 @@ export function useUpdateChatMessage({
       })
 
       // Optimistically update all matching queries
+      const updateTimestamp = Timestamp.fromDate(new Date())
       previousQueries.forEach(([queryKey, queryData]) => {
         if (Array.isArray(queryData)) {
           const updatedData = queryData.map((item: any) =>
-            item.id === chatMessageId ? { ...item, ...data } : item
+            item.id === chatMessageId ? { ...item, ...data, updated: updateTimestamp } : item
           )
           queryClient.setQueryData(queryKey, updatedData)
         }
@@ -541,10 +552,10 @@ export function useDeleteChatMessage() {
     },
     onMutate: async ({ tripId, chatMessageId }) => {
       await queryClient.cancelQueries({
-        queryKey: tripKeys.messages(tripId, []),
+        queryKey: tripKeys.messagesRoot(tripId),
       })
       const previousQueries = queryClient.getQueriesData({
-        queryKey: tripKeys.messages(tripId, []),
+        queryKey: tripKeys.messagesRoot(tripId),
       })
 
       previousQueries.forEach(([queryKey, queryData]) => {
@@ -598,15 +609,17 @@ export function useUpdateTypingStatus(tripId: string, userId: string | undefined
 
 export function useUpdatePackingListItem({ tripId }: { tripId: string }) {
   const queryClient = useQueryClient()
-  const packingListItemQueryKey = tripKeys.packingList(tripId, [])
+  const packingListItemQueryKey = tripKeys.packingListRoot(tripId)
 
   return useMutation({
     mutationFn: async ({ data }: { data: Partial<PackingListItem> & { id: string } }) => {
-      const docRef = doc(firestoreDb, 'trips', tripId, 'packing-list', data.id)
-      const updateData = { ...data, updated: Timestamp.fromDate(new Date()) }
+      const { id, ...rest } = data
+      const docRef = doc(firestoreDb, 'trips', tripId, 'packing-list', id)
+      const updateTimestamp = Timestamp.fromDate(new Date())
+      const updateData = { ...rest, updated: updateTimestamp }
 
       await updateDoc(docRef, updateData)
-      return { ...updateData }
+      return { id, ...updateData }
     },
     onMutate: async ({ data }) => {
       // Cancel any outgoing refetches
@@ -620,10 +633,11 @@ export function useUpdatePackingListItem({ tripId }: { tripId: string }) {
       })
 
       // Optimistically update all matching queries
+      const updateTimestamp = Timestamp.fromDate(new Date())
       previousQueries.forEach(([queryKey, queryData]) => {
         if (Array.isArray(queryData)) {
           const updatedData = queryData.map((item: any) =>
-            item.id === data.id ? { ...item, ...data } : item
+            item.id === data.id ? { ...item, ...data, updated: updateTimestamp } : item
           )
           queryClient.setQueryData(queryKey, updatedData)
         }
@@ -661,10 +675,10 @@ export function useDeletePackingListItem() {
     },
     onMutate: async ({ tripId, packingListItemId }) => {
       await queryClient.cancelQueries({
-        queryKey: tripKeys.packingList(tripId, []),
+        queryKey: tripKeys.packingListRoot(tripId),
       })
       const previousQueries = queryClient.getQueriesData({
-        queryKey: tripKeys.packingList(tripId, []),
+        queryKey: tripKeys.packingListRoot(tripId),
       })
 
       previousQueries.forEach(([queryKey, queryData]) => {

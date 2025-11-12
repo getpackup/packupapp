@@ -6,12 +6,14 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 // import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { useEffect } from 'react'
 import {
+  type ActionFunction,
   data,
   isRouteErrorResponse,
   Links,
   type LoaderFunction,
   Meta,
   Outlet,
+  redirect,
   Scripts,
   ScrollRestoration,
   useLoaderData,
@@ -22,6 +24,7 @@ import FullPageSpinner from '~/components/FullPageSpinner'
 import { Toaster } from '~/components/ui/sonner'
 
 import type { Route } from './+types/root'
+import { CookieBanner } from './components/CookieBanner'
 import { TooltipProvider } from './components/ui/tooltip'
 import { gdprConsent, themePreferenceCookie } from './cookies.server'
 import { trackPageLeave } from './lib/analytics'
@@ -36,6 +39,26 @@ export const links: Route.LinksFunction = () => [
   //   crossOrigin: 'anonymous',
   // },
 ]
+
+export const action: ActionFunction = async ({ request }) => {
+  const formData = await request.formData()
+  const cookieHeader = request.headers.get('Cookie')
+  const gdprCookie = (await gdprConsent.parse(cookieHeader)) || {}
+
+  if (formData.get('accept-gdpr') === 'true') {
+    gdprCookie.gdprConsent = true
+    return redirect(request.headers.get('Referer') || '/', {
+      headers: {
+        'Set-Cookie': await gdprConsent.serialize({
+          gdprConsent: true,
+          expires: new Date(Date.now() + 31536000000), // 1 year
+        }),
+      },
+    })
+  }
+
+  return null
+}
 
 export type RootLoaderData = {
   bodyClassNames: string
@@ -87,9 +110,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const loaderData = useLoaderData<RootLoaderData>()
 
   useEffect(() => {
-    // if (loaderData.showCookieBanner) return
+    if (loaderData.showCookieBanner) return
     return trackPageLeave()
-  }, [])
+  }, [loaderData.showCookieBanner])
 
   const bodyClassNames = cn(
     `transition-colors duration-500 ease-in-out min-h-screen font-sans-serif min-h-screen relative`,
@@ -120,10 +143,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className={bodyClassNames}>
         <QueryClientProvider client={queryClient}>
-          <TooltipProvider>{children}</TooltipProvider>
+          <TooltipProvider>
+            <Toaster position="bottom-right" richColors />
+            {children}
+            {loaderData.showCookieBanner && <CookieBanner />}
+          </TooltipProvider>
           <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
         </QueryClientProvider>
-        <Toaster position="bottom-right" richColors />
         <ScrollRestoration />
         <Scripts />
       </body>

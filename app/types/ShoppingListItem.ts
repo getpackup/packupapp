@@ -2,7 +2,7 @@ import type { Timestamp } from 'firebase/firestore'
 
 export type ShoppingListItemPriority = 'high' | 'medium' | 'low'
 
-export type ShoppingListItem = {
+export type ShoppingListItemType = {
   id: string
   userId: string
   tripId: string

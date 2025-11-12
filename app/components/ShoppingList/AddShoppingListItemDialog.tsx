@@ -28,15 +28,14 @@ import { Input } from '~/components/ui/input'
 import useAuth from '~/contexts/auth/useAuth'
 import { useCreatePackingListItem } from '~/services/trips'
 
-import { Checkbox } from '../ui/checkbox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 
-type AddPackingListDialogProps = {
-  categoryName: string
+type AddShoppingListItemDialogProps = {
+  tripName: string
   onItemCreated?: (itemId: string) => void
 }
 
-function AddPackingListDialog({ categoryName, onItemCreated }: AddPackingListDialogProps) {
+function AddShoppingListItemDialog({ tripName, onItemCreated }: AddShoppingListItemDialogProps) {
   const { id } = useParams()
   const { user } = useAuth()
 
@@ -65,7 +64,7 @@ function AddPackingListDialog({ categoryName, onItemCreated }: AddPackingListDia
       tripId: id,
       data: {
         created: Timestamp.now(),
-        category: categoryName,
+        category: tripName,
         description: '',
         isEssential: false,
         isPacked: false,
@@ -98,7 +97,7 @@ function AddPackingListDialog({ categoryName, onItemCreated }: AddPackingListDia
               <Plus className="h-4 w-4" />
             </TooltipTrigger>
             <TooltipContent className="flex items-center gap-2">
-              Add item to {categoryName}
+              Add item to {tripName}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -113,7 +112,7 @@ function AddPackingListDialog({ categoryName, onItemCreated }: AddPackingListDia
             <DialogHeader>
               <DialogTitle>Add item</DialogTitle>
               <DialogDescription>
-                Create a new item and add it to the packing list for {categoryName}.
+                Create a new item and add it to the shopping list.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4">
@@ -127,23 +126,6 @@ function AddPackingListDialog({ categoryName, onItemCreated }: AddPackingListDia
                       <Input placeholder="Item name" {...field} />
                     </FormControl>
                     <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="saveToGearCloset"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center gap-2">
-                    <FormControl>
-                      <Checkbox
-                        id="saveToGearCloset"
-                        onCheckedChange={field.onChange}
-                        value={field.value.toString()}
-                        checked={field.value}
-                      />
-                    </FormControl>
-                    <FormLabel htmlFor="saveToGearCloset">Save to gear closet</FormLabel>
                   </FormItem>
                 )}
               />
@@ -164,4 +146,4 @@ function AddPackingListDialog({ categoryName, onItemCreated }: AddPackingListDia
   )
 }
 
-export default AddPackingListDialog
+export default AddShoppingListItemDialog

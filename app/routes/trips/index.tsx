@@ -1,5 +1,5 @@
 import { where } from 'firebase/firestore'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
 
 import FullPageSpinner from '~/components/FullPageSpinner'
@@ -44,18 +44,23 @@ export function meta({}: Route.MetaArgs) {
 export default function Trips() {
   const { user } = useAuth()
 
+  const constraints = useMemo(
+    () => [
+      where(`tripMembers.${user?.uid}.status`, 'not-in', [
+        TripMemberStatus.Declined,
+        TripMemberStatus.Removed,
+      ]),
+    ],
+    [user?.uid]
+  )
+
   const {
     data: trips,
     isLoading,
     error,
     refetch,
   } = useTripsQuery({
-    constraints: [
-      where(`tripMembers.${user?.uid}.status`, 'not-in', [
-        TripMemberStatus.Declined,
-        TripMemberStatus.Removed,
-      ]),
-    ],
+    constraints,
     queryOptions: {
       enabled: !!user?.uid,
     },

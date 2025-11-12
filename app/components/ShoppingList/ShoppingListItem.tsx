@@ -1,33 +1,18 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Timestamp } from 'firebase/firestore'
-import {
-  Check,
-  Circle,
-  Ellipsis,
-  Minus,
-  Plus,
-  Settings,
-  ShoppingBasket,
-  Trash2,
-  UserIcon,
-  Users,
-  X,
-} from 'lucide-react'
+import { Check, Circle, Ellipsis, Minus, Plus, Settings, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 import { useParams } from 'react-router'
 import { animated, useSpring } from 'react-spring'
 
 import useAuth from '~/contexts/auth/useAuth'
-import { useSoundsState } from '~/contexts/globalState'
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { cn } from '~/lib/utils'
-import { useCreateShoppingListItem } from '~/services/shoppingList'
-import { tripKeys, useDeletePackingListItem, useUpdatePackingListItem } from '~/services/trips'
-import { type PackingListItem } from '~/types/PackingListItem'
+import { useUpdateShoppingListItem } from '~/services/shoppingList'
+import { tripKeys, useDeletePackingListItem } from '~/services/trips'
+import type { ShoppingListItemType } from '~/types/ShoppingListItem'
 import type { Trip } from '~/types/Trip'
 import type { User } from '~/types/User'
 
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
@@ -39,23 +24,22 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 
-type TripPackingListItemProps = {
-  item: PackingListItem
+type ShoppingListItemProps = {
+  item: ShoppingListItemType
   isMultiSelecting: boolean
   isSelected: boolean
   onItemSelection: (itemId: string, isShiftClick: boolean, isCommandClick: boolean) => void
   sounds?: ReturnType<typeof useCheckboxSounds>
 }
 
-const TripPackingListItem = ({
+const ShoppingListItem = ({
   item,
   isMultiSelecting,
   isSelected,
   onItemSelection,
   sounds,
-}: TripPackingListItemProps) => {
+}: ShoppingListItemProps) => {
   const { id } = useParams()
-  const { soundsEnabled } = useSoundsState()
   const { user } = useAuth()
 
   const queryClient = useQueryClient()
@@ -63,15 +47,17 @@ const TripPackingListItem = ({
   const users = queryClient.getQueryData<User[]>(tripKeys.members(id ?? '', []))
   const trip = queryClient.getQueryData<Trip>(tripKeys.byId(id ?? ''))
 
+  console.log({ user, users, trip })
+
   const springConfig = {
     tension: 400,
     friction: 22,
-    clamp: !item.isPacked,
+    clamp: !item.isPurchased,
   }
 
   const [active, setActive] = useState(false)
 
-  const filledScale = item.isPacked ? (active ? 1.4 : 1) : 0
+  const filledScale = item.isPurchased ? (active ? 1.4 : 1) : 0
   const filledSpring = useSpring({
     transform: `scale(${filledScale})`,
     config: springConfig,
@@ -83,14 +69,14 @@ const TripPackingListItem = ({
     config: springConfig,
   })
 
-  const { mutateAsync: updatePackingListItemAsync } = useUpdatePackingListItem({ tripId: id ?? '' })
+  const { mutateAsync: updateShoppingListItemAsync } = useUpdateShoppingListItem(item.id)
   const { mutateAsync: deletePackingListItemAsync } = useDeletePackingListItem()
-  const { mutateAsync: createShoppingListItemAsync } = useCreateShoppingListItem()
+  // const { mutateAsync: createShoppingListItemAsync } = useCreateShoppingListItem()
 
-  const togglePacked = () => {
+  const togglePurchased = () => {
     if (!id || !item.id) return
 
-    updatePackingListItemAsync({ data: { id: item.id, isPacked: !item.isPacked } })
+    updateShoppingListItemAsync({ data: { id: item.id, isPurchased: !item.isPurchased } })
   }
 
   const handleQuantityChange = (change: number) => {
@@ -100,17 +86,7 @@ const TripPackingListItem = ({
 
     if (newQuantity < 1) return
 
-    updatePackingListItemAsync({ data: { id: item.id, quantity: newQuantity } })
-  }
-
-  const handleMoveToOrFromGroupItems = () => {
-    if (!id || !item.id) return
-
-    const isAlreadyShared = item.packedBy[0].isShared
-
-    updatePackingListItemAsync({
-      data: { id: item.id, packedBy: [{ ...item.packedBy[0], isShared: !isAlreadyShared }] },
-    })
+    updateShoppingListItemAsync({ data: { id: item.id, quantity: newQuantity } })
   }
 
   const handleDelete = () => {
@@ -128,33 +104,8 @@ const TripPackingListItem = ({
       const isCommandClick = event?.metaKey || event?.ctrlKey || false
       onItemSelection(item.id, isShiftClick, isCommandClick)
     } else {
-      togglePacked()
+      togglePurchased()
     }
-  }
-
-  const handleSendToShoppingList = () => {
-    if (!id || !item.id || !trip || !user) return
-
-    createShoppingListItemAsync({
-      data: {
-        actualPrice: null,
-        category: item.category,
-        created: Timestamp.now(),
-        estimatedPrice: null,
-        isPurchased: false,
-        itemName: item.name,
-        neededBy: trip.startDate,
-        notes: '',
-        priority: 'medium',
-        purchasedAt: null,
-        quantity: item.quantity,
-        sourcePackingListItemId: item.id,
-        store: null,
-        tripId: trip.tripId,
-        updated: null,
-        userId: user.uid,
-      },
-    })
   }
 
   return (
@@ -165,28 +116,24 @@ const TripPackingListItem = ({
             <>
               <Checkbox checked={isSelected} onClick={(e) => handleSelection(e)} id={item.id} />
               <span className="cursor-pointer select-none" onClick={(e) => handleSelection(e)}>
-                {item.name}
+                {item.itemName}
               </span>
             </>
           ) : (
             <>
               <animated.div
                 style={outlineSpring}
-                onClick={togglePacked}
+                onClick={togglePurchased}
                 onMouseDown={() => {
                   setActive(true)
-                  if (soundsEnabled) {
-                    sounds?.playActive()
-                  }
+                  sounds?.playActive()
                 }}
                 onMouseUp={() => {
                   setActive(false)
-                  if (soundsEnabled) {
-                    item.isPacked ? sounds?.playOff() : sounds?.playOn()
-                  }
+                  item.isPurchased ? sounds?.playOff() : sounds?.playOn()
                 }}
               >
-                {item.isPacked ? (
+                {item.isPurchased ? (
                   <animated.span
                     style={filledSpring}
                     className="bg-success/80 hover:bg-success flex h-6 w-6 items-center justify-center rounded-full transition-colors"
@@ -197,8 +144,8 @@ const TripPackingListItem = ({
                   <Circle className="text-muted-foreground/80 hover:text-muted-foreground h-6 w-6" />
                 )}
               </animated.div>
-              <span className={cn('select-none', item.isPacked && 'text-muted-foreground')}>
-                {item.name}
+              <span className={cn('select-none', item.isPurchased && 'text-muted-foreground')}>
+                {item.itemName}
               </span>
               {item.quantity && item.quantity !== 1 && (
                 <Badge
@@ -214,18 +161,6 @@ const TripPackingListItem = ({
         <div className="flex items-center gap-2">
           {!isMultiSelecting && (
             <>
-              <div className="*:data-[slot=avatar]:ring-sidebar flex -space-x-2 *:data-[slot=avatar]:ring-1">
-                {item.packedBy?.map((packedBy) => {
-                  const user = users?.find((user) => user.uid === packedBy.uid)
-                  if (!user || !item.isPacked) return null
-                  return (
-                    <Avatar key={packedBy.uid} className="size-6">
-                      <AvatarImage src={user?.photoURL} />
-                      <AvatarFallback>{user?.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                  )
-                })}
-              </div>
               <DropdownMenu>
                 <DropdownMenuTrigger>
                   <Ellipsis className="h-4 w-4" />
@@ -261,16 +196,7 @@ const TripPackingListItem = ({
                     Edit
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleMoveToOrFromGroupItems}>
-                    {item.packedBy[0].isShared ? <UserIcon /> : <Users />}{' '}
-                    {item.packedBy[0].isShared ? 'Move to Personal Items' : 'Move to Group Items'}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSendToShoppingList}>
-                    <ShoppingBasket />
-                    Send to Shopping List
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+
                   <DropdownMenuItem onClick={handleDelete} variant="destructive">
                     <Trash2 />
                     Delete
@@ -285,4 +211,4 @@ const TripPackingListItem = ({
   )
 }
 
-export default TripPackingListItem
+export default ShoppingListItem

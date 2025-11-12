@@ -1,5 +1,5 @@
 import { limit, where } from 'firebase/firestore'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import ChatSheet from '~/components/Chat/ChatSheet'
 import FullPageSpinner from '~/components/FullPageSpinner'
@@ -18,12 +18,15 @@ export function meta({}: Route.MetaArgs) {
 export default function TripDetails({ params }: Route.ComponentProps) {
   const { id } = params
 
-  const { data: trip } = useTripByIdQuery({ tripId: id })
+  const { data: trip, isLoading: isLoadingTrip } = useTripByIdQuery({ tripId: id })
 
-  const constraints =
-    trip?.tripMembers && Object.keys(trip.tripMembers).length > 0
-      ? [where('uid', 'in', Object.keys(trip.tripMembers)), limit(10)]
-      : []
+  const constraints = useMemo(
+    () =>
+      trip?.tripMembers && Object.keys(trip.tripMembers).length > 0
+        ? [where('uid', 'in', Object.keys(trip.tripMembers)), limit(10)]
+        : [],
+    [trip?.tripMembers]
+  )
 
   const { data: users } = useTripMembersQuery({
     tripId: id,
@@ -50,7 +53,7 @@ export default function TripDetails({ params }: Route.ComponentProps) {
         ]}
       />
       <PageContent>
-        {!trip ? (
+        {!trip || isLoadingTrip ? (
           <FullPageSpinner what="trip details" />
         ) : (
           <div className="relative flex h-full min-h-0">

@@ -1,6 +1,7 @@
 import { formatDistanceToNow } from 'date-fns'
 import { limit, where } from 'firebase/firestore'
 import { CalendarIcon, Check, MapPinIcon, MessageSquareMore, X } from 'lucide-react'
+import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { toast } from 'sonner'
 
@@ -35,10 +36,13 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
   const { mutateAsync: updateTripAsync } = useUpdateTrip(trip.tripId)
   const { mutateAsync: sendMessage } = useCreateChatMessage()
 
-  const constraints =
-    trip?.tripMembers && Object.keys(trip.tripMembers).length > 0
-      ? [where('uid', 'in', Object.keys(trip.tripMembers)), limit(10)]
-      : []
+  const constraints = useMemo(
+    () =>
+      trip?.tripMembers && Object.keys(trip.tripMembers).length > 0
+        ? [where('uid', 'in', Object.keys(trip.tripMembers)), limit(10)]
+        : [],
+    [trip?.tripMembers]
+  )
 
   const { data: users } = useTripMembersQuery({
     tripId: trip.tripId,
