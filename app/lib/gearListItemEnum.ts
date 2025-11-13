@@ -1,4 +1,4 @@
-import type { GearListEnumType } from '~/types/GearItem'
+import type { GearListEnum } from '~/types/GearItem'
 
 export const gearListCategories = [
   { value: 'Activity Gear', label: 'Activity Gear' },
@@ -25,7 +25,7 @@ export const gearListTripType = [
   { name: 'multidayTrip', label: 'Multi-Day Trip' },
 ]
 
-export const gearListActivities: GearListEnumType = [
+export const gearListActivities: GearListEnum = [
   { name: 'hiking', label: 'Hiking', icon: 'FaHiking' },
   { name: 'paddling', label: 'Paddling', icon: 'FaWater' },
   { name: 'surfing', label: 'Surfing', icon: 'FaSwimmer' },
@@ -44,7 +44,7 @@ export const gearListActivities: GearListEnumType = [
   { name: 'snowshoeing', label: 'Snowshoeing', icon: 'FaSnowflake' },
 ]
 
-export const gearListAccommodations: GearListEnumType = [
+export const gearListAccommodations: GearListEnum = [
   { name: 'tent', label: 'Tent', icon: 'FaCampground' },
   { name: 'carCamp', label: 'Car Camp/RV', icon: 'FaCaravan' },
   { name: 'basicHut', label: 'Basic Hut', icon: 'FaHome' },
@@ -53,13 +53,13 @@ export const gearListAccommodations: GearListEnumType = [
   { name: 'hotel', label: 'Hotel/Rental', icon: 'FaHotel' },
 ]
 
-export const gearListCampKitchen: GearListEnumType = [
+export const gearListCampKitchen: GearListEnum = [
   { name: 'carCamping', label: 'Car Camping', icon: 'FaCaravan' },
   { name: 'backcountryThreeSeason', label: 'Backcountry 3-Season', icon: 'FaCampground' },
   { name: 'backcountryWinter', label: 'Backcountry Winter', icon: 'FaSnowflake' },
 ]
 
-export const gearListOtherConsiderations: GearListEnumType = [
+export const gearListOtherConsiderations: GearListEnum = [
   { name: 'casual', label: 'Casual', icon: 'FaTshirt' },
   { name: 'international', label: 'International', icon: 'FaGlobeAmericas' },
   { name: 'photography', label: 'Photography', icon: 'FaCamera' },

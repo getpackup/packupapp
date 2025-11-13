@@ -97,7 +97,7 @@ export const activityTypesList: Array<keyof ActivityTypes> = [
 ]
 
 // todo commonize this with gearCloset.ts
-export type GearItemType = {
+export type GearItem = {
   id: string
   name: string
   category: string
@@ -111,7 +111,7 @@ export type GearItemType = {
   quantity?: number
 } & ActivityTypes
 
-export type GearListEnumType = Array<{
+export type GearListEnum = Array<{
   name: keyof ActivityTypes
   label: string
   icon: React.ReactNode

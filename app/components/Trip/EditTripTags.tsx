@@ -9,7 +9,7 @@ import z from 'zod'
 import { Form, FormLabel } from '~/components/ui/form'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { tripKeys, useUpdateTrip } from '~/services/trips'
-import type { GearListEnumType } from '~/types/GearItem'
+import type { GearListEnum } from '~/types/GearItem'
 import type { Trip } from '~/types/Trip'
 
 import { Button } from '../ui/button'
@@ -30,7 +30,7 @@ export function EditTripTags({
 }: {
   name: string
   tags: string[]
-  options: GearListEnumType
+  options: GearListEnum
   children: React.ReactNode
 }) {
   const { id } = useParams()
