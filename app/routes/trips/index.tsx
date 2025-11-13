@@ -1,16 +1,23 @@
 import { where } from 'firebase/firestore'
+import { PlusCircle } from 'lucide-react'
 import { useEffect } from 'react'
+import { Link } from 'react-router'
 import { toast } from 'sonner'
 
 import FullPageSpinner from '~/components/FullPageSpinner'
+import { Logo } from '~/components/Logo'
 import PageContent from '~/components/PageContent'
 import PageHeader from '~/components/PageHeader'
 import TripCard from '~/components/Trip/TripCard'
+import { Badge } from '~/components/ui/badge'
+import { Button } from '~/components/ui/button'
 import { useAuth } from '~/contexts/auth/useAuth'
-import { isBeforeToday } from '~/lib/date'
-import { isAfterToday } from '~/lib/date'
+import { isAfterToday, isBeforeToday } from '~/lib/date'
+import { useTripsQuery } from '~/services/trips'
 import type { Trip } from '~/types/Trip'
 import { TripMemberStatus } from '~/types/TripMember'
+
+import type { Route } from './+types/index'
 
 // Helper function to group trips by year
 function groupTripsByYear(trips: Trip[]): { [year: string]: Trip[] } {
@@ -26,16 +33,6 @@ function groupTripsByYear(trips: Trip[]): { [year: string]: Trip[] } {
     {} as { [year: string]: Trip[] }
   )
 }
-
-import { PlusCircle } from 'lucide-react'
-import { Link } from 'react-router'
-
-import { Logo } from '~/components/Logo'
-import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
-import { useTripsQuery } from '~/services/trips'
-
-import type { Route } from './+types/index'
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: 'Trips | Packup' }]
