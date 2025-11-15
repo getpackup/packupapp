@@ -176,7 +176,6 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
             <span className="truncate">
               {formattedDateRange(trip.startDate.seconds * 1000, trip.endDate.seconds * 1000)}
             </span>
-            {formattedDateRange(trip.startDate.seconds * 1000, trip.endDate.seconds * 1000)}
           </div>
           <div className="flex items-center gap-2 text-base">
             <MapPinIcon className="h-4 w-4 shrink-0" />

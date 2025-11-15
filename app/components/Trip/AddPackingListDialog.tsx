@@ -94,8 +94,10 @@ function AddPackingListDialog({ categoryName, onItemCreated }: AddPackingListDia
       <DialogTrigger asChild>
         <div onClick={(e) => e.stopPropagation()}>
           <Tooltip>
-            <TooltipTrigger className="p-1 opacity-80 hover:opacity-100">
-              <Plus className="h-4 w-4" />
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon-sm">
+                <Plus className="h-4 w-4" />
+              </Button>
             </TooltipTrigger>
             <TooltipContent className="flex items-center gap-2">
               Add item to {categoryName}

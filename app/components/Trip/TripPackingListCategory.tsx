@@ -297,11 +297,11 @@ const TripPackingListCategory = ({
                     </TooltipContent>
                   </Tooltip>
                 )}
-                <div>
+                <div className="select-none">
                   <div className="text-lg font-semibold">
                     {categoryName}{' '}
                     {isMultiSelecting ? null : (
-                      <ChevronDown className="inline h-4 w-4 group-data-[state=closed]/accordion:rotate-180" />
+                      <ChevronDown className="inline h-4 w-4 transition-transform group-data-[state=closed]/accordion:-rotate-90" />
                     )}
                   </div>
                   <div className="text-muted-foreground text-sm">
@@ -453,8 +453,10 @@ const TripPackingListCategory = ({
                     />
 
                     <DropdownMenu>
-                      <DropdownMenuTrigger className="p-1 opacity-80 hover:opacity-100">
-                        <Ellipsis className="h-4 w-4" />
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon-sm" className="mr-1">
+                          <Ellipsis className="h-4 w-4" />
+                        </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         <DropdownMenuItem

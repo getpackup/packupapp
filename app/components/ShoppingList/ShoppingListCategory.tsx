@@ -1,3 +1,4 @@
+import { Timestamp } from 'firebase/firestore'
 import {
   ArrowBigUp,
   ChevronDown,
@@ -12,13 +13,13 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router'
 import { toast } from 'sonner'
 
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { cn } from '~/lib/utils'
-import { useDeletePackingListItem, useUpdatePackingListItem } from '~/services/trips'
-import type { ShoppingListItemType } from '~/types/ShoppingListItem'
+import { useDeleteShoppingListItem, useUpdateShoppingListItem } from '~/services/shoppingList'
+import type { ShoppingListItemType } from '~/types/ShoppingListItemType'
+import type { Trip } from '~/types/Trip'
 
 import AnimatedContainer from '../AnimatedContainer'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion'
@@ -36,27 +37,27 @@ import { Separator } from '../ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import AddShoppingListItemDialog from './AddShoppingListItemDialog'
 import ShoppingListItem from './ShoppingListItem'
+import { useShoppingListCategoryHotkeys } from './useShoppingListCategoryHotkeys'
+import { useShoppingListCategorySelection } from './useShoppingListCategorySelection'
 
 type ShoppingListCategoryProps = {
-  tripName: string
+  trip: Trip
   items: ShoppingListItemType[]
-  isGroup?: boolean
   sounds?: ReturnType<typeof useCheckboxSounds>
 }
 
-const ShoppingListCategory = ({ tripName, items, isGroup, sounds }: ShoppingListCategoryProps) => {
+const ShoppingListCategory = ({ trip, items, sounds }: ShoppingListCategoryProps) => {
   const [isMultiSelecting, setIsMultiSelecting] = useState(false)
   const [selectedItems, setSelectedItems] = useState<string[]>([])
-  // const [lastSelectedItem, setLastSelectedItem] = useState<string | null>(null)
+  const [lastSelectedItem, setLastSelectedItem] = useState<string | null>(null)
   const [accordionOpen, setAccordionOpen] = useState(true)
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false)
   const [newlyAddedItem, setNewlyAddedItem] = useState<string | null>(null)
 
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  const { id } = useParams()
-  const { mutateAsync: updatePackingListItemAsync } = useUpdatePackingListItem({ tripId: id ?? '' })
-  const { mutateAsync: deletePackingListItemAsync } = useDeletePackingListItem()
+  const { mutateAsync: updateShoppingListItemAsync } = useUpdateShoppingListItem()
+  const { mutateAsync: deleteShoppingListItemAsync } = useDeleteShoppingListItem()
 
   const handleItemCreated = (itemId: string) => {
     if (newlyAddedItem) {
@@ -90,26 +91,28 @@ const ShoppingListCategory = ({ tripName, items, isGroup, sounds }: ShoppingList
   const clearOrExitMultiSelect = () => {
     if (selectedItems.length > 0) {
       setSelectedItems([])
-      // setLastSelectedItem(null)
+      setLastSelectedItem(null)
     } else {
       setIsMultiSelecting(false)
       setSelectedItems([])
-      // setLastSelectedItem(null)
+      setLastSelectedItem(null)
       setActionsMenuOpen(false)
     }
   }
 
   const areAllPurchased = items.every((item) => item.isPurchased)
 
-  const markSelectedAsPacked = () => {
-    if (!id || !selectedItems.length) return
+  const markSelectedAsPurchased = () => {
+    if (!selectedItems.length) return
     selectedItems.forEach((item) => {
       const itemData = items.find((i) => i.id === item)
       if (!itemData) return
-      updatePackingListItemAsync({ data: { id: item, isPacked: true } })
+      updateShoppingListItemAsync({
+        data: { id: item, isPurchased: true, purchasedAt: Timestamp.now() },
+      })
     })
     toast.success(
-      `${selectedItems.length} ${selectedItems.length === 1 ? 'item' : 'items'} marked as packed`
+      `${selectedItems.length} ${selectedItems.length === 1 ? 'item' : 'items'} marked as purchased`
     )
     setSelectedItems([])
     setActionsMenuOpen(false)
@@ -117,10 +120,10 @@ const ShoppingListCategory = ({ tripName, items, isGroup, sounds }: ShoppingList
   }
 
   const deleteSelectedItems = () => {
-    if (!id || !selectedItems.length) return
+    if (!selectedItems.length) return
     selectedItems.forEach((item) => {
       if (!item) return
-      deletePackingListItemAsync({ tripId: id, packingListItemId: item })
+      deleteShoppingListItemAsync({ id: item })
     })
     setSelectedItems([])
     setActionsMenuOpen(false)
@@ -131,28 +134,56 @@ const ShoppingListCategory = ({ tripName, items, isGroup, sounds }: ShoppingList
   }
 
   const deleteAllItems = () => {
-    if (!id || !items.length) return
+    if (!items.length) return
     items.forEach((item) => {
       if (!item.id) return
-      deletePackingListItemAsync({ tripId: id, packingListItemId: item.id })
+      deleteShoppingListItemAsync({ id: item.id })
     })
 
-    toast.success(`All items in ${tripName} deleted`)
+    toast.success(`All items in ${trip.name} deleted`)
     setIsMultiSelecting(false)
     setSelectedItems([])
     setActionsMenuOpen(false)
-    // setLastSelectedItem(null)
+    setLastSelectedItem(null)
   }
 
-  const markAllPacked = () => {
-    if (!id || !items.length) return
+  const markAllAsPurchased = () => {
+    if (!items.length) return
 
     const newState = areAllPurchased ? false : true
+    const purchasedAt = newState ? Timestamp.now() : null
     items.forEach((item) => {
       if (!item.id) return
-      updatePackingListItemAsync({ data: { id: item.id, isPacked: newState } })
+      updateShoppingListItemAsync({
+        data: {
+          id: item.id,
+          isPurchased: newState,
+          purchasedAt,
+        },
+      })
     })
   }
+
+  const { handleItemSelection } = useShoppingListCategorySelection(
+    isMultiSelecting,
+    lastSelectedItem,
+    items,
+    selectedItems,
+    setSelectedItems,
+    setLastSelectedItem
+  )
+
+  useShoppingListCategoryHotkeys(
+    isMultiSelecting,
+    clearOrExitMultiSelect,
+    deleteSelectedItems,
+    markSelectedAsPurchased,
+    setSelectedItems,
+    selectedItems,
+    items,
+    actionsMenuOpen,
+    setActionsMenuOpen
+  )
 
   const controlOrCommand =
     navigator.userAgent.indexOf('Mac') !== -1 ? (
@@ -161,25 +192,30 @@ const ShoppingListCategory = ({ tripName, items, isGroup, sounds }: ShoppingList
       <ChevronUp className="inline size-2.5" />
     )
 
+  // each item can have multiple quantities, so if it is purchased, count the quantity
+  const purchasedItemsCount = items
+    .filter((item) => item.isPurchased)
+    .reduce((acc, item) => acc + (item.quantity ?? 1), 0)
+  // each item can have multiple quantities, so we need to count the total number of items
+  const totalItemsCount = items.reduce((acc, item) => acc + (item.quantity ?? 1), 0)
+
   return (
     <>
       <Accordion
         type="single"
         collapsible
-        className={cn('w-full rounded-lg', {
-          '-mr-1 -ml-1 bg-gray-200/50 px-1 dark:bg-gray-700/50': isGroup,
-        })}
-        defaultValue={tripName}
+        className="mb-4 w-full rounded-lg border p-2"
+        defaultValue={trip.name}
         disabled={isMultiSelecting}
-        value={accordionOpen ? tripName : ''}
+        value={accordionOpen ? trip.name : ''}
         onValueChange={(value) => {
-          setAccordionOpen(value === tripName)
+          setAccordionOpen(value === trip.name)
         }}
       >
-        <AccordionItem value={tripName} disabled={isMultiSelecting}>
+        <AccordionItem value={trip.name} disabled={isMultiSelecting}>
           <AccordionTrigger
             hideIcon
-            className="group/accordion hover:no-underline"
+            className="group/accordion py-2 hover:no-underline"
             asChild
             onClick={(e) => {
               if (isMultiSelecting) {
@@ -195,7 +231,7 @@ const ShoppingListCategory = ({ tripName, items, isGroup, sounds }: ShoppingList
                   e.stopPropagation()
                 }
               }}
-              className="focus-visible:border-ring focus-visible:ring-ring/50 mx-2 flex w-full justify-between border-b pb-2 transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50"
+              className="focus-visible:border-ring focus-visible:ring-ring/50 mx-2 flex w-full justify-between transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50"
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -269,21 +305,20 @@ const ShoppingListCategory = ({ tripName, items, isGroup, sounds }: ShoppingList
                     </TooltipContent>
                   </Tooltip>
                 )}
-                <div>
-                  <div className="text-lg font-semibold">
-                    {tripName}{' '}
-                    {isMultiSelecting ? null : (
-                      <ChevronDown className="inline h-4 w-4 group-data-[state=closed]/accordion:rotate-180" />
-                    )}
-                  </div>
-                  <div className="text-muted-foreground text-sm">
-                    {!isMultiSelecting && items.length > 0 && (
-                      <span>
-                        {items.filter((item) => item.isPurchased).length} of {items.length}{' '}
-                        purchased
-                      </span>
-                    )}{' '}
-                    | Needed by {items[0].neededBy.toDate().toLocaleDateString()}
+                <div className="flex items-center gap-4">
+                  {isMultiSelecting ? null : (
+                    <ChevronDown className="ml-1 inline size-6 transition-transform group-data-[state=closed]/accordion:-rotate-90" />
+                  )}
+                  <div className="select-none">
+                    <div className="text-lg font-semibold">{trip.name}</div>
+                    <div className="text-muted-foreground text-sm">
+                      {!isMultiSelecting && totalItemsCount > 0 && (
+                        <span>
+                          {purchasedItemsCount} of {totalItemsCount} purchased
+                        </span>
+                      )}{' '}
+                      | Needed by {trip.startDate.toDate().toLocaleDateString()}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -348,12 +383,12 @@ const ShoppingListCategory = ({ tripName, items, isGroup, sounds }: ShoppingList
                           disabled={selectedItems.length === 0}
                           onClick={(e) => {
                             e.stopPropagation()
-                            markSelectedAsPacked()
+                            markSelectedAsPurchased()
                           }}
                         >
                           <span className="flex items-center gap-2">
                             <ListChecks />
-                            Mark selected as packed
+                            Mark selected as purchased
                           </span>
                           <KbdGroup>
                             <Kbd>/</Kbd>
@@ -421,14 +456,13 @@ const ShoppingListCategory = ({ tripName, items, isGroup, sounds }: ShoppingList
                   </div>
                 ) : (
                   <>
-                    <AddShoppingListItemDialog
-                      tripName={tripName}
-                      onItemCreated={handleItemCreated}
-                    />
+                    <AddShoppingListItemDialog trip={trip} onItemCreated={handleItemCreated} />
 
                     <DropdownMenu>
-                      <DropdownMenuTrigger className="p-1 opacity-80 hover:opacity-100">
-                        <Ellipsis className="h-4 w-4" />
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon-sm" className="mr-1">
+                          <Ellipsis className="h-4 w-4" />
+                        </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         <DropdownMenuItem
@@ -444,23 +478,22 @@ const ShoppingListCategory = ({ tripName, items, isGroup, sounds }: ShoppingList
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation()
-                            markAllPacked()
+                            markAllAsPurchased()
                           }}
                         >
                           <ListChecks />
-                          Mark all as {areAllPurchased ? 'to buy' : 'purchased'}
+                          Mark all as {areAllPurchased ? 'unpurchased' : 'purchased'}
                         </DropdownMenuItem>
-                        {!isGroup && (
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              deleteAllItems()
-                            }}
-                          >
-                            <Trash2 />
-                            Delete all in {tripName}
-                          </DropdownMenuItem>
-                        )}
+
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            deleteAllItems()
+                          }}
+                        >
+                          <Trash2 />
+                          Delete all items
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </>
@@ -468,29 +501,30 @@ const ShoppingListCategory = ({ tripName, items, isGroup, sounds }: ShoppingList
               </div>
             </div>
           </AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-4 text-balance">
+          <AccordionContent className="flex flex-col gap-4 py-0 text-balance">
             <div className="space-y-1">
-              {isGroup && items.length === 0 && (
-                <div className="text-muted-foreground text-center text-sm">No group items yet</div>
-              )}
-              {items.map((item) => {
-                const isNewlyAdded = newlyAddedItem === item.id
+              {items
+                .sort((a, b) => a.created.toDate().getTime() - b.created.toDate().getTime())
+                .map((item) => {
+                  const isNewlyAdded = newlyAddedItem === item.id
 
-                return (
-                  <AnimatedContainer
-                    key={`${item.id}-${isNewlyAdded ? 'highlighted' : 'normal'}`}
-                    animation={isNewlyAdded ? 'highlightNewItem' : undefined}
-                  >
-                    <ShoppingListItem
-                      item={item}
-                      isMultiSelecting={isMultiSelecting}
-                      isSelected={selectedItems.includes(item.id)}
-                      onItemSelection={() => {}}
-                      sounds={sounds}
-                    />
-                  </AnimatedContainer>
-                )
-              })}
+                  return (
+                    <AnimatedContainer
+                      key={`${item.id}-${isNewlyAdded ? 'highlighted' : 'normal'}`}
+                      animation={isNewlyAdded ? 'highlightNewItem' : undefined}
+                    >
+                      <div key={`${item.id}`}>
+                        <ShoppingListItem
+                          item={item}
+                          isMultiSelecting={isMultiSelecting}
+                          isSelected={selectedItems.includes(item.id)}
+                          onItemSelection={handleItemSelection}
+                          sounds={sounds}
+                        />
+                      </div>
+                    </AnimatedContainer>
+                  )
+                })}
             </div>
           </AccordionContent>
         </AccordionItem>

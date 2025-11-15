@@ -19,7 +19,7 @@ import {
 import { toast } from 'sonner'
 
 import { firestoreDb } from '~/firebase/config'
-import type { ShoppingListItemType } from '~/types/ShoppingListItem'
+import type { ShoppingListItemType } from '~/types/ShoppingListItemType'
 
 const shoppingListRootKey = ['shopping-list'] as const
 
@@ -158,18 +158,18 @@ export function useCreateShoppingListItem() {
   })
 }
 
-export function useUpdateShoppingListItem(shoppingListItemId: string) {
+export function useUpdateShoppingListItem() {
   const queryClient = useQueryClient()
-  const shoppingListItemQueryKey = shoppingListKeys.byId(shoppingListItemId)
+  const shoppingListItemQueryKey = shoppingListKeys.root
 
   return useMutation({
     mutationFn: async ({ data }: { data: Partial<ShoppingListItemType> }) => {
-      const docRef = doc(firestoreDb, 'shopping-list', shoppingListItemId)
+      const docRef = doc(firestoreDb, 'shopping-list', data.id ?? '')
       const updateTimestamp = Timestamp.fromDate(new Date())
       const updateData = { ...data, updated: updateTimestamp }
 
       await updateDoc(docRef, updateData)
-      return { id: shoppingListItemId, ...updateData }
+      return { id: data.id, ...updateData }
     },
     onMutate: async ({ data }) => {
       await queryClient.cancelQueries({ queryKey: shoppingListItemQueryKey })
@@ -181,7 +181,7 @@ export function useUpdateShoppingListItem(shoppingListItemId: string) {
       queryClient.setQueryData(
         shoppingListItemQueryKey,
         (old: ShoppingListItemType | undefined) => ({
-          ...(old ?? { id: shoppingListItemId }),
+          ...(old ?? { id: data.id ?? '' }),
           ...data,
           updated: updateTimestamp,
         })
@@ -190,7 +190,7 @@ export function useUpdateShoppingListItem(shoppingListItemId: string) {
       return { previousData }
     },
     onSuccess: () => {
-      toast.success(`Shopping list item updated successfully`)
+      // toast.success(`Shopping list item updated successfully`)
       // trackEvent('Shopping list item Updated Successfully', {
       //   shoppingListItemId: id,
       //   ...previousShoppingListItemData,
@@ -214,15 +214,15 @@ export function useUpdateShoppingListItem(shoppingListItemId: string) {
   })
 }
 
-export function useDeleteShoppingListItem(shoppingListItemId: string) {
+export function useDeleteShoppingListItem() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async () => {
-      const docRef = doc(firestoreDb, 'shopping-list', shoppingListItemId)
+    mutationFn: async (data: { id: string }) => {
+      const docRef = doc(firestoreDb, 'shopping-list', data.id ?? '')
       await deleteDoc(docRef)
     },
-    onMutate: async () => {
+    onMutate: async (data: { id: string }) => {
       await queryClient.cancelQueries({
         queryKey: shoppingListKeys.root,
       })
@@ -232,9 +232,9 @@ export function useDeleteShoppingListItem(shoppingListItemId: string) {
 
       previousQueries.forEach(([queryKey, queryData]) => {
         if (Array.isArray(queryData)) {
-          const updatedData = queryData.filter((item: any) => item.id !== shoppingListItemId)
+          const updatedData = queryData.filter((item: any) => item.id !== data.id)
           queryClient.setQueryData(queryKey, updatedData)
-        } else if (queryData && (queryData as ShoppingListItemType).id === shoppingListItemId) {
+        } else if (queryData && (queryData as ShoppingListItemType).id === data.id) {
           queryClient.setQueryData(queryKey, undefined)
         }
       })

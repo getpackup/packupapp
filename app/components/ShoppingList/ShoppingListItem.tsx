@@ -1,18 +1,16 @@
-import { useQueryClient } from '@tanstack/react-query'
-import { Check, Circle, Ellipsis, Minus, Plus, Settings, Trash2, X } from 'lucide-react'
+import { Timestamp } from 'firebase/firestore'
+import { Check, Circle, Ellipsis, Minus, Plus, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
-import { useParams } from 'react-router'
 import { animated, useSpring } from 'react-spring'
 
-import useAuth from '~/contexts/auth/useAuth'
+import { useSoundsState } from '~/contexts/globalState'
+import { formatMoneyWithCommas } from '~/lib/money'
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { cn } from '~/lib/utils'
-import { useUpdateShoppingListItem } from '~/services/shoppingList'
-import { tripKeys, useDeletePackingListItem } from '~/services/trips'
-import type { ShoppingListItemType } from '~/types/ShoppingListItem'
-import type { Trip } from '~/types/Trip'
-import type { User } from '~/types/User'
+import { useDeleteShoppingListItem, useUpdateShoppingListItem } from '~/services/shoppingList'
+import type { ShoppingListItemType } from '~/types/ShoppingListItemType'
 
+import PriorityIcon from '../PriorityIcon'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
@@ -23,6 +21,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
+import EditShoppingListItem from './EditShoppingListItem'
 
 type ShoppingListItemProps = {
   item: ShoppingListItemType
@@ -39,15 +39,9 @@ const ShoppingListItem = ({
   onItemSelection,
   sounds,
 }: ShoppingListItemProps) => {
-  const { id } = useParams()
-  const { user } = useAuth()
+  const { soundsEnabled } = useSoundsState()
 
-  const queryClient = useQueryClient()
-
-  const users = queryClient.getQueryData<User[]>(tripKeys.members(id ?? '', []))
-  const trip = queryClient.getQueryData<Trip>(tripKeys.byId(id ?? ''))
-
-  console.log({ user, users, trip })
+  const [isEditing, setIsEditing] = useState(false)
 
   const springConfig = {
     tension: 400,
@@ -69,18 +63,25 @@ const ShoppingListItem = ({
     config: springConfig,
   })
 
-  const { mutateAsync: updateShoppingListItemAsync } = useUpdateShoppingListItem(item.id)
-  const { mutateAsync: deletePackingListItemAsync } = useDeletePackingListItem()
-  // const { mutateAsync: createShoppingListItemAsync } = useCreateShoppingListItem()
+  const { mutateAsync: updateShoppingListItemAsync } = useUpdateShoppingListItem()
+  const { mutateAsync: deleteShoppingListItemAsync } = useDeleteShoppingListItem()
 
   const togglePurchased = () => {
-    if (!id || !item.id) return
+    if (!item.id) return
 
-    updateShoppingListItemAsync({ data: { id: item.id, isPurchased: !item.isPurchased } })
+    const newIsPurchased = !item.isPurchased
+
+    updateShoppingListItemAsync({
+      data: {
+        id: item.id,
+        isPurchased: newIsPurchased,
+        purchasedAt: newIsPurchased ? Timestamp.now() : null,
+      },
+    })
   }
 
   const handleQuantityChange = (change: number) => {
-    if (!id || !item.id) return
+    if (!item.id) return
 
     const newQuantity = item.quantity + change
 
@@ -90,12 +91,9 @@ const ShoppingListItem = ({
   }
 
   const handleDelete = () => {
-    if (!id || !item.id) return
+    if (!item.id) return
 
-    deletePackingListItemAsync({
-      tripId: id,
-      packingListItemId: item.id,
-    })
+    deleteShoppingListItemAsync({ id: item.id })
   }
 
   const handleSelection = (event?: React.MouseEvent) => {
@@ -109,13 +107,16 @@ const ShoppingListItem = ({
   }
 
   return (
-    <div className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg px-3 py-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <div className="text-sidebar-foreground hover:bg-sidebar-accent/40 rounded-lg px-3 py-2">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
           {isMultiSelecting ? (
             <>
               <Checkbox checked={isSelected} onClick={(e) => handleSelection(e)} id={item.id} />
-              <span className="cursor-pointer select-none" onClick={(e) => handleSelection(e)}>
+              <span
+                className="cursor-pointer truncate select-none"
+                onClick={(e) => handleSelection(e)}
+              >
                 {item.itemName}
               </span>
             </>
@@ -126,11 +127,15 @@ const ShoppingListItem = ({
                 onClick={togglePurchased}
                 onMouseDown={() => {
                   setActive(true)
-                  sounds?.playActive()
+                  if (soundsEnabled) {
+                    sounds?.playActive()
+                  }
                 }}
                 onMouseUp={() => {
                   setActive(false)
-                  item.isPurchased ? sounds?.playOff() : sounds?.playOn()
+                  if (soundsEnabled) {
+                    item.isPurchased ? sounds?.playOff() : sounds?.playOn()
+                  }
                 }}
               >
                 {item.isPurchased ? (
@@ -141,29 +146,91 @@ const ShoppingListItem = ({
                     <Check className="text-muted dark:text-foreground h-4 w-4" strokeWidth={3} />
                   </animated.span>
                 ) : (
-                  <Circle className="text-muted-foreground/80 hover:text-muted-foreground h-6 w-6" />
+                  <Circle className="text-muted-foreground/80 hover:text-muted-foreground h-6 w-6 shrink-0" />
                 )}
               </animated.div>
-              <span className={cn('select-none', item.isPurchased && 'text-muted-foreground')}>
-                {item.itemName}
-              </span>
-              {item.quantity && item.quantity !== 1 && (
-                <Badge
-                  className="h-5 min-w-5 rounded-full font-mono tabular-nums"
-                  variant="outline"
-                >
-                  <X className="h-3 w-3" /> {item.quantity}
-                </Badge>
-              )}
+              <div className="flex min-w-0 flex-1 flex-col select-none">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span
+                    className={cn(
+                      'truncate',
+                      item.isPurchased && 'text-muted-foreground line-through'
+                    )}
+                  >
+                    {item.itemName}
+                  </span>
+                  {item.quantity && item.quantity !== 1 && (
+                    <Badge
+                      className="h-5 min-w-5 shrink-0 rounded-full font-mono tabular-nums"
+                      variant="outline"
+                    >
+                      <X className="h-3 w-3" /> {item.quantity}
+                    </Badge>
+                  )}
+                </div>
+                {(item.store || item.notes) && (
+                  <div className="text-muted-foreground truncate text-xs">
+                    {item.store && `${item.store}`}
+                    {item.store && item.notes ? ' • ' : ''}
+                    {item.notes && item.notes}
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex shrink-0 items-center gap-2">
+          {item.estimatedPrice && (
+            <Tooltip>
+              <TooltipTrigger>
+                <span
+                  className={cn(
+                    'text-muted-foreground font-mono text-xs tabular-nums',
+                    item.actualPrice && 'line-through'
+                  )}
+                >
+                  {formatMoneyWithCommas(item.estimatedPrice)}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Estimated price</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {item.actualPrice && (
+            <Tooltip>
+              <TooltipTrigger>
+                <span className="font-mono text-xs tabular-nums">
+                  {formatMoneyWithCommas(item.actualPrice)}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Actual price</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {item.priority && (
+            <Tooltip>
+              <TooltipTrigger>
+                <Badge variant="outline">
+                  <PriorityIcon priority={item.priority} withColor />
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="capitalize">
+                  {item.priority !== 'no priority' ? item.priority : 'No'} priority
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          )}
           {!isMultiSelecting && (
             <>
               <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Ellipsis className="h-4 w-4" />
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon-sm">
+                    <Ellipsis className="h-4 w-4" />
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem className="flex justify-between p-0">
@@ -191,10 +258,15 @@ const ShoppingListItem = ({
                     </Button>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Settings />
-                    Edit
+
+                  <DropdownMenuItem asChild>
+                    <EditShoppingListItem
+                      item={item}
+                      isEditing={isEditing}
+                      setIsEditing={setIsEditing}
+                    />
                   </DropdownMenuItem>
+
                   <DropdownMenuSeparator />
 
                   <DropdownMenuItem onClick={handleDelete} variant="destructive">

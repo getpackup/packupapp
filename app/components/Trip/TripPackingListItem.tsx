@@ -138,14 +138,12 @@ const TripPackingListItem = ({
     createShoppingListItemAsync({
       data: {
         actualPrice: null,
-        category: item.category,
         created: Timestamp.now(),
         estimatedPrice: null,
         isPurchased: false,
         itemName: item.name,
-        neededBy: trip.startDate,
         notes: '',
-        priority: 'medium',
+        priority: 'no priority',
         purchasedAt: null,
         quantity: item.quantity,
         sourcePackingListItemId: item.id,
@@ -158,7 +156,7 @@ const TripPackingListItem = ({
   }
 
   return (
-    <div className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg px-3 py-2">
+    <div className="text-sidebar-foreground hover:bg-sidebar-accent/40 rounded-lg px-3 py-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           {isMultiSelecting ? (
@@ -227,8 +225,10 @@ const TripPackingListItem = ({
                 })}
               </div>
               <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Ellipsis className="h-4 w-4" />
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon-sm">
+                    <Ellipsis className="h-4 w-4" />
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem className="flex justify-between p-0">

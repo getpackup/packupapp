@@ -49,7 +49,7 @@ const SidebarItem = ({ children }: { children: React.ReactNode }) => {
 
 const SubHeading = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="text-sidebar-foreground ring-sidebar-ring mt-2 flex h-8 shrink-0 items-center justify-between rounded-md px-3 text-xs leading-relaxed font-medium outline-hidden transition-[margin,opacity] duration-200 ease-linear group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0">
+    <div className="text-sidebar-foreground mt-2 flex shrink-0 items-center justify-between px-3 text-xs leading-relaxed outline-hidden">
       {children}
     </div>
   )
@@ -194,9 +194,9 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           <EditTripTags tags={onlyActivityTags} options={gearListActivities} name="Activities">
             <SubHeading>
               Activities{' '}
-              <p className="p-1 opacity-80 hover:opacity-100">
+              <div className="focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-muted hover:text-muted-foreground inline-flex size-8 shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
                 <Ellipsis className="h-4 w-4" />
-              </p>
+              </div>
             </SubHeading>
           </EditTripTags>
           <SidebarItem>
@@ -215,9 +215,9 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           >
             <SubHeading>
               Accommodations/Kitchen{' '}
-              <p className="p-1 opacity-80 hover:opacity-100">
+              <div className="focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-muted hover:text-muted-foreground inline-flex size-8 shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
                 <Ellipsis className="h-4 w-4" />
-              </p>
+              </div>
             </SubHeading>
           </EditTripTags>
           <SidebarItem>
@@ -236,9 +236,9 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           >
             <SubHeading>
               Other Considerations{' '}
-              <p className="p-1 opacity-80 hover:opacity-100">
+              <div className="focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-muted hover:text-muted-foreground inline-flex size-8 shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
                 <Ellipsis className="h-4 w-4" />
-              </p>
+              </div>
             </SubHeading>
           </EditTripTags>
           <SidebarItem>

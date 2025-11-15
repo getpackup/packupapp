@@ -60,7 +60,7 @@ export function useUpdateUser(userId: string) {
       return { previousData }
     },
     onSuccess: () => {
-      toast.success(`User updated successfully`)
+      // toast.success(`User updated successfully`)
       // trackEvent('User Updated Successfully', {
       //   userId: userId,
       //   ...previousUserData,
