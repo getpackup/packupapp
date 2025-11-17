@@ -177,7 +177,7 @@ function AddShoppingListItemDialog({ trip, onItemCreated }: AddShoppingListItemD
                     <InputCharacterCount
                       maxLength={MAX_STORE_LENGTH}
                       value={watchedStore ?? ''}
-                      dangerThreshold={10}
+                      dangerThreshold={5}
                     />
                   </FormItem>
                 )}

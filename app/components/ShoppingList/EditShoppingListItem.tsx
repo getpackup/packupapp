@@ -215,7 +215,7 @@ const EditShoppingListItem = ({ item, isEditing, setIsEditing }: EditShoppingLis
                     <InputCharacterCount
                       maxLength={MAX_STORE_LENGTH}
                       value={watchedStore ?? ''}
-                      dangerThreshold={10}
+                      dangerThreshold={5}
                     />
                   </FormItem>
                 )}

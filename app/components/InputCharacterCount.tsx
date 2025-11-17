@@ -9,16 +9,17 @@ type InputCharacterCountProps = {
 }
 
 const InputCharacterCount = ({ maxLength, value, dangerThreshold }: InputCharacterCountProps) => {
-  const remainingCharacters = maxLength - (value?.length ?? 0)
+  const valueLength = value?.length ?? 0
+  const remainingCharacters = maxLength - valueLength
 
-  if (remainingCharacters < 0) {
+  if (maxLength - dangerThreshold <= remainingCharacters) {
     return null
   }
 
   return (
     <FormDescription
       className={cn('text-xs', {
-        'text-destructive': maxLength - dangerThreshold - (value?.length ?? 0) < 0,
+        'text-destructive': maxLength - dangerThreshold - valueLength <= 0,
       })}
     >
       {remainingCharacters === 1

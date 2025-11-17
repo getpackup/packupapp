@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase/firestore'
-import { Check, Circle, Ellipsis, Minus, Plus, Trash2, X } from 'lucide-react'
+import { Check, Circle, Dot, Ellipsis, Minus, Plus, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 import { animated, useSpring } from 'react-spring'
 
@@ -8,7 +8,7 @@ import { formatMoneyWithCommas } from '~/lib/money'
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { cn } from '~/lib/utils'
 import { useDeleteShoppingListItem, useUpdateShoppingListItem } from '~/services/shoppingList'
-import type { ShoppingListItemType } from '~/types/ShoppingListItemType'
+import type { ShoppingListItemPriority, ShoppingListItemType } from '~/types/ShoppingListItemType'
 
 import PriorityIcon from '../PriorityIcon'
 import { Badge } from '../ui/badge'
@@ -19,6 +19,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
@@ -88,6 +89,12 @@ const ShoppingListItem = ({
     if (newQuantity < 1) return
 
     updateShoppingListItemAsync({ data: { id: item.id, quantity: newQuantity } })
+  }
+
+  const handlePriorityChange = (priority: ShoppingListItemPriority) => {
+    if (!item.id) return
+
+    updateShoppingListItemAsync({ data: { id: item.id, priority } })
   }
 
   const handleDelete = () => {
@@ -169,9 +176,9 @@ const ShoppingListItem = ({
                   )}
                 </div>
                 {(item.store || item.notes) && (
-                  <div className="text-muted-foreground truncate text-xs">
-                    {item.store && `${item.store}`}
-                    {item.store && item.notes ? ' • ' : ''}
+                  <div className="text-muted-foreground flex items-center truncate text-xs">
+                    {item.store && <span className="font-bold">{item.store}</span>}
+                    {item.store && item.notes && <Dot strokeWidth={3} />}
                     {item.notes && item.notes}
                   </div>
                 )}
@@ -211,18 +218,51 @@ const ShoppingListItem = ({
             </Tooltip>
           )}
           {item.priority && (
-            <Tooltip>
-              <TooltipTrigger>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Badge variant="outline">
                   <PriorityIcon priority={item.priority} withColor />
                 </Badge>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="capitalize">
-                  {item.priority !== 'no priority' ? item.priority : 'No'} priority
-                </p>
-              </TooltipContent>
-            </Tooltip>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-48">
+                <DropdownMenuItem onClick={() => handlePriorityChange('no priority')}>
+                  <PriorityIcon priority="no priority" />
+                  No priority
+                  {item.priority === 'no priority' && (
+                    <DropdownMenuShortcut>
+                      <Check className="h-4 w-4" />
+                    </DropdownMenuShortcut>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handlePriorityChange('low')}>
+                  <PriorityIcon priority="low" withColor />
+                  Low
+                  {item.priority === 'low' && (
+                    <DropdownMenuShortcut>
+                      <Check className="h-4 w-4" />
+                    </DropdownMenuShortcut>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handlePriorityChange('medium')}>
+                  <PriorityIcon priority="medium" withColor />
+                  Medium
+                  {item.priority === 'medium' && (
+                    <DropdownMenuShortcut>
+                      <Check className="h-4 w-4" />
+                    </DropdownMenuShortcut>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handlePriorityChange('high')}>
+                  <PriorityIcon priority="high" withColor />
+                  High
+                  {item.priority === 'high' && (
+                    <DropdownMenuShortcut>
+                      <Check className="h-4 w-4" />
+                    </DropdownMenuShortcut>
+                  )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           {!isMultiSelecting && (
             <>
@@ -232,7 +272,7 @@ const ShoppingListItem = ({
                     <Ellipsis className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
+                <DropdownMenuContent className="w-48">
                   <DropdownMenuItem className="flex justify-between p-0">
                     <Button
                       variant="outline"

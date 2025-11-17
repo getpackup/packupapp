@@ -16,6 +16,6 @@ export type ShoppingListItemType = {
   created: Timestamp
   updated: Timestamp | null
   priority: ShoppingListItemPriority
-  store: string | null // Where they plan to buy it. Stores are saved on the user's profile.
-  sourcePackingListItemId: string | null // Link back to original packing list item
+  store: string | null
+  sourcePackingListItemId: string | null
 }
