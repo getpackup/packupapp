@@ -1,23 +1,21 @@
 import type { Timestamp } from 'firebase/firestore'
 
-export type ShoppingListItemPriority = 'high' | 'medium' | 'low'
+export type ShoppingListItemPriority = 'no priority' | 'high' | 'medium' | 'low'
 
 export type ShoppingListItemType = {
   id: string
   userId: string
   tripId: string
   itemName: string
-  neededBy: Timestamp
-  category: string
   quantity: number
   notes: string
-  estimatedPrice: number | null
-  actualPrice: number | null
+  estimatedPrice: string | null
+  actualPrice: string | null
   isPurchased: boolean
   purchasedAt: Timestamp | null
   created: Timestamp
   updated: Timestamp | null
   priority: ShoppingListItemPriority
-  store: string | null // Where they plan to buy it
-  sourcePackingListItemId: string | null // Link back to original packing list item
+  store: string | null
+  sourcePackingListItemId: string | null
 }

@@ -52,7 +52,7 @@ export default function TripDetails({ params }: Route.ComponentProps) {
           { label: trip?.name || 'Trip Details', href: `/trips/${id}` },
         ]}
       />
-      <PageContent>
+      <PageContent noPadding>
         {!trip || isLoadingTrip ? (
           <FullPageSpinner what="trip details" />
         ) : (

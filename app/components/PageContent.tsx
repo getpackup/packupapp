@@ -1,9 +1,18 @@
+import { cn } from '~/lib/utils'
+
 type PageContentProps = {
   children: React.ReactNode
+  noPadding?: boolean
 }
 
-const PageContent = ({ children }: PageContentProps) => {
-  return <div className="flex-1 overflow-hidden px-8 py-3 flex flex-col gap-[15px]">{children}</div>
+const PageContent = ({ children, noPadding }: PageContentProps) => {
+  return (
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <div className={cn('h-full min-h-0 w-full overflow-y-auto p-8', noPadding && 'p-0')}>
+        {children}
+      </div>
+    </div>
+  )
 }
 
 export default PageContent

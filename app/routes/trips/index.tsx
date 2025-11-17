@@ -108,7 +108,7 @@ export default function Trips() {
     <>
       <PageHeader crumbs={[{ label: 'Trips', href: '/trips' }]} />
       <PageContent>
-        <div className="flex h-full min-h-0 w-full overflow-y-auto p-8">
+        <div className="">
           <div className="mx-auto w-full max-w-4xl">
             {isLoading && <FullPageSpinner what="trips" />}
             {!isLoading && nonArchivedTrips && nonArchivedTrips.length > 0 && (
