@@ -94,8 +94,10 @@ function AddPackingListDialog({ categoryName, onItemCreated }: AddPackingListDia
       <DialogTrigger asChild>
         <div onClick={(e) => e.stopPropagation()}>
           <Tooltip>
-            <TooltipTrigger className="p-1 opacity-80 hover:opacity-100">
-              <Plus className="h-4 w-4" />
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon-sm">
+                <Plus className="h-4 w-4" />
+              </Button>
             </TooltipTrigger>
             <TooltipContent className="flex items-center gap-2">
               Add item to {categoryName}
@@ -111,9 +113,9 @@ function AddPackingListDialog({ categoryName, onItemCreated }: AddPackingListDia
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
-              <DialogTitle>Add item to {categoryName}</DialogTitle>
+              <DialogTitle>Add item</DialogTitle>
               <DialogDescription>
-                Make changes to your profile here. Click save when you&apos;re done.
+                Create a new item and add it to the packing list for {categoryName}.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4">
@@ -154,7 +156,7 @@ function AddPackingListDialog({ categoryName, onItemCreated }: AddPackingListDia
               </DialogClose>
               <Button type="submit" disabled={isPending}>
                 {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isPending ? 'Adding...' : 'Add item'}
+                {isPending ? 'Saving...' : 'Save'}
               </Button>
             </DialogFooter>
           </form>

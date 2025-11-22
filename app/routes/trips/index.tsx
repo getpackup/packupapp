@@ -1,6 +1,6 @@
 import { where } from 'firebase/firestore'
 import { PlusCircle } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 
@@ -41,18 +41,23 @@ export function meta({}: Route.MetaArgs) {
 export default function Trips() {
   const { user } = useAuth()
 
+  const constraints = useMemo(
+    () => [
+      where(`tripMembers.${user?.uid}.status`, 'not-in', [
+        TripMemberStatus.Declined,
+        TripMemberStatus.Removed,
+      ]),
+    ],
+    [user?.uid]
+  )
+
   const {
     data: trips,
     isLoading,
     error,
     refetch,
   } = useTripsQuery({
-    constraints: [
-      where(`tripMembers.${user?.uid}.status`, 'not-in', [
-        TripMemberStatus.Declined,
-        TripMemberStatus.Removed,
-      ]),
-    ],
+    constraints,
     queryOptions: {
       enabled: !!user?.uid,
     },
@@ -100,7 +105,7 @@ export default function Trips() {
     <>
       <PageHeader crumbs={[{ label: 'Trips', href: '/trips' }]} />
       <PageContent>
-        <div className="flex h-full min-h-0 w-full overflow-y-auto p-8">
+        <div className="">
           <div className="mx-auto w-full max-w-4xl">
             {isLoading && <FullPageSpinner what="trips" />}
             {!isLoading && nonArchivedTrips && nonArchivedTrips.length > 0 && (

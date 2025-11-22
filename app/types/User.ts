@@ -21,5 +21,4 @@ export type User = {
     hasSeenPackingListTour?: boolean
     hasDismissedFernwoodAd?: Timestamp
   }
-  shoppingListStores?: string[]
 }

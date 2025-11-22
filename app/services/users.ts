@@ -5,9 +5,12 @@ import { toast } from 'sonner'
 import { firestoreDb } from '~/firebase/config'
 import type { User } from '~/types/User'
 
+const userRootKey = ['users'] as const
+
 export const userKeys = {
-  all: (constraints: QueryConstraint[]) => ['users', ...constraints] as const,
-  byId: (userId: string) => [...userKeys.all([]), userId] as const,
+  root: userRootKey,
+  all: (constraints: QueryConstraint[]) => [...userRootKey, ...constraints] as const,
+  byId: (userId: string) => [...userRootKey, userId] as const,
 }
 
 export function useUserByIdQuery({ userId }: { userId: string }) {
@@ -35,10 +38,11 @@ export function useUpdateUser(userId: string) {
   return useMutation({
     mutationFn: async ({ data }: { data: Partial<User> }) => {
       const docRef = doc(firestoreDb, 'users', userId)
-      const updateData = { ...data, updated: Timestamp.fromDate(new Date()) }
+      const updateTimestamp = Timestamp.fromDate(new Date())
+      const updateData = { ...data, updated: updateTimestamp }
 
       await updateDoc(docRef, updateData)
-      return { ...updateData }
+      return { ...updateData, uid: userId }
     },
     onMutate: async ({ data }) => {
       await queryClient.cancelQueries({ queryKey: userQueryKey })
@@ -46,15 +50,17 @@ export function useUpdateUser(userId: string) {
       const previousData = queryClient.getQueryData(userQueryKey)
 
       // Optimistically update to the new value
-      queryClient.setQueryData(userQueryKey, (old: any) => ({
-        ...old,
+      const updateTimestamp = Timestamp.fromDate(new Date())
+      queryClient.setQueryData(userQueryKey, (old: User | undefined) => ({
+        ...(old ?? { uid: userId }),
         ...data,
+        updated: updateTimestamp,
       }))
 
       return { previousData }
     },
     onSuccess: () => {
-      toast.success(`User updated successfully`)
+      // toast.success(`User updated successfully`)
       // trackEvent('User Updated Successfully', {
       //   userId: userId,
       //   ...previousUserData,

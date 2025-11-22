@@ -1,3 +1,4 @@
+import { Timestamp } from 'firebase/firestore'
 import {
   ArrowBigUp,
   ChevronDown,
@@ -12,13 +13,13 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router'
 import { toast } from 'sonner'
 
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { cn } from '~/lib/utils'
-import { useDeletePackingListItem, useUpdatePackingListItem } from '~/services/trips'
-import type { PackingListItem } from '~/types/PackingListItem'
+import { useDeleteShoppingListItem, useUpdateShoppingListItem } from '~/services/shoppingList'
+import type { ShoppingListItemType } from '~/types/ShoppingListItemType'
+import type { Trip } from '~/types/Trip'
 
 import AnimatedContainer from '../AnimatedContainer'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion'
@@ -34,24 +35,18 @@ import {
 import { Kbd, KbdGroup } from '../ui/kbd'
 import { Separator } from '../ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
-import AddPackingListDialog from './AddPackingListDialog'
-import TripPackingListItem from './TripPackingListItem'
-import { usePackingListCategoryHotkeys } from './usePackingListCategoryHotkeys'
-import { usePackingListCategorySelection } from './usePackingListCategorySelection'
+import AddShoppingListItemDialog from './AddShoppingListItemDialog'
+import ShoppingListItem from './ShoppingListItem'
+import { useShoppingListCategoryHotkeys } from './useShoppingListCategoryHotkeys'
+import { useShoppingListCategorySelection } from './useShoppingListCategorySelection'
 
-type TripPackingListCategoryProps = {
-  categoryName: string
-  items: PackingListItem[]
-  isGroup?: boolean
+type ShoppingListCategoryProps = {
+  trip: Trip
+  items: ShoppingListItemType[]
   sounds?: ReturnType<typeof useCheckboxSounds>
 }
 
-const TripPackingListCategory = ({
-  categoryName,
-  items,
-  isGroup,
-  sounds,
-}: TripPackingListCategoryProps) => {
+const ShoppingListCategory = ({ trip, items, sounds }: ShoppingListCategoryProps) => {
   const [isMultiSelecting, setIsMultiSelecting] = useState(false)
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [lastSelectedItem, setLastSelectedItem] = useState<string | null>(null)
@@ -61,9 +56,8 @@ const TripPackingListCategory = ({
 
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  const { id } = useParams()
-  const { mutateAsync: updatePackingListItemAsync } = useUpdatePackingListItem({ tripId: id ?? '' })
-  const { mutateAsync: deletePackingListItemAsync } = useDeletePackingListItem()
+  const { mutateAsync: updateShoppingListItemAsync } = useUpdateShoppingListItem()
+  const { mutateAsync: deleteShoppingListItemAsync } = useDeleteShoppingListItem()
 
   const handleItemCreated = (itemId: string) => {
     if (newlyAddedItem) {
@@ -106,17 +100,19 @@ const TripPackingListCategory = ({
     }
   }
 
-  const areAllPacked = items.every((item) => item.isPacked)
+  const areAllPurchased = items.every((item) => item.isPurchased)
 
-  const markSelectedAsPacked = () => {
-    if (!id || !selectedItems.length) return
+  const markSelectedAsPurchased = () => {
+    if (!selectedItems.length) return
     selectedItems.forEach((item) => {
       const itemData = items.find((i) => i.id === item)
       if (!itemData) return
-      updatePackingListItemAsync({ data: { id: item, isPacked: true } })
+      updateShoppingListItemAsync({
+        data: { id: item, isPurchased: true, purchasedAt: Timestamp.now() },
+      })
     })
     toast.success(
-      `${selectedItems.length} ${selectedItems.length === 1 ? 'item' : 'items'} marked as packed`
+      `${selectedItems.length} ${selectedItems.length === 1 ? 'item' : 'items'} marked as purchased`
     )
     setSelectedItems([])
     setActionsMenuOpen(false)
@@ -124,10 +120,10 @@ const TripPackingListCategory = ({
   }
 
   const deleteSelectedItems = () => {
-    if (!id || !selectedItems.length) return
+    if (!selectedItems.length) return
     selectedItems.forEach((item) => {
       if (!item) return
-      deletePackingListItemAsync({ tripId: id, packingListItemId: item })
+      deleteShoppingListItemAsync({ id: item })
     })
     setSelectedItems([])
     setActionsMenuOpen(false)
@@ -138,30 +134,37 @@ const TripPackingListCategory = ({
   }
 
   const deleteAllItems = () => {
-    if (!id || !items.length) return
+    if (!items.length) return
     items.forEach((item) => {
       if (!item.id) return
-      deletePackingListItemAsync({ tripId: id, packingListItemId: item.id })
+      deleteShoppingListItemAsync({ id: item.id })
     })
 
-    toast.success(`All items in ${categoryName} deleted`)
+    toast.success(`All items in ${trip.name} deleted`)
     setIsMultiSelecting(false)
     setSelectedItems([])
     setActionsMenuOpen(false)
     setLastSelectedItem(null)
   }
 
-  const markAllPacked = () => {
-    if (!id || !items.length) return
+  const markAllAsPurchased = () => {
+    if (!items.length) return
 
-    const newState = areAllPacked ? false : true
+    const newState = areAllPurchased ? false : true
+    const purchasedAt = newState ? Timestamp.now() : null
     items.forEach((item) => {
       if (!item.id) return
-      updatePackingListItemAsync({ data: { id: item.id, isPacked: newState } })
+      updateShoppingListItemAsync({
+        data: {
+          id: item.id,
+          isPurchased: newState,
+          purchasedAt,
+        },
+      })
     })
   }
 
-  const { handleItemSelection } = usePackingListCategorySelection(
+  const { handleItemSelection } = useShoppingListCategorySelection(
     isMultiSelecting,
     lastSelectedItem,
     items,
@@ -170,11 +173,11 @@ const TripPackingListCategory = ({
     setLastSelectedItem
   )
 
-  usePackingListCategoryHotkeys(
+  useShoppingListCategoryHotkeys(
     isMultiSelecting,
     clearOrExitMultiSelect,
     deleteSelectedItems,
-    markSelectedAsPacked,
+    markSelectedAsPurchased,
     setSelectedItems,
     selectedItems,
     items,
@@ -189,25 +192,30 @@ const TripPackingListCategory = ({
       <ChevronUp className="inline size-2.5" />
     )
 
+  // each item can have multiple quantities, so if it is purchased, count the quantity
+  const purchasedItemsCount = items
+    .filter((item) => item.isPurchased)
+    .reduce((acc, item) => acc + (item.quantity ?? 1), 0)
+  // each item can have multiple quantities, so we need to count the total number of items
+  const totalItemsCount = items.reduce((acc, item) => acc + (item.quantity ?? 1), 0)
+
   return (
     <>
       <Accordion
         type="single"
         collapsible
-        className={cn('w-full rounded-lg', {
-          '-mr-1 -ml-1 bg-gray-200/50 px-1 dark:bg-gray-700/50': isGroup,
-        })}
-        defaultValue={categoryName}
+        className="mb-4 w-full rounded-lg border p-2"
+        defaultValue={trip.name}
         disabled={isMultiSelecting}
-        value={accordionOpen ? categoryName : ''}
+        value={accordionOpen ? trip.name : ''}
         onValueChange={(value) => {
-          setAccordionOpen(value === categoryName)
+          setAccordionOpen(value === trip.name)
         }}
       >
-        <AccordionItem value={categoryName} disabled={isMultiSelecting}>
+        <AccordionItem value={trip.name} disabled={isMultiSelecting}>
           <AccordionTrigger
             hideIcon
-            className="group/accordion hover:no-underline"
+            className="group/accordion py-2 hover:no-underline"
             asChild
             onClick={(e) => {
               if (isMultiSelecting) {
@@ -223,7 +231,7 @@ const TripPackingListCategory = ({
                   e.stopPropagation()
                 }
               }}
-              className="focus-visible:border-ring focus-visible:ring-ring/50 mx-2 flex w-full justify-between border-b pb-2 transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50"
+              className="focus-visible:border-ring focus-visible:ring-ring/50 mx-2 flex w-full justify-between transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50"
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -297,19 +305,20 @@ const TripPackingListCategory = ({
                     </TooltipContent>
                   </Tooltip>
                 )}
-                <div className="select-none">
-                  <div className="text-lg font-semibold">
-                    {categoryName}{' '}
-                    {isMultiSelecting ? null : (
-                      <ChevronDown className="inline h-4 w-4 transition-transform group-data-[state=closed]/accordion:-rotate-90" />
-                    )}
-                  </div>
-                  <div className="text-muted-foreground text-sm">
-                    {!isMultiSelecting && items.length > 0 && (
-                      <span>
-                        {items.filter((item) => item.isPacked).length} of {items.length} packed
-                      </span>
-                    )}
+                <div className="flex items-center gap-4">
+                  {isMultiSelecting ? null : (
+                    <ChevronDown className="ml-1 inline size-6 transition-transform group-data-[state=closed]/accordion:-rotate-90" />
+                  )}
+                  <div className="select-none">
+                    <div className="text-lg font-semibold">{trip.name}</div>
+                    <div className="text-muted-foreground text-sm">
+                      {!isMultiSelecting && totalItemsCount > 0 && (
+                        <span>
+                          {purchasedItemsCount} of {totalItemsCount} purchased
+                        </span>
+                      )}{' '}
+                      | Needed by {trip.startDate.toDate().toLocaleDateString()}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -374,12 +383,12 @@ const TripPackingListCategory = ({
                           disabled={selectedItems.length === 0}
                           onClick={(e) => {
                             e.stopPropagation()
-                            markSelectedAsPacked()
+                            markSelectedAsPurchased()
                           }}
                         >
                           <span className="flex items-center gap-2">
                             <ListChecks />
-                            Mark selected as packed
+                            Mark selected as purchased
                           </span>
                           <KbdGroup>
                             <Kbd>/</Kbd>
@@ -447,10 +456,7 @@ const TripPackingListCategory = ({
                   </div>
                 ) : (
                   <>
-                    <AddPackingListDialog
-                      categoryName={categoryName}
-                      onItemCreated={handleItemCreated}
-                    />
+                    <AddShoppingListItemDialog trip={trip} onItemCreated={handleItemCreated} />
 
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -472,23 +478,22 @@ const TripPackingListCategory = ({
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation()
-                            markAllPacked()
+                            markAllAsPurchased()
                           }}
                         >
                           <ListChecks />
-                          Mark all as {areAllPacked ? 'unpacked' : 'packed'}
+                          Mark all as {areAllPurchased ? 'unpurchased' : 'purchased'}
                         </DropdownMenuItem>
-                        {!isGroup && (
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              deleteAllItems()
-                            }}
-                          >
-                            <Trash2 />
-                            Delete all in {categoryName}
-                          </DropdownMenuItem>
-                        )}
+
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            deleteAllItems()
+                          }}
+                        >
+                          <Trash2 />
+                          Delete all items
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </>
@@ -496,29 +501,30 @@ const TripPackingListCategory = ({
               </div>
             </div>
           </AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-4 text-balance">
+          <AccordionContent className="flex flex-col gap-4 py-0 text-balance">
             <div className="space-y-1">
-              {isGroup && items.length === 0 && (
-                <div className="text-muted-foreground text-center text-sm">No group items yet</div>
-              )}
-              {items.map((item) => {
-                const isNewlyAdded = newlyAddedItem === item.id
+              {items
+                .sort((a, b) => a.created.toDate().getTime() - b.created.toDate().getTime())
+                .map((item) => {
+                  const isNewlyAdded = newlyAddedItem === item.id
 
-                return (
-                  <AnimatedContainer
-                    key={`${item.id}-${isNewlyAdded ? 'highlighted' : 'normal'}`}
-                    animation={isNewlyAdded ? 'highlightNewItem' : undefined}
-                  >
-                    <TripPackingListItem
-                      item={item}
-                      isMultiSelecting={isMultiSelecting}
-                      isSelected={selectedItems.includes(item.id)}
-                      onItemSelection={handleItemSelection}
-                      sounds={sounds}
-                    />
-                  </AnimatedContainer>
-                )
-              })}
+                  return (
+                    <AnimatedContainer
+                      key={`${item.id}-${isNewlyAdded ? 'highlighted' : 'normal'}`}
+                      animation={isNewlyAdded ? 'highlightNewItem' : undefined}
+                    >
+                      <div key={`${item.id}`}>
+                        <ShoppingListItem
+                          item={item}
+                          isMultiSelecting={isMultiSelecting}
+                          isSelected={selectedItems.includes(item.id)}
+                          onItemSelection={handleItemSelection}
+                          sounds={sounds}
+                        />
+                      </div>
+                    </AnimatedContainer>
+                  )
+                })}
             </div>
           </AccordionContent>
         </AccordionItem>
@@ -534,4 +540,4 @@ const TripPackingListCategory = ({
   )
 }
 
-export default TripPackingListCategory
+export default ShoppingListCategory

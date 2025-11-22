@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
+import { Timestamp } from 'firebase/firestore'
 import {
   Check,
   Circle,
@@ -6,6 +7,7 @@ import {
   Minus,
   Plus,
   Settings,
+  ShoppingBasket,
   Trash2,
   UserIcon,
   Users,
@@ -15,11 +17,14 @@ import { useState } from 'react'
 import { useParams } from 'react-router'
 import { animated, useSpring } from 'react-spring'
 
+import useAuth from '~/contexts/auth/useAuth'
 import { useSoundsState } from '~/contexts/globalState'
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { cn } from '~/lib/utils'
-import { useDeletePackingListItem, useUpdatePackingListItem } from '~/services/trips'
+import { useCreateShoppingListItem } from '~/services/shoppingList'
+import { tripKeys, useDeletePackingListItem, useUpdatePackingListItem } from '~/services/trips'
 import { type PackingListItem } from '~/types/PackingListItem'
+import type { Trip } from '~/types/Trip'
 import type { User } from '~/types/User'
 
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
@@ -51,10 +56,12 @@ const TripPackingListItem = ({
 }: TripPackingListItemProps) => {
   const { id } = useParams()
   const { soundsEnabled } = useSoundsState()
+  const { user } = useAuth()
 
   const queryClient = useQueryClient()
 
-  const users = queryClient.getQueryData<User[]>(['firebase', 'docs', 'trips', id, 'tripMembers'])
+  const users = queryClient.getQueryData<User[]>(tripKeys.members(id ?? '', []))
+  const trip = queryClient.getQueryData<Trip>(tripKeys.byId(id ?? ''))
 
   const springConfig = {
     tension: 400,
@@ -78,6 +85,7 @@ const TripPackingListItem = ({
 
   const { mutateAsync: updatePackingListItemAsync } = useUpdatePackingListItem({ tripId: id ?? '' })
   const { mutateAsync: deletePackingListItemAsync } = useDeletePackingListItem()
+  const { mutateAsync: createShoppingListItemAsync } = useCreateShoppingListItem()
 
   const togglePacked = () => {
     if (!id || !item.id) return
@@ -124,8 +132,31 @@ const TripPackingListItem = ({
     }
   }
 
+  const handleSendToShoppingList = () => {
+    if (!id || !item.id || !trip || !user) return
+
+    createShoppingListItemAsync({
+      data: {
+        actualPrice: null,
+        created: Timestamp.now(),
+        estimatedPrice: null,
+        isPurchased: false,
+        itemName: item.name,
+        notes: '',
+        priority: 'no priority',
+        purchasedAt: null,
+        quantity: item.quantity,
+        sourcePackingListItemId: item.id,
+        store: null,
+        tripId: trip.tripId,
+        updated: null,
+        userId: user.uid,
+      },
+    })
+  }
+
   return (
-    <div className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg px-3 py-2">
+    <div className="text-sidebar-foreground hover:bg-sidebar-accent/40 rounded-lg px-3 py-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           {isMultiSelecting ? (
@@ -194,8 +225,10 @@ const TripPackingListItem = ({
                 })}
               </div>
               <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Ellipsis className="h-4 w-4" />
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon-sm">
+                    <Ellipsis className="h-4 w-4" />
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem className="flex justify-between p-0">
@@ -233,7 +266,12 @@ const TripPackingListItem = ({
                     {item.packedBy[0].isShared ? 'Move to Personal Items' : 'Move to Group Items'}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleDelete}>
+                  <DropdownMenuItem onClick={handleSendToShoppingList}>
+                    <ShoppingBasket />
+                    Send to Shopping List
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleDelete} variant="destructive">
                     <Trash2 />
                     Delete
                   </DropdownMenuItem>
