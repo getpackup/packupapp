@@ -18,7 +18,10 @@ export default function GearCloset() {
     error,
     refetch,
   } = useGearClosetQuery({
-    userId: user?.uid ?? "-1"
+    userId: user?.uid ?? "",
+    queryOptions: {
+      enabled: !!user?.uid
+    }
   })
 
   if (!isLoading) {

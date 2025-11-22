@@ -1,9 +1,4 @@
-import {
-  type QueryObserverOptions,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query'
+import { type QueryObserverOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   addDoc,
   collection,
@@ -62,15 +57,13 @@ export function useTripsQuery({
         const q = query(tripsCollectionRef, ...constraints)
         const querySnapshot = await getDocs(q)
         return querySnapshot.docs.map((doc) => {
-          const data = doc.data() as Trip
-          return data
+          return doc.data() as Trip
         })
       }
 
       const querySnapshot = await getDocs(tripsCollectionRef)
       return querySnapshot.docs.map((doc) => {
-        const data = doc.data() as Trip
-        return data
+        return doc.data() as Trip
       })
     },
     // Keep trip data fresh for 2 minutes

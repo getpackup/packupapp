@@ -1,5 +1,5 @@
 import { type QueryObserverOptions, useQuery } from '@tanstack/react-query'
-import { collection, getDocs, query, type QueryConstraint } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, query, type QueryConstraint } from 'firebase/firestore'
 
 import { firestoreDb } from '~/firebase/config'
 import type { GearItem } from '~/types/GearItem'
@@ -45,9 +45,10 @@ export function useGearQuery({
   })
 }
 
+
 export function useGearClosetQuery({
-  userId,
-  queryOptions,
+   userId,
+   queryOptions,
 }: {
   userId: string
   queryOptions?: Omit<QueryObserverOptions<GearItem[], Error>, 'queryKey' | 'queryFn'>
@@ -55,12 +56,46 @@ export function useGearClosetQuery({
   return useQuery<GearItem[], Error>({
     queryKey: gearKeys.gearCloset(userId),
     queryFn: async (): Promise<GearItem[]> => {
-      const gearClosetCollectionRef = collection(firestoreDb, 'gear-closet')
-
-      const querySnapshot = await getDocs(gearClosetCollectionRef)
-      return querySnapshot.docs.map((doc) => {
+      // Get a master gear list
+      const gearCollectionRef = collection(firestoreDb, 'gear')
+      const gearQuery = query(gearCollectionRef)
+      const gearSnapshot = await getDocs(gearQuery)
+      const gear: Array<GearItem> = gearSnapshot.docs.map((doc) => {
         return doc.data() as GearItem
       })
+
+      console.log('master gear', gear)
+
+      const gcDocRef = doc(firestoreDb, 'gear-closet', userId)
+      const docSnap = await getDoc(gcDocRef)
+
+      if (!docSnap.exists()) {
+        throw new Error(`Gear closet does not exist for ${userId}`)
+      }
+
+      const { categories, removals } = docSnap.data()
+      console.log('categories', categories)
+      console.log('removals', removals)
+
+      const filteredList: Array<GearItem> = gear.filter((i: GearItem) => {
+        // Match gear item to participating categories
+        const keys = Object.keys(i)
+        const participatingCategories = keys.filter(k => (i as Record<string, any>)[k] === true)
+
+        // Remove items marked with "removals"
+        return !removals.includes(i.id) && participatingCategories.length > 0
+      })
+
+      // Add "additions" gear
+      const additionsSubCollectionRef = collection(firestoreDb, 'gear-closet', userId, 'additions')
+      const additionsQuery = query(additionsSubCollectionRef)
+      const additionsSnapshot = await getDocs(additionsQuery)
+      const additions: Array<GearItem> = additionsSnapshot.docs.map(doc => {
+        return doc.data() as GearItem
+      })
+
+      // Voilà
+      return [...filteredList, ...additions]
     },
     // Keep trip data fresh for 2 minutes
     staleTime: 2 * 60 * 1000,
