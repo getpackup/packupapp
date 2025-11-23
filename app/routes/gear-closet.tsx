@@ -47,7 +47,7 @@ export default function GearCloset() {
       <PageHeader crumbs={[{ label: 'Gear Closet', href: '/gear-closet' }]} />
       <PageContent>
         <div className="relative flex h-full min-h-0">
-          <div className="w-2/3 overflow-y-auto p-8">
+          <div className="w-2/3 overflow-y-auto p-8" style={{scrollbarWidth: 'none'}}>
             { !isLoading &&
               <GearTable data={data ?? []} />
             }
