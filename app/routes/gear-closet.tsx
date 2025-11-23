@@ -4,19 +4,22 @@ import useAuth from '~/contexts/auth/useAuth'
 import { useGearClosetQuery } from '~/services/gear'
 
 import type { Route } from './+types/home'
+import GearTable from '~/components/ui/gear-table'
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: 'Gear Closet | Packup' }]
 }
 
+// TODO add gear selection
+// TODO add gear update
+// TODO add gear delete
 export default function GearCloset() {
   const { user } = useAuth()
 
   const {
-    data: gear,
+    data,
     isLoading,
     error,
-    refetch,
   } = useGearClosetQuery({
     userId: user?.uid ?? "",
     queryOptions: {
@@ -24,12 +27,19 @@ export default function GearCloset() {
     }
   })
 
-  if (!isLoading) {
-    console.log('Done loading gear')
-    console.log('error', error)
-    console.log('gear', gear)
-  } else {
-    console.log('Loading gear...')
+  if (error) {
+    return (
+      <>
+        <PageHeader crumbs={[{ label: 'Gear Closet', href: '/gear-closet' }]} />
+        <PageContent>
+          <div className="relative flex h-full min-h-0">
+            <div className="w-2/3 overflow-y-auto p-8">
+              <p>An error occured. Please try again later or reach out to support</p>
+            </div>
+          </div>
+        </PageContent>
+      </>
+    )
   }
 
   return (
@@ -38,10 +48,12 @@ export default function GearCloset() {
       <PageContent>
         <div className="relative flex h-full min-h-0">
           <div className="w-2/3 overflow-y-auto p-8">
-            <p>Section for a list of gear items with search/filters</p>
+            { !isLoading &&
+              <GearTable data={data ?? []} />
+            }
           </div>
           <div className="bg-sidebar border-sidebar-border w-1/3 overflow-y-auto border-l">
-            <p>Section for selected item's info and option to edit/save</p>
+            <p>Select an item</p>
           </div>
         </div>
       </PageContent>

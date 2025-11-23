@@ -64,18 +64,15 @@ export function useGearClosetQuery({
         return doc.data() as GearItem
       })
 
-      console.log('master gear', gear)
-
       const gcDocRef = doc(firestoreDb, 'gear-closet', userId)
       const docSnap = await getDoc(gcDocRef)
 
       if (!docSnap.exists()) {
-        throw new Error(`Gear closet does not exist for ${userId}`)
+        console.error(`Gear closet does not exist for ${userId}`)
+        return []
       }
 
-      const { categories, removals } = docSnap.data()
-      console.log('categories', categories)
-      console.log('removals', removals)
+      const { removals } = docSnap.data()
 
       const filteredList: Array<GearItem> = gear.filter((i: GearItem) => {
         // Match gear item to participating categories
