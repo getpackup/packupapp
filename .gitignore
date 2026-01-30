@@ -10,3 +10,4 @@
 .netlify
 
 .idea
+.claude/*.local.*
