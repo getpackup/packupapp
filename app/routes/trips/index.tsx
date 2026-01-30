@@ -1,19 +1,34 @@
 import { where } from 'firebase/firestore'
+import { PlusCircle } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
+import { Link } from 'react-router'
 import { toast } from 'sonner'
 
 import FullPageSpinner from '~/components/FullPageSpinner'
+import { Logo } from '~/components/Logo'
 import PageContent from '~/components/PageContent'
 import PageHeader from '~/components/PageHeader'
 import TripCard from '~/components/Trip/TripCard'
+import { Badge } from '~/components/ui/badge'
+import { Button } from '~/components/ui/button'
 import { useAuth } from '~/contexts/auth/useAuth'
-import { isBeforeToday } from '~/lib/date'
-import { isAfterToday } from '~/lib/date'
+import { isAfterToday, isBeforeToday } from '~/lib/date'
+import { useTripsQuery } from '~/services/trips'
 import type { Trip } from '~/types/Trip'
 import { TripMemberStatus } from '~/types/TripMember'
 
+import type { Route } from './+types/index'
+
+export function meta({}: Route.MetaArgs) {
+  return [{ title: 'Trips | Packup' }]
+}
+
+type TripWithStatus = Trip & {
+  status: 'pending' | 'in-progress' | 'upcoming' | 'past'
+}
+
 // Helper function to group trips by year
-function groupTripsByYear(trips: Trip[]): { [year: string]: Trip[] } {
+function groupTripsByYear(trips: TripWithStatus[]): { [year: string]: TripWithStatus[] } {
   return trips.reduce(
     (groups, trip) => {
       const year = new Date(trip.startDate.seconds * 1000).getFullYear().toString()
@@ -23,22 +38,8 @@ function groupTripsByYear(trips: Trip[]): { [year: string]: Trip[] } {
       groups[year].push(trip)
       return groups
     },
-    {} as { [year: string]: Trip[] }
+    {} as { [year: string]: TripWithStatus[] }
   )
-}
-
-import { PlusCircle } from 'lucide-react'
-import { Link } from 'react-router'
-
-import { Logo } from '~/components/Logo'
-import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
-import { useTripsQuery } from '~/services/trips'
-
-import type { Route } from './+types/index'
-
-export function meta({}: Route.MetaArgs) {
-  return [{ title: 'Trips | Packup' }]
 }
 
 export default function Trips() {
@@ -66,37 +67,30 @@ export default function Trips() {
     },
   })
 
-  const nonArchivedTrips = trips
-    ?.filter((trip) => !trip.archived && trip.startDate)
-    .sort((a, b) => {
-      // Safety check for startDate
-      if (!a.startDate || !b.startDate) return 0
-      return b.startDate.seconds - a.startDate.seconds
-    })
+  // Add status to each trip and filter out archived trips
+  const tripsWithStatus = useMemo(() => {
+    if (!trips || !user?.uid) return []
 
-  const pendingTrips =
-    user?.uid &&
-    nonArchivedTrips?.filter(
-      (trip) =>
-        trip.tripMembers &&
-        trip.tripMembers[user.uid] &&
-        trip.tripMembers[user.uid].status === TripMemberStatus.Pending
-    )
+    return trips
+      .filter((trip) => !trip.archived && trip.startDate)
+      .map((trip): TripWithStatus => {
+        const isPending = trip.tripMembers?.[user.uid]?.status === TripMemberStatus.Pending
+        const isInProgress =
+          isBeforeToday(trip.startDate.seconds * 1000) && isAfterToday(trip.endDate.seconds * 1000)
+        const isUpcoming = isAfterToday(trip.startDate.seconds * 1000)
 
-  const inProgressTrips = nonArchivedTrips?.filter(
-    (trip) =>
-      isBeforeToday(trip.startDate.seconds * 1000) && isAfterToday(trip.endDate.seconds * 1000)
-  )
+        let status: TripWithStatus['status'] = 'past'
+        if (isPending) status = 'pending'
+        else if (isInProgress) status = 'in-progress'
+        else if (isUpcoming) status = 'upcoming'
 
-  const upcomingTrips = nonArchivedTrips
-    ?.filter((trip) => isAfterToday(trip.startDate.seconds * 1000))
-    .sort((a, b) => a.startDate.seconds - b.startDate.seconds)
+        return { ...trip, status }
+      })
+      .sort((a, b) => b.startDate.seconds - a.startDate.seconds)
+  }, [trips, user?.uid])
 
-  const pastTrips = nonArchivedTrips
-    ?.filter((trip) => isBeforeToday(trip.endDate.seconds * 1000))
-    .sort((a, b) => b.startDate.seconds - a.startDate.seconds) // Sort chronologically (most recent first)
-
-  const pastTripsByYear = pastTrips ? groupTripsByYear(pastTrips) : {}
+  const tripsByYear = groupTripsByYear(tripsWithStatus)
+  const sortedYears = Object.keys(tripsByYear).sort((a, b) => parseInt(b) - parseInt(a))
 
   useEffect(() => {
     if (error) {
@@ -111,70 +105,34 @@ export default function Trips() {
         <div className="">
           <div className="mx-auto w-full max-w-4xl">
             {isLoading && <FullPageSpinner what="trips" />}
-            {!isLoading && nonArchivedTrips && nonArchivedTrips.length > 0 && (
-              <div className="space-y-4">
-                {/* Pending Trips */}
-                {pendingTrips && pendingTrips.length > 0 && (
-                  <div className="space-y-4">
-                    <h2 className="text-2xl font-bold">Pending invitations</h2>
-                    <div className="space-y-4">
-                      {pendingTrips.map((trip: Trip) => (
-                        <TripCard
-                          key={trip.tripId}
-                          trip={trip}
-                          isPending
-                          showCountdown
-                          refetch={refetch}
-                        />
-                      ))}
+            {!isLoading && tripsWithStatus.length > 0 && (
+              <div className="-ml-12 space-y-0">
+                {sortedYears.map((year) => (
+                  <div key={year} className="flex gap-6">
+                    <div className="w-12 shrink-0">
+                      <div className="sticky top-0 py-4">
+                        <Badge variant="default" className="text-sm">
+                          {year}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 space-y-4 py-4">
+                      {tripsByYear[year]
+                        .sort((a, b) => b.startDate.seconds - a.startDate.seconds)
+                        .map((trip) => (
+                          <TripCard
+                            key={trip.tripId}
+                            trip={trip}
+                            isPending={trip.status === 'pending'}
+                            showCountdown={trip.status === 'upcoming' || trip.status === 'pending'}
+                            showRemaining={trip.status === 'in-progress'}
+                            refetch={refetch}
+                          />
+                        ))}
                     </div>
                   </div>
-                )}
-
-                {/* In Progress Trips */}
-                {inProgressTrips && inProgressTrips.length > 0 && (
-                  <div className="space-y-4">
-                    <h2 className="text-2xl font-bold">In Progress</h2>
-                    <div className="space-y-4">
-                      {inProgressTrips.map((trip: Trip) => (
-                        <TripCard key={trip.tripId} trip={trip} showRemaining />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Upcoming Trips */}
-                {upcomingTrips && upcomingTrips.length > 0 && (
-                  <div className="space-y-4">
-                    <h2 className="text-2xl font-bold">Upcoming</h2>
-                    <div className="space-y-4">
-                      {upcomingTrips.map((trip: Trip) => (
-                        <TripCard key={trip.tripId} trip={trip} showCountdown />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Past Trips grouped by year */}
-                {Object.keys(pastTripsByYear).length > 0 && (
-                  <div className="space-y-4">
-                    <h2 className="text-2xl font-bold">Past trips</h2>
-                    {Object.keys(pastTripsByYear)
-                      .sort((a, b) => parseInt(b) - parseInt(a)) // Sort years descending (newest first)
-                      .map((year) => (
-                        <div key={year} className="space-y-4">
-                          <Badge variant="default">{year}</Badge>
-                          <div className="space-y-4">
-                            {pastTripsByYear[year]
-                              .sort((a, b) => b.startDate.seconds - a.startDate.seconds) // Sort chronologically within year
-                              .map((trip: Trip) => (
-                                <TripCard key={trip.tripId} trip={trip} />
-                              ))}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                )}
+                ))}
 
                 <p className="text-muted-foreground py-24 text-center text-sm">
                   You've reached the end of the list.{' '}
@@ -184,7 +142,7 @@ export default function Trips() {
                 </p>
               </div>
             )}
-            {!isLoading && nonArchivedTrips && nonArchivedTrips.length === 0 && (
+            {!isLoading && tripsWithStatus.length === 0 && (
               <div className="mx-auto flex max-w-md flex-col items-center space-y-8 text-center">
                 <Logo className="size-16" fill="var(--muted-foreground)" />
                 <h2 className="text-2xl font-bold">Welcome, adventurer!</h2>

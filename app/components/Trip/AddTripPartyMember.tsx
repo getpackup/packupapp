@@ -182,35 +182,6 @@ export function AddTripPartyMember({
       },
     }
 
-    // await queryClient.cancelQueries({ queryKey: firebaseKeys.doc('trips', id) })
-
-    // const previousTripData = queryClient.getQueryData(firebaseKeys.doc('trips', id))
-    // queryClient.setQueryData(firebaseKeys.doc('trips', id), (old: any) => {
-    //   if (!old) return old
-    //   return {
-    //     ...old,
-    //     tripMembers: {
-    //       ...old.tripMembers,
-    //       [hitUserId]: newMember,
-    //     },
-    //   }
-    // })
-
-    // const previousUsersData = queryClient.getQueryData<User[]>([
-    //   'firebase',
-    //   'docs',
-    //   'trips',
-    //   id,
-    //   'tripMembers',
-    // ])
-    // const foundUser = hits.find((hit) => hit.uid === hitUserId)
-    // if (foundUser && previousUsersData) {
-    //   queryClient.setQueryData<User[]>(
-    //     ['firebase', 'docs', 'trips', id, 'tripMembers'],
-    //     [...previousUsersData, foundUser]
-    //   )
-    // }
-
     try {
       await updateTrip({ data: payload })
         .then(async () => {

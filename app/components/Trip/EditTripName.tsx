@@ -1,20 +1,27 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { PopoverClose } from '@radix-ui/react-popover'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useParams } from 'react-router'
 import { toast } from 'sonner'
 import z from 'zod'
 
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '~/components/ui/dialog'
+import {
   Form,
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
-import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { useUpdateTrip } from '~/services/trips'
 
 import { Button } from '../ui/button'
@@ -27,6 +34,7 @@ export function EditTripName({
   children: React.ReactNode
 }) {
   const { id } = useParams()
+  const [open, setOpen] = useState(false)
   const { mutateAsync: updateTripAsync } = useUpdateTrip(String(id))
 
   const formSchema = z.object({
@@ -46,14 +54,11 @@ export function EditTripName({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!id) return
 
-    // mock esc keypress to close the popover
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
-    form.reset({ name: values.name })
-
     try {
       await updateTripAsync({
         data: { name: values.name },
       })
+      setOpen(false)
     } catch (error) {
       toast.error('Error updating trip name: ' + (error as Error).message)
       console.error('Error updating trip name:', error)
@@ -61,48 +66,51 @@ export function EditTripName({
   }
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <FormLabel className="mb-2">Update trip name</FormLabel>
-
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem className="mb-2 w-full">
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="What do you want to call this trip?"
-                      onFocus={(e) => {
-                        field.onBlur()
-                        // Move cursor to the end instead of selecting all text
-                        setTimeout(() => {
-                          e.target.setSelectionRange(e.target.value.length, e.target.value.length)
-                        }, 10)
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex justify-end gap-2">
-              <PopoverClose asChild>
-                <Button type="button" variant="outline" className="">
+            <DialogHeader>
+              <DialogTitle>Update trip name</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem className="w-full">
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="What do you want to call this trip?"
+                        onFocus={(e) => {
+                          field.onBlur()
+                          // Move cursor to the end instead of selecting all text
+                          setTimeout(() => {
+                            e.target.setSelectionRange(e.target.value.length, e.target.value.length)
+                          }, 10)
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
                   Cancel
                 </Button>
-              </PopoverClose>
-              <Button type="submit" disabled={!form.formState.isDirty} className="">
+              </DialogClose>
+              <Button type="submit" disabled={!form.formState.isDirty}>
                 Save changes
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </Form>
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   )
 }

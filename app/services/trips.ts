@@ -339,6 +339,7 @@ export function useUpdateTrip(tripId: string) {
       // })
     },
     onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: tripKeys.all([]) })
       queryClient.invalidateQueries({ queryKey: tripQueryKey })
       queryClient.invalidateQueries({
         queryKey: tripKeys.membersRoot(tripId),

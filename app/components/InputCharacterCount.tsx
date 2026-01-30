@@ -6,13 +6,19 @@ type InputCharacterCountProps = {
   maxLength: number
   value: string
   dangerThreshold: number
+  isDirty: boolean
 }
 
-const InputCharacterCount = ({ maxLength, value, dangerThreshold }: InputCharacterCountProps) => {
+const InputCharacterCount = ({
+  maxLength,
+  value,
+  dangerThreshold,
+  isDirty,
+}: InputCharacterCountProps) => {
   const valueLength = value?.length ?? 0
   const remainingCharacters = maxLength - valueLength
 
-  if (maxLength - dangerThreshold <= remainingCharacters) {
+  if (maxLength - dangerThreshold <= remainingCharacters || !isDirty) {
     return null
   }
 

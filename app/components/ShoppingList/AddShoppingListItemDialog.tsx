@@ -156,6 +156,7 @@ function AddShoppingListItemDialog({ trip, onItemCreated }: AddShoppingListItemD
                       maxLength={MAX_NAME_AND_NOTES_LENGTH}
                       value={watchedName ?? ''}
                       dangerThreshold={20}
+                      isDirty={Boolean(form.formState.dirtyFields.itemName)}
                     />
                   </FormItem>
                 )}
@@ -178,6 +179,7 @@ function AddShoppingListItemDialog({ trip, onItemCreated }: AddShoppingListItemD
                       maxLength={MAX_STORE_LENGTH}
                       value={watchedStore ?? ''}
                       dangerThreshold={5}
+                      isDirty={Boolean(form.formState.dirtyFields.store)}
                     />
                   </FormItem>
                 )}
@@ -196,6 +198,7 @@ function AddShoppingListItemDialog({ trip, onItemCreated }: AddShoppingListItemD
                       maxLength={MAX_NAME_AND_NOTES_LENGTH}
                       value={watchedNotes ?? ''}
                       dangerThreshold={20}
+                      isDirty={Boolean(form.formState.dirtyFields.itemName)}
                     />
                   </FormItem>
                 )}

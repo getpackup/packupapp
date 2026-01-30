@@ -136,7 +136,7 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
         )}
         {showCountdown && (
           <div className="absolute top-2 left-2 z-10 text-xs">
-            <Badge variant="default">
+            <Badge variant="primary">
               {formatDistanceToNow(trip.startDate.seconds * 1000, { addSuffix: true })}
             </Badge>
           </div>

@@ -97,7 +97,7 @@ export const activityTypesList: Array<keyof ActivityTypes> = [
 ]
 
 // todo commonize this with gearCloset.ts
-export type GearItemType = {
+export type GearItem = {
   id: string
   name: string
   category: string

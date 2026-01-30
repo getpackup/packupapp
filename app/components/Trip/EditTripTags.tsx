@@ -1,13 +1,21 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { PopoverClose } from '@radix-ui/react-popover'
 import { useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useParams } from 'react-router'
 import { toast } from 'sonner'
 import z from 'zod'
 
-import { Form, FormLabel } from '~/components/ui/form'
-import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '~/components/ui/dialog'
+import { Form } from '~/components/ui/form'
 import { tripKeys, useUpdateTrip } from '~/services/trips'
 import type { GearListEnumType } from '~/types/GearItem'
 import type { Trip } from '~/types/Trip'
@@ -34,6 +42,7 @@ export function EditTripTags({
   children: React.ReactNode
 }) {
   const { id } = useParams()
+  const [open, setOpen] = useState(false)
   const { mutateAsync: updateTripAsync } = useUpdateTrip(String(id))
   const queryClient = useQueryClient()
 
@@ -51,10 +60,6 @@ export function EditTripTags({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!id) return
 
-    // mock esc keypress to close the popover
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
-    form.reset({ ...Object.fromEntries(formKeys.map((key) => [key, values[key]])) })
-
     const previousTripData = queryClient.getQueryData<Trip>(tripKeys.byId(id))
     const tagsFromOtherGroups = (previousTripData?.tags ?? []).filter(
       (tag) => !formKeys.includes(tag)
@@ -70,6 +75,7 @@ export function EditTripTags({
           tags: updatedTags,
         },
       })
+      setOpen(false)
     } catch (error) {
       toast.error(`Error updating trip ${name} tags: ` + (error as Error).message)
       console.error(`Error updating trip ${name} tags:`, error)
@@ -77,49 +83,52 @@ export function EditTripTags({
   }
 
   return (
-    <Popover>
-      <PopoverTrigger className="w-full">{children}</PopoverTrigger>
-      <PopoverContent className="w-full max-w-md min-w-(--radix-popover-trigger-width)">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger className="w-full">{children}</DialogTrigger>
+      <DialogContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <FormLabel className="mb-2">Update {name} tags</FormLabel>
-
-            <MultiSelect defaultValues={tags}>
-              <MultiSelectTrigger className="mb-2 w-full">
-                <MultiSelectValue
-                  placeholder={`Select ${name}...`}
-                  onDeselect={(item) => form.setValue(item, false, { shouldDirty: true })}
-                />
-              </MultiSelectTrigger>
-              <MultiSelectContent search={false}>
-                <MultiSelectGroup>
-                  {options
-                    .sort((a, b) => a.label.localeCompare(b.label))
-                    .map((option) => (
-                      <MultiSelectItem
-                        key={option.label}
-                        value={option.label}
-                        onSelect={() => form.setValue(option.label, true, { shouldDirty: true })}
-                      >
-                        {option.label}
-                      </MultiSelectItem>
-                    ))}
-                </MultiSelectGroup>
-              </MultiSelectContent>
-            </MultiSelect>
-            <div className="flex justify-end gap-2">
-              <PopoverClose asChild>
-                <Button type="button" variant="outline" className="">
+            <DialogHeader>
+              <DialogTitle>Update {name} tags</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <MultiSelect defaultValues={tags}>
+                <MultiSelectTrigger className="w-full">
+                  <MultiSelectValue
+                    placeholder={`Select ${name}...`}
+                    onDeselect={(item) => form.setValue(item, false, { shouldDirty: true })}
+                  />
+                </MultiSelectTrigger>
+                <MultiSelectContent search={false}>
+                  <MultiSelectGroup>
+                    {options
+                      .sort((a, b) => a.label.localeCompare(b.label))
+                      .map((option) => (
+                        <MultiSelectItem
+                          key={option.label}
+                          value={option.label}
+                          onSelect={() => form.setValue(option.label, true, { shouldDirty: true })}
+                        >
+                          {option.label}
+                        </MultiSelectItem>
+                      ))}
+                  </MultiSelectGroup>
+                </MultiSelectContent>
+              </MultiSelect>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
                   Cancel
                 </Button>
-              </PopoverClose>
-              <Button type="submit" disabled={!form.formState.isDirty} className="">
+              </DialogClose>
+              <Button type="submit" disabled={!form.formState.isDirty}>
                 Save changes
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </Form>
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   )
 }

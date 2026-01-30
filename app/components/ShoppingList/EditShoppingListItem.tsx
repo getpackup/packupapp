@@ -160,6 +160,7 @@ const EditShoppingListItem = ({ item, isEditing, setIsEditing }: EditShoppingLis
                       maxLength={MAX_NAME_AND_NOTES_LENGTH}
                       value={watchedName ?? ''}
                       dangerThreshold={20}
+                      isDirty={Boolean(form.formState.dirtyFields.itemName)}
                     />
                   </FormItem>
                 )}
@@ -216,6 +217,7 @@ const EditShoppingListItem = ({ item, isEditing, setIsEditing }: EditShoppingLis
                       maxLength={MAX_STORE_LENGTH}
                       value={watchedStore ?? ''}
                       dangerThreshold={5}
+                      isDirty={Boolean(form.formState.dirtyFields.store)}
                     />
                   </FormItem>
                 )}
@@ -234,6 +236,7 @@ const EditShoppingListItem = ({ item, isEditing, setIsEditing }: EditShoppingLis
                       maxLength={MAX_NAME_AND_NOTES_LENGTH}
                       value={watchedNotes ?? ''}
                       dangerThreshold={20}
+                      isDirty={Boolean(form.formState.dirtyFields.notes)}
                     />
                   </FormItem>
                 )}

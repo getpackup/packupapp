@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. When reporting information to me, be extremely concise, and sacrifice grammar for the sake of concision.
 
 ## Development Commands
 
@@ -78,3 +78,6 @@ This is a **React Router v7** application with server-side rendering using a ful
 - Optimistic updates for all mutations
 - Real-time subscriptions only where needed
 - Route-based code splitting built into React Router v7
+
+### Comments
+DO NOT add comments to code explaining what the code is doing unless it is overly complex. Only add comments to help a developer understand why the code is doing what it is doing.

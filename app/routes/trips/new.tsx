@@ -1,5 +1,6 @@
 import PageContent from '~/components/PageContent'
 import PageHeader from '~/components/PageHeader'
+import NewTripForm from '~/components/Trip/NewTrip'
 
 import type { Route } from './+types/new'
 
@@ -17,8 +18,8 @@ export default function NewTrip() {
         ]}
       />
       <PageContent>
-        <div className="w-full max-w-4xl">
-          <p>Create a new trip form will go here</p>
+        <div className="mx-auto w-full max-w-4xl">
+          <NewTripForm />
         </div>
       </PageContent>
     </>
