@@ -1,4 +1,5 @@
 import { orderBy } from 'firebase/firestore'
+import { ListIcon } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 
 import useAuth from '~/contexts/auth/useAuth'
@@ -10,10 +11,20 @@ import type { PackingListItem } from '~/types/PackingListItem'
 import type { User } from '~/types/User'
 
 import FullPageSpinner from '../FullPageSpinner'
+import { Button } from '../ui/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '../ui/empty'
 import { Input } from '../ui/input'
 import { Progress } from '../ui/progress'
 import { Tabs } from '../ui/tabs'
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group'
+import AddPackingListDialog from './AddPackingListDialog'
 import TripPackingListCategory from './TripPackingListCategory'
 
 type TripPackingListProps = {
@@ -131,7 +142,7 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
           </ToggleGroup>
         </div>
 
-        {isLoading || packingList?.length === 0 ? (
+        {isLoading ? (
           <FullPageSpinner what="packing list" />
         ) : (
           <div className="space-y-1">
@@ -144,8 +155,38 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
               />
             )}
 
-            {personalItems?.length === 0 ? (
-              <div className="text-muted-foreground text-sm">No personal items</div>
+            {packingList?.length === 0 && (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <ListIcon />
+                  </EmptyMedia>
+                  <EmptyTitle>No items found</EmptyTitle>
+                  <EmptyDescription>You have no items to pack for this trip yet</EmptyDescription>
+                  <EmptyContent className="flex-row justify-center gap-2">
+                    <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}}>
+                      <Button>Add an item</Button>
+                    </AddPackingListDialog>
+                  </EmptyContent>
+                </EmptyHeader>
+              </Empty>
+            )}
+
+            {(packingList?.length ?? 0) > 0 && personalItems?.length === 0 ? (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <ListIcon />
+                  </EmptyMedia>
+                  <EmptyTitle>No items found</EmptyTitle>
+                  <EmptyDescription>You have no items to pack for this trip yet</EmptyDescription>
+                  <EmptyContent className="flex-row justify-center gap-2">
+                    <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}}>
+                      <Button>Add an item</Button>
+                    </AddPackingListDialog>
+                  </EmptyContent>
+                </EmptyHeader>
+              </Empty>
             ) : (
               <>
                 {getGroupedFinalItems &&

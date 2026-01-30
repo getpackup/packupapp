@@ -20,5 +20,6 @@ export type User = {
     theme?: 'light' | 'dark'
     hasSeenPackingListTour?: boolean
     hasDismissedFernwoodAd?: Timestamp
+    temperatureUnit?: 'celsius' | 'fahrenheit'
   }
 }

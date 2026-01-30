@@ -31,6 +31,7 @@ import { EditTripLocation } from './EditTripLocation'
 import { EditTripName } from './EditTripName'
 import { EditTripTags } from './EditTripTags'
 import TripPartyMemberBadge from './TripPartyMemberBadge'
+import TripWeather from './TripWeather'
 
 type TripDetailsSidebarProps = {
   trip: Trip
@@ -189,6 +190,17 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
               </EditTripDescription>
             </div>
           </SidebarItem>
+
+          <Separator className="my-4" />
+
+          {trip.lat && trip.lng && (
+            <TripWeather
+              lat={trip.lat}
+              lng={trip.lng}
+              startDate={trip.startDate}
+              endDate={trip.endDate}
+            />
+          )}
 
           <Separator className="mt-4" />
           <EditTripTags tags={onlyActivityTags} options={gearListActivities} name="Activities">

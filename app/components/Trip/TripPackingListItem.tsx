@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Timestamp } from 'firebase/firestore'
+import { limit, Timestamp, where } from 'firebase/firestore'
 import {
   Check,
   Circle,
@@ -13,7 +13,7 @@ import {
   Users,
   X,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams } from 'react-router'
 import { animated, useSpring } from 'react-spring'
 
@@ -60,8 +60,16 @@ const TripPackingListItem = ({
 
   const queryClient = useQueryClient()
 
-  const users = queryClient.getQueryData<User[]>(tripKeys.members(id ?? '', []))
   const trip = queryClient.getQueryData<Trip>(tripKeys.byId(id ?? ''))
+
+  const constraints = useMemo(
+    () =>
+      trip?.tripMembers && Object.keys(trip.tripMembers).length > 0
+        ? [where('uid', 'in', Object.keys(trip.tripMembers)), limit(10)]
+        : [],
+    [trip?.tripMembers]
+  )
+  const users = id ? queryClient.getQueryData<User[]>(tripKeys.members(id, constraints)) : []
 
   const springConfig = {
     tension: 400,
@@ -261,11 +269,17 @@ const TripPackingListItem = ({
                     Edit
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleMoveToOrFromGroupItems}>
-                    {item.packedBy[0].isShared ? <UserIcon /> : <Users />}{' '}
-                    {item.packedBy[0].isShared ? 'Move to Personal Items' : 'Move to Group Items'}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  {trip?.tripMembers && Object.keys(trip.tripMembers).length > 1 && (
+                    <>
+                      <DropdownMenuItem onClick={handleMoveToOrFromGroupItems}>
+                        {item.packedBy[0].isShared ? <UserIcon /> : <Users />}{' '}
+                        {item.packedBy[0].isShared
+                          ? 'Move to Personal Items'
+                          : 'Move to Group Items'}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
                   <DropdownMenuItem onClick={handleSendToShoppingList}>
                     <ShoppingBasket />
                     Send to Shopping List

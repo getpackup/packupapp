@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Timestamp } from 'firebase/firestore'
-import { Loader2, Plus } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { useParams } from 'react-router'
 import z from 'zod'
@@ -29,14 +29,18 @@ import useAuth from '~/contexts/auth/useAuth'
 import { useCreatePackingListItem } from '~/services/trips'
 
 import { Checkbox } from '../ui/checkbox'
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 
 type AddPackingListDialogProps = {
   categoryName: string
   onItemCreated?: (itemId: string) => void
+  children: React.ReactNode
 }
 
-function AddPackingListDialog({ categoryName, onItemCreated }: AddPackingListDialogProps) {
+function AddPackingListDialog({
+  categoryName,
+  onItemCreated,
+  children,
+}: AddPackingListDialogProps) {
   const { id } = useParams()
   const { user } = useAuth()
 
@@ -91,20 +95,7 @@ function AddPackingListDialog({ categoryName, onItemCreated }: AddPackingListDia
   }
   return (
     <Dialog onOpenChange={() => form.reset()}>
-      <DialogTrigger asChild>
-        <div onClick={(e) => e.stopPropagation()}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon-sm">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent className="flex items-center gap-2">
-              Add item to {categoryName}
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         className="sm:max-w-[425px]"
         onClick={(e) => e.stopPropagation()}

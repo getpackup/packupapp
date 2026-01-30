@@ -8,6 +8,7 @@ import {
   Ellipsis,
   ListChecks,
   LogOut,
+  Plus,
   Trash2,
   X,
 } from 'lucide-react'
@@ -450,7 +451,20 @@ const TripPackingListCategory = ({
                     <AddPackingListDialog
                       categoryName={categoryName}
                       onItemCreated={handleItemCreated}
-                    />
+                    >
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon-sm">
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent className="flex items-center gap-2">
+                            Add item to {categoryName}
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </AddPackingListDialog>
 
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

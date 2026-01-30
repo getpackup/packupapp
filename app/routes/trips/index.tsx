@@ -106,7 +106,7 @@ export default function Trips() {
           <div className="mx-auto w-full max-w-4xl">
             {isLoading && <FullPageSpinner what="trips" />}
             {!isLoading && tripsWithStatus.length > 0 && (
-              <div className="-ml-12 space-y-0">
+              <div className="-ml-18 space-y-0">
                 {sortedYears.map((year) => (
                   <div key={year} className="flex gap-6">
                     <div className="w-12 shrink-0">
