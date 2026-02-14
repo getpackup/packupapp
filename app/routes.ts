@@ -10,6 +10,7 @@ export default [
     route('gear-closet', 'routes/gear-closet.tsx'),
     route('profile', 'routes/profile.tsx'),
     route('settings', 'routes/settings.tsx'),
+    route('test', 'routes/test.tsx'),
     route('shopping-list', 'routes/shopping-list.tsx'),
     route('support', 'routes/support.tsx'),
     route('templates', 'routes/templates.tsx'),
@@ -20,6 +21,9 @@ export default [
   route('resource/toggle-theme', 'routes/resource.toggle-theme.tsx'),
   route('resource/send-trip-invitation', 'routes/resource.send-trip-invitation.tsx'),
   route('resource/send-signin-email', 'routes/resource.send-signin-email.tsx'),
+  route('resource/create-checkout-session', 'routes/resource.create-checkout-session.tsx'),
+  route('resource/create-portal-session', 'routes/resource.create-portal-session.tsx'),
+  route('resource/stripe-webhook', 'routes/resource.stripe-webhook.tsx'),
   // Add catch-all route for unknown URLs
   route('...', 'routes/[...].tsx'),
 ] satisfies RouteConfig
