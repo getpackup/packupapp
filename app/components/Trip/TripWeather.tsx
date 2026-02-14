@@ -1,5 +1,5 @@
 import type { Timestamp } from 'firebase/firestore'
-import { CalendarOff, CloudOff, Loader2 } from 'lucide-react'
+import { CloudOff, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import useAuth from '~/contexts/auth/useAuth'
@@ -102,19 +102,7 @@ const TripWeather = ({ lat, lng, startDate, endDate }: TripWeatherProps) => {
     )
   }
 
-  if (!data || (data.days.length === 0 && data.unavailableDays.length > 0)) {
-    return (
-      <>
-        <div className="text-sidebar-foreground mt-2 flex shrink-0 items-center px-3 text-xs leading-relaxed">
-          Weather
-        </div>
-        <div className="text-muted-foreground flex items-center gap-2 px-3 py-2 text-sm">
-          <CalendarOff className="h-4 w-4" />
-          <span>Available within 16 days of trip</span>
-        </div>
-      </>
-    )
-  }
+  if (!data) return null
 
   const formatDisplayDate = (dateStr: string) => {
     const date = new Date(dateStr + 'T00:00:00')
@@ -123,6 +111,20 @@ const TripWeather = ({ lat, lng, startDate, endDate }: TripWeatherProps) => {
       date: date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
     }
   }
+
+  const daysMap = new Map(data.days.map((d) => [d.date, d]))
+  const tripStart = new Date(startDateObj)
+  tripStart.setHours(0, 0, 0, 0)
+  const tripEnd = new Date(endDateObj)
+  tripEnd.setHours(0, 0, 0, 0)
+  const allTripDates: string[] = []
+  const cur = new Date(tripStart)
+  while (cur <= tripEnd) {
+    allTripDates.push(cur.toISOString().split('T')[0])
+    cur.setDate(cur.getDate() + 1)
+  }
+
+  if (allTripDates.length === 0) return null
 
   return (
     <>
@@ -145,37 +147,46 @@ const TripWeather = ({ lat, lng, startDate, endDate }: TripWeatherProps) => {
         </ToggleGroup>
       </div>
       <div className="flex gap-1 overflow-x-auto px-3 pb-2">
-        {data.days.map((day) => {
-          const WeatherIcon = getWeatherIcon(day.weatherCode)
-          const description = getWeatherDescription(day.weatherCode)
-          const { weekday, date } = formatDisplayDate(day.date)
+        {allTripDates.map((dateStr) => {
+          const day = daysMap.get(dateStr)
+          const { weekday, date } = formatDisplayDate(dateStr)
+
+          if (day) {
+            const WeatherIcon = getWeatherIcon(day.weatherCode)
+            const description = getWeatherDescription(day.weatherCode)
+            return (
+              <Tooltip key={dateStr}>
+                <TooltipTrigger asChild>
+                  <div className="bg-card flex shrink-0 flex-col items-center rounded-lg border px-3 py-2">
+                    <span className="text-xs font-medium">{weekday}</span>
+                    <span className="text-muted-foreground text-xs">{date}</span>
+                    <WeatherIcon className="text-muted-foreground my-2 h-8 w-8" />
+                    <span className="text-sm font-medium">
+                      {formatTemperature(day.temperatureMax, temperatureUnit)}
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      {formatTemperature(day.temperatureMin, temperatureUnit)}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>{description}</TooltipContent>
+              </Tooltip>
+            )
+          }
 
           return (
-            <Tooltip key={day.date}>
-              <TooltipTrigger asChild>
-                <div className="bg-card flex shrink-0 flex-col items-center rounded-lg border px-3 py-2">
-                  <span className="text-xs font-medium">{weekday}</span>
-                  <span className="text-muted-foreground text-xs">{date}</span>
-                  <WeatherIcon className="text-muted-foreground my-2 h-8 w-8" />
-                  <span className="text-sm font-medium">
-                    {formatTemperature(day.temperatureMax, temperatureUnit)}
-                  </span>
-                  <span className="text-muted-foreground text-xs">
-                    {formatTemperature(day.temperatureMin, temperatureUnit)}
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>{description}</TooltipContent>
-            </Tooltip>
+            <div
+              key={dateStr}
+              className="bg-card text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed px-3 py-2 text-xs"
+            >
+              <span className="font-medium">{weekday}</span>
+              <span className="">{date}</span>
+              <span className="my-2 text-center">—</span>
+              <span className="text-center">Recent weather not yet available</span>
+            </div>
           )
         })}
       </div>
-      {data.unavailableDays.length > 0 && (
-        <div className="text-muted-foreground px-3 text-xs">
-          +{data.unavailableDays.length} day{data.unavailableDays.length > 1 ? 's' : ''} not yet
-          available
-        </div>
-      )}
     </>
   )
 }
