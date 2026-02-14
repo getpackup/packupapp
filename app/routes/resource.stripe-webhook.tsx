@@ -10,7 +10,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   const secretKey = process.env.STRIPE_SECRET_KEY
-  const endpointSecret = 'whsec_25bf26c92627cb95210a6ee1cafd1b34a3e93b014a2242785cea0bdda698e70d' // process.env.STRIPE_WEBHOOK_SECRET
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET
   if (!secretKey || !endpointSecret) {
     return new Response(JSON.stringify({ error: 'Stripe webhook not configured' }), {
       status: 500,
