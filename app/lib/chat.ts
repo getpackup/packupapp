@@ -15,7 +15,6 @@ export const createChatMessage = (
   content,
   createdAt: Timestamp.now(),
   isEdited: false,
-  isDeleted: false,
   type: 'text',
   reactions: {},
   replyToMessageId: replyToMessageId ?? '',
@@ -27,7 +26,6 @@ export const createSystemMessage = (content: string): Omit<ChatMessage, 'id'> =>
   content,
   createdAt: Timestamp.now(),
   isEdited: false,
-  isDeleted: false,
   type: 'system',
   userPhotoUrl: '/icons/icon-192x192.png',
 })
