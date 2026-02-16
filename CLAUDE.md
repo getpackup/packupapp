@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-**Development server:** `npm run dev` (starts at http://localhost:5173)
-**Build:** `npm run build`
-**Type checking:** `npm run typecheck` (runs React Router typegen + tsc)
-**Linting:** `npm run lint` or `npm run lint:fix`
+**Development server:** `pnpm dev` (starts at http://localhost:5173)
+**Build:** `pnpm build`
+**Type checking:** `pnpm typecheck` (runs React Router typegen + tsc)
+**Linting:** `pnpm lint` or `pnpm lint:fix`
 
 ## Architecture Overview
 
