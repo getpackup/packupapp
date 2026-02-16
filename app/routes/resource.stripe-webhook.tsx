@@ -1,6 +1,16 @@
 import { type ActionFunction } from 'react-router'
 import Stripe from 'stripe'
 
+async function postToSlack(payload: { text: string; blocks?: object[] }) {
+  const url = process.env.SLACK_WEBHOOK_URL
+  if (!url) return
+  await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
 export const action: ActionFunction = async ({ request }) => {
   if (request.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
@@ -42,6 +52,28 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   switch (event.type) {
+    case 'checkout.session.completed': {
+      const session = event.data.object as Stripe.Checkout.Session
+      if (session.mode === 'payment') {
+        const amount = session.amount_total
+          ? (session.amount_total / 100).toFixed(2)
+          : '—'
+        const currency = (session.currency ?? '').toUpperCase()
+        await postToSlack({
+          text: `One-time payment completed: ${amount} ${currency}`,
+          blocks: [
+            {
+              type: 'section',
+              text: {
+                type: 'mrkdwn',
+                text: `*One-time payment completed*\n• Amount: ${amount} ${currency}\n• Customer: ${session.customer_email ?? session.customer ?? '—'}\n• Session: \`${session.id}\``,
+              },
+            },
+          ],
+        })
+      }
+      break
+    }
     case 'customer.subscription.trial_will_end': {
       const subscription = event.data.object as Stripe.Subscription
       console.log('Subscription trial_will_end:', subscription.status)
