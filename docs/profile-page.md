@@ -11,8 +11,8 @@ Allow users to view and edit their personal profile information. A profile compl
 | Field | Editable | Notes |
 |---|---|---|
 | Display name | Yes | Existing `displayName` field on `User` |
-| Username | No (display only) | Already on `User` |
-| Email | No (display only) | Firebase Auth–owned |
+| Username | No (header only) | Shown under the display name in the page header; not repeated in Personal Info |
+| Email | No (display only) | Firebase Auth–owned; shown in Personal Info with a lock icon |
 | Bio | Yes | Existing `bio` field on `User`, free-text textarea |
 | Location | Yes | Existing `location` field on `User`, Google Places autocomplete |
 | Profile image | Yes | Maps to existing `photoURL` on `User` |
@@ -60,7 +60,7 @@ Source: `gearListActivities` from `app/lib/gearListItemEnum.ts` — the 16 entri
 
 Do **not** include accommodations, transport, or gear-filter-only types (tent, car, airplane, baby, etc.) — those live in `gearListAccommodations`, `gearListOtherConsiderations`, etc.
 
-Display as a tag list in view mode. In edit mode, show all 16 as selectable tags (toggle on/off). Selected tags are visually distinct (filled/coloured vs outlined).
+Display as a tag list in view mode. In edit mode, show all 16 as selectable tags (toggle on/off). Selected tags are visually distinct (filled/coloured vs outlined). Empty state text (view mode): *"What are your favourite activities?"*
 
 ---
 
@@ -122,7 +122,6 @@ Display the bar as: `X% complete` label + a `<Progress>` component (already in `
 ├─────────────────────────────────────────┤
 │  Personal Info                          │
 │  Display name  John Smith               │
-│  Username      @jsmith  (locked)        │
 │  Email         j@example.com  (locked)  │
 │  Bio           Avid hiker and...        │
 │  Location      Vancouver, BC, Canada    │
@@ -139,11 +138,36 @@ Display the bar as: `X% complete` label + a `<Progress>` component (already in `
 - Single Edit button in the top-right toggles the entire page into edit mode, revealing Save and Cancel actions in the same position.
 - All editable fields become inputs simultaneously when in edit mode.
 - Profile image is editable via click/tap on the avatar (in edit mode only).
-- Username and email show a lock icon and tooltip explaining why they are not editable.
+- Email shows a lock icon and tooltip explaining why it is not editable.
+- Username is shown only in the header (@username), not in the Personal Info section.
+- All interactive elements use `cursor: pointer`.
+
+### Responsive Layout
+
+Below **715 px**:
+- **Personal Info** — single-column grid; label sits above its value.
+- **Emergency Contacts** — each contact's fields (name / email / phone) stack vertically; remove button aligns to the end of the stack.
+
+Above 715 px:
+- **Personal Info** — two-column grid (`120px` label | `1fr` value); labels and values centre-aligned vertically (bio label pins to top to match the textarea).
+- **Emergency Contacts** — fields displayed in a single row.
 
 ### Profile Image Upload
 
-Firebase Storage (already available via Firebase config). Upload on file select, show preview immediately, write URL to `photoURL` on save. Accepted types: `image/jpeg`, `image/png`, `image/webp`. Max size: 5 MB (client-side validation).
+Accepted types: `image/jpeg`, `image/png`, `image/webp`. Max size: 5 MB (client-side validation). Images are uploaded to Firebase Storage immediately on file select (not deferred to save). The resulting URL is stored in local state and written to Firestore when the user clicks Save.
+
+#### Crop flow
+
+1. User clicks the avatar overlay (edit mode only) → opens the file picker.
+2. Validate MIME type and file size; show a `toast.error` and abort if invalid.
+3. Read the image's natural dimensions.
+   - **Already square** (width === height): skip the crop dialog and upload directly.
+   - **Not square**: open the crop dialog.
+4. **Crop dialog** (`react-easy-crop`, 1:1 aspect ratio):
+   - User drags to reposition and scrolls / uses a slider (1×–3× zoom) to zoom.
+   - **Crop & Upload**: canvas-extracts the selected region as a JPEG blob → uploads to `user-avatars/{uid}` in Firebase Storage → sets the download URL as the avatar preview.
+   - **Cancel**: dismisses the dialog without uploading anything.
+5. The avatar preview updates immediately after upload; the URL is persisted to Firestore when the user saves.
 
 ---
 
@@ -157,7 +181,7 @@ Fields written on save: `displayName`, `bio`, `location`, `photoURL`, `favourite
 
 ## Tests
 
-Set up **Vitest** (compatible with the existing Vite config) as the project has no test runner yet.
+Vitest + React Testing Library. Run with `pnpm test`.
 
 ### Test file: `app/lib/profileCompletion.test.ts`
 
@@ -175,21 +199,43 @@ Cover:
 
 ### Test file: `app/routes/profile.test.tsx`
 
-Component tests using **React Testing Library**. Mock `useUpdateUser` to capture calls without hitting Firestore.
+Mock `useUpdateUser` to capture calls without hitting Firestore. Mock `firebase/storage` to capture upload calls.
 
 **Save:**
 - Entering new values and clicking Save calls `useUpdateUser` with the updated fields
-- The updated values are visible in view mode after saving
+- Exits edit mode after saving
 
 **Cancel:**
 - Entering new values and clicking Cancel does not call `useUpdateUser`
 - The original values are still shown in view mode after cancelling
 
+**Image upload:**
+- Invalid MIME type shows a `toast.error` and does not upload
+- File over 5 MB shows a `toast.error` and does not upload
+- Valid image calls `uploadBytes` on Firebase Storage
+- Square image (equal dimensions) skips the crop dialog and uploads directly *(todo — requires crop implementation)*
+- Non-square image shows the crop dialog before uploading *(todo — requires crop implementation)*
+
+**Crop dialog:**
+- Confirming crop uploads the canvas-extracted blob to Firebase Storage *(todo — requires crop implementation)*
+- Cancelling crop discards the selection without uploading *(todo — requires crop implementation)*
+
+**Activities:**
+- Toggling an unselected activity in edit mode adds it to the saved selection
+- Toggling a selected activity in edit mode removes it from the saved selection
+
+**Emergency contacts:**
+- Clicking "Add contact" adds a new empty contact row in edit mode
+- Clicking the remove button deletes the contact row
+
 ---
 
 ## Decisions
 
-1. **Username** — read-only permanently, no plans to make it editable.
+1. **Username** — read-only permanently, no plans to make it editable. Shown only in the page header, not repeated in the Personal Info section.
 2. **Profile image** — replace only, no remove/reset option.
 3. **Display name sync** — on save, update Firebase Auth via `updateProfile(auth.currentUser, { displayName })` in addition to writing to Firestore.
 4. **Firebase Storage** — assumed configured; verify the Storage bucket is initialised in the Firebase console before implementing image upload.
+5. **Image upload timing** — upload to Firebase Storage on file select (or crop confirm), not on save. Only the Firestore write is deferred to save.
+6. **Crop library** — `react-easy-crop` for the interactive crop UI. Canvas API used to extract the cropped region as a JPEG blob before uploading.
+7. **Crop skipped for square images** — if natural width equals natural height, the crop dialog is bypassed entirely.
