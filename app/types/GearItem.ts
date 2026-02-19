@@ -7,6 +7,7 @@ export type ActivityTypes = {
   backcountryWinter: boolean
   basicHut: boolean
   bikepacking: boolean
+  backpacking: boolean
   biking: boolean
   bivy: boolean
   boat: boolean
@@ -56,6 +57,7 @@ export const activityTypesList: Array<keyof ActivityTypes> = [
   'backcountryWinter',
   'basicHut',
   'bikepacking',
+  'backpacking',
   'biking',
   'bivy',
   'boat',

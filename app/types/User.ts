@@ -1,10 +1,13 @@
 import type { Timestamp } from 'firebase/firestore'
 
+import type { ActivityTypes } from './GearItem'
+
 export type User = {
   bio?: string
   displayName: string
   email: string
   emergencyContacts?: Array<{ name: string; email: string; phoneNumber: string }>
+  favouriteActivities?: Array<keyof ActivityTypes>
   isAdmin?: boolean
   location?: string
   photoURL?: string

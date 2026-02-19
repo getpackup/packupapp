@@ -32,6 +32,7 @@ export const gearListActivities: GearListEnumType = [
   { name: 'fishing', label: 'Fishing', icon: 'FaFish' },
   { name: 'mountainBiking', label: 'Mountain Biking', icon: 'FaBicycle' },
   { name: 'bikepacking', label: 'Bikepacking', icon: 'FaBiking' },
+  { name: 'backpacking', label: 'Backpacking', icon: 'FaBackpack' },
   { name: 'trailRunning', label: 'Trail Running', icon: 'FaRunning' },
   { name: 'bouldering', label: 'Bouldering', icon: 'FaRegHandRock' },
   { name: 'sportClimbing', label: 'Sport Climbing', icon: 'FaMountain' },
