@@ -1,5 +1,7 @@
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 import { updateProfile } from 'firebase/auth'
+import Cropper from 'react-easy-crop'
+import 'react-easy-crop/react-easy-crop.css'
 import { Camera, Lock, Pencil, Plus, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -9,6 +11,14 @@ import PageHeader from '~/components/PageHeader'
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
 import { Progress } from '~/components/ui/progress'
 import { Textarea } from '~/components/ui/textarea'
@@ -28,6 +38,50 @@ export function meta({}: Route.MetaArgs) {
   return [{ title: 'Profile | Packup' }]
 }
 
+type PixelCrop = { x: number; y: number; width: number; height: number }
+
+function getImageDimensions(src: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight })
+    img.onerror = reject
+    img.src = src
+  })
+}
+
+async function getCroppedBlob(imageSrc: string, pixelCrop: PixelCrop): Promise<Blob> {
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => resolve(image)
+    image.onerror = reject
+    image.src = imageSrc
+  })
+
+  const canvas = document.createElement('canvas')
+  canvas.width = pixelCrop.width
+  canvas.height = pixelCrop.height
+  const ctx = canvas.getContext('2d')!
+  ctx.drawImage(
+    img,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  )
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error('Canvas toBlob failed'))),
+      'image/jpeg',
+      0.92
+    )
+  })
+}
+
 export default function Profile() {
   const { user } = useAuth()
   const { mutateAsync: updateUser, isPending } = useUpdateUser(user?.uid ?? '')
@@ -44,6 +98,12 @@ export default function Profile() {
   )
   const [emergencyContacts, setEmergencyContacts] = useState(user?.emergencyContacts ?? [])
   const [isUploadingImage, setIsUploadingImage] = useState(false)
+
+  // Crop dialog state
+  const [cropSrc, setCropSrc] = useState<string | null>(null)
+  const [crop, setCrop] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<PixelCrop | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const locationDebounceRef = useRef<number | null>(null)
@@ -99,9 +159,19 @@ export default function Profile() {
     setIsEditing(false)
   }
 
+  const uploadBlob = async (blob: Blob | File) => {
+    if (!user) return
+    const storageRef = ref(firebaseStorage, `user-avatars/${user.uid}`)
+    await uploadBytes(storageRef, blob)
+    const downloadURL = await getDownloadURL(storageRef)
+    setPhotoURL(downloadURL)
+  }
+
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !user) return
+    // Reset so the same file can be re-selected after cancelling
+    e.target.value = ''
 
     const validTypes = ['image/jpeg', 'image/png', 'image/webp']
     if (!validTypes.includes(file.type)) {
@@ -114,22 +184,50 @@ export default function Profile() {
       return
     }
 
-    const localURL = URL.createObjectURL(file)
-    setPhotoURL(localURL)
+    const objectURL = URL.createObjectURL(file)
+    const { width, height } = await getImageDimensions(objectURL)
+
+    if (width === height) {
+      // Already square — upload directly, no crop needed
+      setPhotoURL(objectURL)
+      try {
+        setIsUploadingImage(true)
+        await uploadBlob(file)
+      } catch {
+        setPhotoURL(user.photoURL ?? '')
+        toast.error('Failed to upload image')
+      } finally {
+        setIsUploadingImage(false)
+        URL.revokeObjectURL(objectURL)
+      }
+    } else {
+      // Open the crop dialog; objectURL is kept alive until dialog closes
+      setCropSrc(objectURL)
+      setCrop({ x: 0, y: 0 })
+      setZoom(1)
+      setCroppedAreaPixels(null)
+    }
+  }
+
+  const handleCropConfirm = async () => {
+    if (!cropSrc || !croppedAreaPixels || !user) return
 
     try {
       setIsUploadingImage(true)
-      const storageRef = ref(firebaseStorage, `user-avatars/${user.uid}`)
-      await uploadBytes(storageRef, file)
-      const downloadURL = await getDownloadURL(storageRef)
-      setPhotoURL(downloadURL)
+      const blob = await getCroppedBlob(cropSrc, croppedAreaPixels)
+      await uploadBlob(blob)
     } catch {
-      setPhotoURL(user.photoURL ?? '')
       toast.error('Failed to upload image')
     } finally {
       setIsUploadingImage(false)
-      URL.revokeObjectURL(localURL)
+      URL.revokeObjectURL(cropSrc)
+      setCropSrc(null)
     }
+  }
+
+  const handleCropCancel = () => {
+    if (cropSrc) URL.revokeObjectURL(cropSrc)
+    setCropSrc(null)
   }
 
   const handleLocationInputChange = (value: string) => {
@@ -215,7 +313,7 @@ export default function Profile() {
               )}
             </div>
 
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <h1 className="text-xl font-semibold">{user.displayName}</h1>
               <p className="text-muted-foreground text-sm">@{user.username}</p>
             </div>
@@ -263,7 +361,7 @@ export default function Profile() {
                 <span className="text-sm">{user.displayName || '—'}</span>
               )}
 
-<span className="text-muted-foreground text-sm">Email</span>
+              <span className="text-muted-foreground text-sm">Email</span>
               <div className="flex items-center gap-1.5">
                 <span className="text-sm">{user.email}</span>
                 {isEditing && (
@@ -353,7 +451,9 @@ export default function Profile() {
                     ) : null
                   })
                 ) : (
-                  <span className="text-muted-foreground text-sm">What are your favourite activities?</span>
+                  <span className="text-muted-foreground text-sm">
+                    What are your favourite activities?
+                  </span>
                 )}
               </div>
             )}
@@ -405,7 +505,10 @@ export default function Profile() {
                 <>
                   {(user.emergencyContacts?.length ?? 0) > 0 ? (
                     user.emergencyContacts?.map((contact, index) => (
-                      <div key={index} className="flex flex-col text-sm min-[715px]:flex-row min-[715px]:gap-3">
+                      <div
+                        key={index}
+                        className="flex flex-col text-sm min-[715px]:flex-row min-[715px]:gap-3"
+                      >
                         <span className="font-medium">{contact.name}</span>
                         {contact.email && (
                           <span className="text-muted-foreground">{contact.email}</span>
@@ -426,6 +529,51 @@ export default function Profile() {
           </section>
         </div>
       </PageContent>
+
+      {/* Crop dialog */}
+      <Dialog open={!!cropSrc} onOpenChange={(open) => { if (!open) handleCropCancel() }}>
+        <DialogContent className="max-w-md" showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Crop Photo</DialogTitle>
+            <DialogDescription>
+              Drag to reposition · scroll or use the slider to zoom
+            </DialogDescription>
+          </DialogHeader>
+          <div className="relative h-72 overflow-hidden rounded-md bg-black">
+            {cropSrc && (
+              <Cropper
+                image={cropSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={(_, pixels) => setCroppedAreaPixels(pixels)}
+              />
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-muted-foreground shrink-0 text-xs">Zoom</span>
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.05}
+              value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="w-full"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCropCancel} disabled={isUploadingImage}>
+              Cancel
+            </Button>
+            <Button onClick={handleCropConfirm} disabled={isUploadingImage}>
+              {isUploadingImage ? 'Uploading…' : 'Crop & Upload'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
