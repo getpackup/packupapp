@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Type checking:** `pnpm typecheck` (runs React Router typegen + tsc)
 - **Linting:** `pnpm lint` or `pnpm lint:fix`
 - **Email preview:** `pnpm email:dev` (previews React Email templates)
+- **Tests:** `pnpm test` (run once) or `pnpm test:watch` (watch mode)
 
 ## Architecture Overview
 
@@ -119,5 +120,14 @@ This is a **React Router v7** application with SSR using a full-stack architectu
 - Animations via `motion` package (Framer Motion v3 equivalent)
 - Responsive design to support popular viewports (mobile, table, desktop and HD screens) 
 
+### Testing
+- **Stack:** Vitest + jsdom + @testing-library/jest-dom
+- Test files co-located with source (e.g. `foo.test.ts` next to `foo.ts`)
+- Config: `vitest.config.ts`, setup: `app/test-setup.ts`
+
 ### Comments
 DO NOT add comments to code explaining what the code is doing unless it is overly complex. Only add comments to help a developer understand why the code is doing what it is doing.
+
+### Workflow
+- Revise CLAUDE.md every time a local changes are either commited or pushed to GitHub remote repository
+- Don't put Claude as co-author when writing commits
