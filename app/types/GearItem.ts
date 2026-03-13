@@ -100,7 +100,8 @@ export const activityTypesList: Array<keyof ActivityTypes> = [
 export type GearItem = {
   id: string
   name: string
-  category: string
+  category?: string
+  tags?: string[]
   created?: Timestamp
   updated?: Timestamp
   essential: boolean
@@ -110,6 +111,19 @@ export type GearItem = {
   description?: string
   quantity?: number
 } & ActivityTypes
+
+export type GearClosetItem = {
+  id: string
+  name: string
+  tags: string[]
+  created?: Timestamp
+  updated?: Timestamp
+  essential: boolean
+  weight?: string
+  weightUnit?: 'g' | 'kg' | 'oz' | 'lb'
+  description?: string
+  quantity?: number
+}
 
 export type GearListEnumType = Array<{
   name: keyof ActivityTypes
