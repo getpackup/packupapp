@@ -1,11 +1,12 @@
-import { Plus, Settings2 } from 'lucide-react'
+import { Plus, Settings2, Tags } from 'lucide-react'
 import { useMemo } from 'react'
 
 import FullPageSpinner from '~/components/FullPageSpinner'
 import AddGearClosetItemDialog from '~/components/GearCloset/AddGearClosetItemDialog'
 import type { GearClosetItemWithMeta } from '~/components/GearCloset/GearClosetList'
 import GearClosetList from '~/components/GearCloset/GearClosetList'
-import ManageCategoriesDialog from '~/components/GearCloset/ManageCategoriesDialog'
+import ManageCustomTagsDialog from '~/components/GearCloset/ManageCustomTagsDialog'
+import ManageTagsDialog from '~/components/GearCloset/ManageTagsDialog'
 import PageContent from '~/components/PageContent'
 import PageHeader from '~/components/PageHeader'
 import { Button } from '~/components/ui/button'
@@ -99,12 +100,18 @@ export default function GearCloset() {
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold">Gear Closet</h2>
               <div className="flex gap-2">
-                <ManageCategoriesDialog userId={userId} currentCategories={categories}>
+                <ManageTagsDialog userId={userId} currentTags={categories}>
                   <Button variant="outline" size="sm">
                     <Settings2 className="mr-1 h-4 w-4" />
-                    Categories
+                    Tags
                   </Button>
-                </ManageCategoriesDialog>
+                </ManageTagsDialog>
+                <ManageCustomTagsDialog userId={userId}>
+                  <Button variant="outline" size="sm">
+                    <Tags className="mr-1 h-4 w-4" />
+                    Custom Tags
+                  </Button>
+                </ManageCustomTagsDialog>
                 <AddGearClosetItemDialog userId={userId}>
                   <Button size="sm">
                     <Plus className="mr-1 h-4 w-4" />

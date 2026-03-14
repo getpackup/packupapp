@@ -165,9 +165,9 @@ Implementation Steps
 - Built full gear closet UI: list, category accordion, add/edit/manage dialogs, search
 - No changes to existing packing lists or trip creation — fully backward compatible
 
-### Phase 2: Decouple PackingListItem from GearItem
+### Phase 2: Connect Gear Closet to Packing Lists + Flat Tag-Based List (DONE)
 
-**Goal:** Stop duplicating all gear data onto every packing list item. Use references instead.
+**Goal:** Stop duplicating all gear data onto every packing list item. Use references instead. Replace category-grouped packing list with a flat, tag-filterable list.
 
 **Gear ownership model:**
 - Master gear items live in `/gear/{itemId}` (curated by the team)
@@ -191,11 +191,61 @@ When User A adds a custom item to a shared trip, User B needs to see it. Rather 
 - New items created after Phase 2 use the reference pattern
 - No migration of existing trip packing lists required
 
-**Steps:**
-- Update `PackingListItem` type with new fields
-- Update trip creation / "add item to packing list" flow to populate `gearItemId`, `gearSource`, `gearOwnerId`
-- Update packing list display to join with gear data when available, fall back to inline data
-- Update `AddPackingListDialog` to save `gearItemId` reference when adding from closet
+**Completed:**
+- Updated `PackingListItem` type with `gearItemId`, `gearSource`, `gearOwnerId`, `overrides`
+- Built `gearFilterUtils.ts` — label/key converters, `filterGearByActivities`, `ClosetBrowseItem` normalizers
+- Added `useUserGearClosetItems` hook composing master + custom gear into browseable list
+- Added `useGeneratePackingList` mutation — filters gear by activities, batch-creates items, deduplicates
+- Built `GeneratePackingListDialog` — activity type checkboxes, pre-selects from trip tags
+- Enhanced `AddPackingListDialog` with gear closet search via Command component
+- Wired generate buttons into `TripPackingList` (empty state + toolbar)
+- Added weight display on `TripPackingListItem`
+- Built `EditPackingListItemDialog` — edit name, category, description, weight, quantity; overrides for gear-linked items; "save to closet" checkbox that forks master→custom when needed
+- Added tags step to new trip wizard, built `useCreateTrip` mutation, wired full trip creation + auto-generation flow
+- Added `useDeleteTrip` mutation and delete button on `TripDetailsSidebar`
+
+### Phase 2b: Flat Tag-Based Packing List
+
+**Goal:** Remove category-based grouping from the packing list. Show a single flat list with tags as Badge/Pill components on each item row, with smart tag filtering at the top.
+
+**Packing list display changes:**
+- Remove `TripPackingListCategory` accordion grouping — render all personal items as one flat list
+- Group Items section for shared items remains separate (it's a different concept — packing responsibility, not categorization)
+- Each `TripPackingListItem` row shows its tags as small `Badge` pills inline (after name, before weight)
+- Tags come from the item's `category` field (legacy items) and/or the linked gear item's `tags[]` — normalize both into a display array
+- Keep existing packed/unpacked/all toggle, search, and progress bar
+
+**Tag filter bar:**
+- Sits below the search bar / beside the packed toggle
+- Collects all unique tags across every item in the current packing list
+- Renders as a horizontal scrollable row of toggle-able `Badge` pills (or similar compact UI)
+- Clicking a tag filters the list to only items that have that tag
+- Multiple tags can be selected — show items matching **any** selected tag (OR logic)
+- Clicking an active tag deselects it; when no tags are selected, show all items
+- Badge shows a count of how many items have that tag (e.g. "Hiking (12)")
+
+**Edit tags on a packing list item:**
+- `EditPackingListItemDialog` gets a tag picker replacing the single category dropdown
+- Multi-select from predefined tags (`gearListCategories` labels + `allGearListItems` labels) plus free-text entry for custom tags
+- Saved to the packing list item's `category` field (for backward compat, first tag) and a new `tags: string[]` field on `PackingListItem`
+- When "save to closet" is checked, tags sync back to the gear closet item too
+
+**PackingListItem type update:**
+- Add `tags?: string[]` — multiple tags per item
+- Keep `category` as the primary/first tag for backward compat with old items
+- Display logic: use `tags` if present, fall back to `[category]` for legacy items
+
+**Files to modify:**
+| File | Action |
+|------|--------|
+| `app/types/PackingListItem.ts` | Add `tags?: string[]` |
+| `app/components/Trip/TripPackingList.tsx` | Remove category grouping, add tag filter bar, render flat list |
+| `app/components/Trip/TripPackingListItem.tsx` | Show tag badges inline on each row |
+| `app/components/Trip/TripPackingListCategory.tsx` | Remove or repurpose — no longer used for personal items (keep for Group Items if needed) |
+| `app/components/Trip/EditPackingListItemDialog.tsx` | Replace category select with multi-tag picker |
+| `app/lib/groupPackingListItems.ts` | Remove or deprecate — no longer needed for personal items |
+| `app/services/trips.ts` | Update `useGeneratePackingList` to populate `tags[]` on created items |
+| `app/components/Trip/AddPackingListDialog.tsx` | Populate `tags` from gear closet item when selecting from closet |
 
 ### Phase 3: Collections, User Tags, and Migration
 

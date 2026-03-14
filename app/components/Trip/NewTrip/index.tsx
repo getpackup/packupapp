@@ -1,12 +1,21 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { endOfDay, startOfDay } from 'date-fns'
+import { differenceInCalendarDays, endOfDay, startOfDay } from 'date-fns'
 import { Timestamp } from 'firebase/firestore'
+import { Loader2 } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router'
+import { toast } from 'sonner'
 import { z } from 'zod'
 
 import { Button } from '~/components/ui/button'
+import useAuth from '~/contexts/auth/useAuth'
+import { activityKeyToLabel } from '~/lib/gearFilterUtils'
+import { allGearListItems } from '~/lib/gearListItemEnum'
+import { useCreateTrip, useGeneratePackingList } from '~/services/trips'
+import type { ActivityTypes } from '~/types/GearItem'
+import { TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
 
 import { Form } from '../../ui/form'
@@ -15,6 +24,7 @@ import HeaderImageStep from './HeaderImageStep'
 import LocationStep from './LocationStep'
 import MembersStep from './MembersStep'
 import NameStep from './NameStep'
+import TagsStep from './TagsStep'
 
 type NewTripFormProps = {}
 
@@ -36,11 +46,20 @@ export const newTripFormSchema = z.object({
     .min(3, { message: 'Name must be at least 3 characters' })
     .max(50, { message: 'Name must be less than 50 characters' }),
   headerImage: z.string().optional(),
+  tags: z.array(z.string()).optional(),
 })
+
+const TOTAL_STEPS = 6
 
 const NewTripForm = ({}: NewTripFormProps) => {
   const [step, setStep] = useState<number>(0)
   const [tripMembers, setTripMembers] = useState<User[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { mutateAsync: createTrip } = useCreateTrip()
+  const { mutateAsync: generatePackingList } = useGeneratePackingList()
 
   const form = useForm<z.infer<typeof newTripFormSchema>>({
     resolver: zodResolver(newTripFormSchema),
@@ -51,19 +70,106 @@ const NewTripForm = ({}: NewTripFormProps) => {
       startDate: undefined,
       endDate: undefined,
       headerImage: undefined,
+      tags: [],
     },
   })
 
-  function onSubmit(values: z.infer<typeof newTripFormSchema>) {
-    console.log(values)
+  async function onSubmit(values: z.infer<typeof newTripFormSchema>) {
+    if (!user?.uid || !values.startDate || !values.endDate) return
 
-    if (!values.startDate || !values.endDate) return
-    const newDates = {
-      startDate: Timestamp.fromDate(startOfDay(values.startDate)),
-      endDate: Timestamp.fromDate(endOfDay(values.endDate)),
+    setIsSubmitting(true)
+
+    try {
+      const startDate = Timestamp.fromDate(startOfDay(values.startDate))
+      const endDate = Timestamp.fromDate(endOfDay(values.endDate))
+      const tripLength = differenceInCalendarDays(values.endDate, values.startDate) + 1
+
+      const allTags = values.tags ?? []
+      const predefinedKeySet = new Set<string>(allGearListItems.map((i) => i.name))
+      const activityKeys = allTags.filter((t): t is keyof ActivityTypes => predefinedKeySet.has(t))
+      const customTagValues = allTags.filter((t) => !predefinedKeySet.has(t))
+      const tagLabels = [
+        ...activityKeys
+          .map((key) => activityKeyToLabel(key))
+          .filter((label): label is string => !!label),
+        ...customTagValues,
+      ]
+
+      const tripMembersMap: Record<string, any> = {
+        [user.uid]: {
+          uid: user.uid,
+          status: TripMemberStatus.Owner,
+          invitedAt: Timestamp.now(),
+        },
+      }
+
+      for (const member of tripMembers) {
+        if (member.uid === user.uid) continue
+        tripMembersMap[member.uid] = {
+          uid: member.uid,
+          status: TripMemberStatus.Pending,
+          invitedAt: Timestamp.now(),
+          invitedBy: user.uid,
+        }
+      }
+
+      const trip = await createTrip({
+        data: {
+          name: values.name,
+          description: '',
+          startDate,
+          endDate,
+          startingPoint: values.startingPoint,
+          lat: values.lat,
+          lng: values.lng,
+          headerImage: values.headerImage ?? '',
+          owner: user.uid,
+          tags: tagLabels,
+          timezoneOffset: new Date().getTimezoneOffset(),
+          tripLength,
+          tripMembers: tripMembersMap,
+        },
+        tripMembers: tripMembersMap,
+      })
+
+      if (activityKeys.length > 0 || customTagValues.length > 0) {
+        try {
+          const result = await generatePackingList({
+            tripId: trip.tripId,
+            activityKeys,
+            userId: user.uid,
+            customTagNames: customTagValues,
+          })
+          if (result.length > 0) {
+            toast.success(`Trip created with ${result.length} packing list items`)
+          } else {
+            toast.success('Trip created')
+          }
+        } catch (genErr) {
+          console.error('Packing list generation failed:', genErr)
+          toast.success('Trip created (packing list generation failed — you can retry from the trip page)')
+        }
+      } else {
+        toast.success('Trip created')
+      }
+
+      navigate(`/trips/${trip.tripId}`)
+    } catch {
+      toast.error('Failed to create trip')
+      setIsSubmitting(false)
     }
-    console.log(newDates)
   }
+
+  const isLastStep = step === TOTAL_STEPS - 1
+
+  const handleNext = () => {
+    if (isLastStep) {
+      form.handleSubmit(onSubmit)()
+    } else {
+      setStep(step + 1)
+    }
+  }
+
   return (
     <div className="flex flex-col items-center">
       <Form {...form}>
@@ -82,13 +188,25 @@ const NewTripForm = ({}: NewTripFormProps) => {
             )}
             {step === 3 && <NameStep key="name" form={form} />}
             {step === 4 && <HeaderImageStep key="headerImage" form={form} />}
+            {step === 5 && <TagsStep key="tags" form={form} />}
           </AnimatePresence>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <Button type="button" variant="outline" className="" onClick={() => setStep(step - 1)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStep(step - 1)}
+              disabled={step === 0 || isSubmitting}
+            >
               Previous
             </Button>
-            <Button type="button" variant="accent" className="" onClick={() => setStep(step + 1)}>
-              Next
+            <Button
+              type="button"
+              variant="accent"
+              onClick={handleNext}
+              disabled={isSubmitting}
+            >
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isLastStep ? (isSubmitting ? 'Creating...' : 'Create trip') : 'Next'}
             </Button>
           </div>
         </form>

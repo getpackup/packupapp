@@ -83,7 +83,9 @@ export const allGearListItems = [
 
 export const gearListKeys = [...allGearListItems].map((item) => item.name)
 
+export const allActivityTags = allGearListItems.map((i) => i.label)
+
 export const allPredefinedTags = [
   ...gearListCategories.map((c) => c.value),
-  ...allGearListItems.map((i) => i.label),
+  ...allActivityTags,
 ]

@@ -27,6 +27,7 @@ import { type PackingListItem } from '~/types/PackingListItem'
 import type { Trip } from '~/types/Trip'
 import type { User } from '~/types/User'
 
+import TagPills from '../TagPills'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
@@ -38,6 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
+import EditPackingListItemDialog from './EditPackingListItemDialog'
 
 type TripPackingListItemProps = {
   item: PackingListItem
@@ -78,6 +80,7 @@ const TripPackingListItem = ({
   }
 
   const [active, setActive] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
 
   const filledScale = item.isPacked ? (active ? 1.4 : 1) : 0
   const filledSpring = useSpring({
@@ -165,8 +168,9 @@ const TripPackingListItem = ({
 
   return (
     <div className="text-sidebar-foreground hover:bg-sidebar-accent/40 rounded-lg px-3 py-2">
+      <EditPackingListItemDialog item={item} open={editOpen} onOpenChange={setEditOpen} />
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-4">
           {isMultiSelecting ? (
             <>
               <Checkbox checked={isSelected} onClick={(e) => handleSelection(e)} id={item.id} />
@@ -203,9 +207,15 @@ const TripPackingListItem = ({
                   <Circle className="text-muted-foreground/80 hover:text-muted-foreground h-6 w-6" />
                 )}
               </animated.div>
-              <span className={cn('select-none', item.isPacked && 'text-muted-foreground')}>
+              <span className={cn('truncate select-none', item.isPacked && 'text-muted-foreground')}>
                 {item.name}
               </span>
+              {item.weight && (
+                <span className="text-muted-foreground text-xs">
+                  {item.weight}
+                  {item.weightUnit ?? 'g'}
+                </span>
+              )}
               {item.quantity && item.quantity !== 1 && (
                 <Badge
                   className="h-5 min-w-5 rounded-full font-mono tabular-nums"
@@ -217,10 +227,11 @@ const TripPackingListItem = ({
             </>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           {!isMultiSelecting && (
             <>
-              <div className="*:data-[slot=avatar]:ring-sidebar flex -space-x-2 *:data-[slot=avatar]:ring-1">
+              <TagPills item={item} />
+              <div className="*:data-[slot=avatar]:ring-sidebar flex shrink-0 -space-x-2 *:data-[slot=avatar]:ring-1">
                 {item.packedBy?.map((packedBy) => {
                   const user = users?.find((user) => user.uid === packedBy.uid)
                   if (!user || !item.isPacked) return null
@@ -234,7 +245,7 @@ const TripPackingListItem = ({
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon-sm">
+                  <Button variant="ghost" size="icon-sm" className="shrink-0">
                     <Ellipsis className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -264,7 +275,7 @@ const TripPackingListItem = ({
                     </Button>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setEditOpen(true)}>
                     <Settings />
                     Edit
                   </DropdownMenuItem>

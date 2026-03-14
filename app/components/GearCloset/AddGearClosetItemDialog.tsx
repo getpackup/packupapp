@@ -40,7 +40,7 @@ import {
   SelectValue,
 } from '~/components/ui/select'
 import { allPredefinedTags, gearListCategories } from '~/lib/gearListItemEnum'
-import { useCreateGearClosetItem } from '~/services/gear'
+import { useCreateGearClosetItem, useGearClosetQuery } from '~/services/gear'
 import type { GearClosetItem } from '~/types/GearItem'
 
 type AddGearClosetItemDialogProps = {
@@ -58,6 +58,8 @@ const formSchema = z.object({
 
 function AddGearClosetItemDialog({ userId, children }: AddGearClosetItemDialogProps) {
   const { mutateAsync: createItem, isPending } = useCreateGearClosetItem(userId)
+  const { data: closet } = useGearClosetQuery({ userId, queryOptions: { enabled: !!userId } })
+  const customTags = closet?.customTags ?? []
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -130,7 +132,7 @@ function AddGearClosetItemDialog({ userId, children }: AddGearClosetItemDialogPr
                       <MultiSelectContent
                         search={{ placeholder: 'Search tags...', emptyMessage: 'No tags found' }}
                       >
-                        <MultiSelectGroup heading="Categories">
+                        <MultiSelectGroup heading="General">
                           {gearListCategories.map((cat) => (
                             <MultiSelectItem key={cat.value} value={cat.value}>
                               {cat.label}
@@ -146,6 +148,15 @@ function AddGearClosetItemDialog({ userId, children }: AddGearClosetItemDialogPr
                               </MultiSelectItem>
                             ))}
                         </MultiSelectGroup>
+                        {customTags.length > 0 && (
+                          <MultiSelectGroup heading="Custom">
+                            {customTags.map((tag) => (
+                              <MultiSelectItem key={tag.name} value={tag.name}>
+                                {tag.name}
+                              </MultiSelectItem>
+                            ))}
+                          </MultiSelectGroup>
+                        )}
                       </MultiSelectContent>
                     </MultiSelect>
                     <FormMessage />

@@ -16,11 +16,18 @@ import {
   setDoc,
   Timestamp,
   updateDoc,
+  writeBatch,
 } from 'firebase/firestore'
+import { useMemo } from 'react'
 import { toast } from 'sonner'
 
 import { firestoreDb } from '~/firebase/config'
-import type { GearCloset } from '~/types/GearCloset'
+import {
+  type ClosetBrowseItem,
+  normalizeCustomItem,
+  normalizeMasterItem,
+} from '~/lib/gearFilterUtils'
+import type { GearCloset, UserTag } from '~/types/GearCloset'
 import type { GearClosetItem, GearItem } from '~/types/GearItem'
 
 export const gearKeys = {
@@ -322,26 +329,26 @@ export function useRemoveGearItem(userId: string) {
   })
 }
 
-export function useRestoreGearItem(userId: string) {
+export function useCreateCustomTag(userId: string) {
   const queryClient = useQueryClient()
   const closetKey = gearKeys.gearCloset(userId)
 
   return useMutation({
-    mutationFn: async ({ gearItemId }: { gearItemId: string }) => {
+    mutationFn: async ({ tag }: { tag: UserTag }) => {
       const docRef = doc(firestoreDb, 'gear-closet', userId)
       const docSnap = await getDoc(docRef)
       const current = docSnap.data() as GearCloset | undefined
-      const removals = (current?.removals ?? []).filter((id) => id !== gearItemId)
-      await setDoc(docRef, { removals }, { merge: true })
-      return removals
+      const customTags = [...(current?.customTags ?? []), tag]
+      await setDoc(docRef, { customTags }, { merge: true })
+      return customTags
     },
-    onMutate: async ({ gearItemId }) => {
+    onMutate: async ({ tag }) => {
       await queryClient.cancelQueries({ queryKey: closetKey })
       const previousData = queryClient.getQueryData(closetKey)
 
       queryClient.setQueryData(closetKey, (old: GearCloset | undefined) => ({
-        ...(old ?? { id: userId, owner: userId, categories: [] }),
-        removals: (old?.removals ?? []).filter((id) => id !== gearItemId),
+        ...(old ?? { id: userId, owner: userId, categories: [], removals: [] }),
+        customTags: [...(old?.customTags ?? []), tag],
       }))
 
       return { previousData }
@@ -350,10 +357,206 @@ export function useRestoreGearItem(userId: string) {
       if (context?.previousData) {
         queryClient.setQueryData(closetKey, context.previousData)
       }
-      toast.error('Failed to restore gear item')
+      toast.error('Failed to create custom tag')
     },
     onSuccess: () => {
-      toast.success('Item restored to gear closet')
+      toast.success('Custom tag created')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: closetKey })
     },
   })
+}
+
+export function useUpdateCustomTag(userId: string) {
+  const queryClient = useQueryClient()
+  const closetKey = gearKeys.gearCloset(userId)
+  const additionsKey = gearKeys.gearClosetAdditions(userId)
+
+  return useMutation({
+    mutationFn: async ({
+      oldName,
+      newTag,
+    }: {
+      oldName: string
+      newTag: UserTag
+    }) => {
+      const batch = writeBatch(firestoreDb)
+      const closetRef = doc(firestoreDb, 'gear-closet', userId)
+      const closetSnap = await getDoc(closetRef)
+      const current = closetSnap.data() as GearCloset | undefined
+      const customTags = (current?.customTags ?? []).map((t) =>
+        t.name === oldName ? newTag : t
+      )
+      batch.set(closetRef, { customTags }, { merge: true })
+
+      if (oldName !== newTag.name) {
+        const additionsRef = collection(firestoreDb, 'gear-closet', userId, 'additions')
+        const additionsSnap = await getDocs(additionsRef)
+        for (const d of additionsSnap.docs) {
+          const data = d.data()
+          if (Array.isArray(data.tags) && data.tags.includes(oldName)) {
+            batch.update(d.ref, {
+              tags: data.tags.map((t: string) => (t === oldName ? newTag.name : t)),
+            })
+          }
+        }
+      }
+
+      await batch.commit()
+      return customTags
+    },
+    onMutate: async ({ oldName, newTag }) => {
+      await queryClient.cancelQueries({ queryKey: closetKey })
+      await queryClient.cancelQueries({ queryKey: additionsKey })
+      const previousCloset = queryClient.getQueryData(closetKey)
+      const previousAdditions = queryClient.getQueryData(additionsKey)
+
+      queryClient.setQueryData(closetKey, (old: GearCloset | undefined) => ({
+        ...(old ?? { id: userId, owner: userId, categories: [], removals: [] }),
+        customTags: (old?.customTags ?? []).map((t) =>
+          t.name === oldName ? newTag : t
+        ),
+      }))
+
+      if (oldName !== newTag.name) {
+        queryClient.setQueryData(additionsKey, (old: GearClosetItem[] | undefined) =>
+          (old ?? []).map((item) => ({
+            ...item,
+            tags: item.tags?.map((t) => (t === oldName ? newTag.name : t)),
+          }))
+        )
+      }
+
+      return { previousCloset, previousAdditions }
+    },
+    onError: (_err, _variables, context: any) => {
+      if (context?.previousCloset) {
+        queryClient.setQueryData(closetKey, context.previousCloset)
+      }
+      if (context?.previousAdditions) {
+        queryClient.setQueryData(additionsKey, context.previousAdditions)
+      }
+      toast.error('Failed to update custom tag')
+    },
+    onSuccess: () => {
+      toast.success('Custom tag updated')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: closetKey })
+      queryClient.invalidateQueries({ queryKey: additionsKey })
+    },
+  })
+}
+
+export function useDeleteCustomTag(userId: string) {
+  const queryClient = useQueryClient()
+  const closetKey = gearKeys.gearCloset(userId)
+  const additionsKey = gearKeys.gearClosetAdditions(userId)
+
+  return useMutation({
+    mutationFn: async ({ tagName }: { tagName: string }) => {
+      const batch = writeBatch(firestoreDb)
+      const closetRef = doc(firestoreDb, 'gear-closet', userId)
+      const closetSnap = await getDoc(closetRef)
+      const current = closetSnap.data() as GearCloset | undefined
+      const customTags = (current?.customTags ?? []).filter((t) => t.name !== tagName)
+      batch.set(closetRef, { customTags }, { merge: true })
+
+      const additionsRef = collection(firestoreDb, 'gear-closet', userId, 'additions')
+      const additionsSnap = await getDocs(additionsRef)
+      for (const d of additionsSnap.docs) {
+        const data = d.data()
+        if (Array.isArray(data.tags) && data.tags.includes(tagName)) {
+          batch.update(d.ref, {
+            tags: data.tags.filter((t: string) => t !== tagName),
+          })
+        }
+      }
+
+      await batch.commit()
+      return customTags
+    },
+    onMutate: async ({ tagName }) => {
+      await queryClient.cancelQueries({ queryKey: closetKey })
+      await queryClient.cancelQueries({ queryKey: additionsKey })
+      const previousCloset = queryClient.getQueryData(closetKey)
+      const previousAdditions = queryClient.getQueryData(additionsKey)
+
+      queryClient.setQueryData(closetKey, (old: GearCloset | undefined) => ({
+        ...(old ?? { id: userId, owner: userId, categories: [], removals: [] }),
+        customTags: (old?.customTags ?? []).filter((t) => t.name !== tagName),
+      }))
+
+      queryClient.setQueryData(additionsKey, (old: GearClosetItem[] | undefined) =>
+        (old ?? []).map((item) => ({
+          ...item,
+          tags: item.tags?.filter((t) => t !== tagName),
+        }))
+      )
+
+      return { previousCloset, previousAdditions }
+    },
+    onError: (_err, _variables, context: any) => {
+      if (context?.previousCloset) {
+        queryClient.setQueryData(closetKey, context.previousCloset)
+      }
+      if (context?.previousAdditions) {
+        queryClient.setQueryData(additionsKey, context.previousAdditions)
+      }
+      toast.error('Failed to delete custom tag')
+    },
+    onSuccess: () => {
+      toast.success('Custom tag deleted')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: closetKey })
+      queryClient.invalidateQueries({ queryKey: additionsKey })
+    },
+  })
+}
+
+export function useUserGearClosetItems({
+  userId,
+  constraints = [],
+}: {
+  userId: string
+  constraints?: QueryConstraint[]
+}): { data: ClosetBrowseItem[]; isLoading: boolean } {
+  const { data: masterItems, isLoading: masterLoading } = useGearQuery({
+    constraints,
+    queryOptions: { enabled: !!userId },
+  })
+  const { data: closet, isLoading: closetLoading } = useGearClosetQuery({
+    userId,
+    queryOptions: { enabled: !!userId },
+  })
+  const { data: additions, isLoading: additionsLoading } = useGearClosetAdditionsQuery({
+    userId,
+    queryOptions: { enabled: !!userId },
+  })
+
+  const removalsSet = useMemo(() => new Set(closet?.removals ?? []), [closet?.removals])
+
+  const data = useMemo<ClosetBrowseItem[]>(() => {
+    const items: ClosetBrowseItem[] = []
+
+    if (masterItems) {
+      for (const item of masterItems) {
+        if (!removalsSet.has(item.id)) {
+          items.push(normalizeMasterItem(item))
+        }
+      }
+    }
+
+    if (additions) {
+      for (const item of additions) {
+        items.push(normalizeCustomItem(item))
+      }
+    }
+
+    return items
+  }, [masterItems, additions, removalsSet])
+
+  return { data, isLoading: masterLoading || closetLoading || additionsLoading }
 }

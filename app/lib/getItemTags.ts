@@ -1,7 +1,9 @@
 export function getItemTags(item: { tags?: string[]; category?: string }): string[] {
-  if (item.tags && item.tags.length > 0) return item.tags
-  if (item.category) return [item.category]
-  return []
+  const tags = item.tags ?? []
+  if (item.category && !tags.includes(item.category)) {
+    return [item.category, ...tags]
+  }
+  return tags.length > 0 ? tags : item.category ? [item.category] : []
 }
 
 export function getGroupKey(item: { tags?: string[]; category?: string }): string {

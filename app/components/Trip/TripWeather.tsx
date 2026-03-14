@@ -174,6 +174,12 @@ const TripWeather = ({ lat, lng, startDate, endDate }: TripWeatherProps) => {
             )
           }
 
+          const dateObj = new Date(dateStr + 'T00:00:00')
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          const unavailableLabel =
+            dateObj < today ? 'Recent weather not yet available' : 'Future weather not yet available'
+
           return (
             <div
               key={dateStr}
@@ -182,7 +188,7 @@ const TripWeather = ({ lat, lng, startDate, endDate }: TripWeatherProps) => {
               <span className="font-medium">{weekday}</span>
               <span className="">{date}</span>
               <span className="my-2 text-center">—</span>
-              <span className="text-center">Recent weather not yet available</span>
+              <span className="text-center">{unavailableLabel}</span>
             </div>
           )
         })}

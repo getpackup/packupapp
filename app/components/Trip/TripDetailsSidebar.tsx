@@ -1,6 +1,8 @@
-import { BadgeInfo, CalendarIcon, Ellipsis, MapPinIcon, MessageSquareMore } from 'lucide-react'
+import { BadgeInfo, CalendarIcon, Ellipsis, MapPinIcon, MessageSquareMore, Trash2 } from 'lucide-react'
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 
+import useAuth from '~/contexts/auth/useAuth'
 import { formattedDate, formattedDateRange } from '~/lib/date'
 import {
   gearListAccommodations,
@@ -8,6 +10,11 @@ import {
   gearListCampKitchen,
   gearListOtherConsiderations,
 } from '~/lib/gearListItemEnum'
+import { getTagDotClass } from '~/lib/tagColors'
+import { useCustomTagColorMap } from '~/lib/useCustomTagColorMap'
+import { cn } from '~/lib/utils'
+import { useGearClosetQuery } from '~/services/gear'
+import { useDeleteTrip } from '~/services/trips'
 import type { Trip } from '~/types/Trip'
 import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
@@ -16,6 +23,16 @@ import StaticMapImage from '../StaticMapImage'
 import { AspectRatio } from '../ui/aspect-ratio'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,10 +74,28 @@ const SubHeading = ({ children }: { children: React.ReactNode }) => {
 }
 
 const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { mutateAsync: deleteTrip, isPending: isDeleting } = useDeleteTrip()
   const [showAllMembers, setShowAllMembers] = useState(false)
   const tripMembers = showAllMembers
     ? Object.values(trip.tripMembers)
     : acceptedTripMembersOnly(Object.values(trip.tripMembers))
+
+  const userId = user?.uid ?? ''
+  const { data: closet } = useGearClosetQuery({ userId, queryOptions: { enabled: !!userId } })
+  const customTagDefs = closet?.customTags ?? []
+  const colorMap = useCustomTagColorMap(userId)
+  const customTagNames = new Set(customTagDefs.map((ct) => ct.name))
+
+  const onlyCustomTags = trip
+    ? trip.tags.filter((tag) => customTagNames.has(tag))
+    : []
+
+  const customTagOptions = customTagDefs.map((ct) => ({
+    name: ct.name,
+    label: ct.name,
+  }))
 
   const onlyActivityTags = trip
     ? trip.tags.filter((item) => gearListActivities.some((tag) => item === tag.label))
@@ -214,7 +249,13 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           <SidebarItem>
             <div className="flex flex-wrap items-center gap-2">
               {onlyActivityTags.map((tag: string) => (
-                <Badge key={`${tag}tag`} variant="secondary">
+                <Badge key={`${tag}tag`} variant="secondary" className="flex items-center gap-1.5">
+                  <span
+                    className={cn(
+                      'inline-block h-2 w-2 shrink-0 rounded-full',
+                      getTagDotClass(tag, colorMap)
+                    )}
+                  />
                   {tag}
                 </Badge>
               ))}
@@ -235,7 +276,13 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           <SidebarItem>
             <div className="flex flex-wrap items-center gap-2">
               {onlyAccommodationOrCampKitchenTags.map((tag: string) => (
-                <Badge key={`${tag}tag`} variant="secondary">
+                <Badge key={`${tag}tag`} variant="secondary" className="flex items-center gap-1.5">
+                  <span
+                    className={cn(
+                      'inline-block h-2 w-2 shrink-0 rounded-full',
+                      getTagDotClass(tag, colorMap)
+                    )}
+                  />
                   {tag}
                 </Badge>
               ))}
@@ -256,12 +303,49 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           <SidebarItem>
             <div className="flex flex-wrap items-center gap-2">
               {onlyOtherConsiderationsTags.map((tag: string) => (
-                <Badge key={`${tag}tag`} variant="secondary">
+                <Badge key={`${tag}tag`} variant="secondary" className="flex items-center gap-1.5">
+                  <span
+                    className={cn(
+                      'inline-block h-2 w-2 shrink-0 rounded-full',
+                      getTagDotClass(tag, colorMap)
+                    )}
+                  />
                   {tag}
                 </Badge>
               ))}
             </div>
           </SidebarItem>
+          {customTagDefs.length > 0 && (
+            <>
+              <EditTripTags
+                tags={onlyCustomTags}
+                options={customTagOptions}
+                name="Custom Tags"
+              >
+                <SubHeading>
+                  Custom Tags{' '}
+                  <div className="focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-muted hover:text-muted-foreground inline-flex size-8 shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+                    <Ellipsis className="h-4 w-4" />
+                  </div>
+                </SubHeading>
+              </EditTripTags>
+              <SidebarItem>
+                <div className="flex flex-wrap items-center gap-2">
+                  {onlyCustomTags.map((tag: string) => (
+                    <Badge key={`${tag}tag`} variant="secondary" className="flex items-center gap-1.5">
+                      <span
+                        className={cn(
+                          'inline-block h-2 w-2 shrink-0 rounded-full',
+                          getTagDotClass(tag, colorMap)
+                        )}
+                      />
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </SidebarItem>
+            </>
+          )}
           <Separator className="my-4" />
 
           {!!trip && !!trip.created && (
@@ -274,6 +358,45 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
                 </>
               )}
             </SubHeading>
+          )}
+
+          {user?.uid === trip.owner && (
+            <>
+              <Separator className="my-4" />
+              <div className="px-3 pb-2">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive w-full justify-start gap-2">
+                      <Trash2 className="h-4 w-4" />
+                      Delete trip
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Delete trip</DialogTitle>
+                      <DialogDescription>
+                        Are you sure you want to delete &ldquo;{trip.name}&rdquo;? This action cannot be undone.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                      </DialogClose>
+                      <Button
+                        variant="destructive"
+                        disabled={isDeleting}
+                        onClick={async () => {
+                          await deleteTrip({ tripId: trip.tripId })
+                          navigate('/trips')
+                        }}
+                      >
+                        {isDeleting ? 'Deleting...' : 'Delete'}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </>
           )}
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Timestamp } from 'firebase/firestore'
 import { Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import z from 'zod'
@@ -38,12 +39,17 @@ import {
   SelectValue,
 } from '~/components/ui/select'
 import { allPredefinedTags, gearListCategories } from '~/lib/gearListItemEnum'
-import { useUpdateGearClosetItem } from '~/services/gear'
+import {
+  useCreateGearClosetItem,
+  useGearClosetQuery,
+  useRemoveGearItem,
+  useUpdateGearClosetItem,
+} from '~/services/gear'
 import type { GearClosetItem } from '~/types/GearItem'
 
 type EditGearClosetItemDialogProps = {
   userId: string
-  item: GearClosetItem | null
+  item: (GearClosetItem & { isMasterItem?: boolean }) | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -62,7 +68,12 @@ function EditGearClosetItemDialog({
   open,
   onOpenChange,
 }: EditGearClosetItemDialogProps) {
-  const { mutateAsync: updateItem, isPending } = useUpdateGearClosetItem(userId)
+  const { mutateAsync: updateItem, isPending: isUpdating } = useUpdateGearClosetItem(userId)
+  const { mutateAsync: createItem, isPending: isCreating } = useCreateGearClosetItem(userId)
+  const { mutateAsync: hideItem } = useRemoveGearItem(userId)
+  const { data: closet } = useGearClosetQuery({ userId, queryOptions: { enabled: !!userId } })
+  const customTags = closet?.customTags ?? []
+  const isPending = isUpdating || isCreating
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -79,20 +90,40 @@ function EditGearClosetItemDialog({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!item) return
 
-    const data: Record<string, unknown> = {
-      id: item.id,
-      name: values.name,
-      tags: values.tags,
-    }
-    if (values.weight) {
-      data.weight = values.weight
-      data.weightUnit = values.weightUnit ?? 'g'
-    }
-    if (values.description) {
-      data.description = values.description
-    }
+    if (item.isMasterItem) {
+      const newData: Record<string, unknown> = {
+        name: values.name,
+        tags: values.tags,
+        essential: false,
+        quantity: item.quantity ?? 1,
+        created: Timestamp.now(),
+      }
+      if (values.weight) {
+        newData.weight = values.weight
+        newData.weightUnit = values.weightUnit ?? 'g'
+      }
+      if (values.description) {
+        newData.description = values.description
+      }
 
-    await updateItem({ data: data as Partial<GearClosetItem> & { id: string } })
+      await createItem({ data: newData as Omit<GearClosetItem, 'id'> })
+      await hideItem({ gearItemId: item.id })
+    } else {
+      const data: Record<string, unknown> = {
+        id: item.id,
+        name: values.name,
+        tags: values.tags,
+      }
+      if (values.weight) {
+        data.weight = values.weight
+        data.weightUnit = values.weightUnit ?? 'g'
+      }
+      if (values.description) {
+        data.description = values.description
+      }
+
+      await updateItem({ data: data as Partial<GearClosetItem> & { id: string } })
+    }
 
     onOpenChange(false)
   }
@@ -104,7 +135,7 @@ function EditGearClosetItemDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
               <DialogTitle>Edit gear item</DialogTitle>
-              <DialogDescription>Update your custom gear item.</DialogDescription>
+              <DialogDescription>Update your gear item details.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4">
               <FormField
@@ -133,7 +164,7 @@ function EditGearClosetItemDialog({
                       <MultiSelectContent
                         search={{ placeholder: 'Search tags...', emptyMessage: 'No tags found' }}
                       >
-                        <MultiSelectGroup heading="Categories">
+                        <MultiSelectGroup heading="General">
                           {gearListCategories.map((cat) => (
                             <MultiSelectItem key={cat.value} value={cat.value}>
                               {cat.label}
@@ -149,6 +180,15 @@ function EditGearClosetItemDialog({
                               </MultiSelectItem>
                             ))}
                         </MultiSelectGroup>
+                        {customTags.length > 0 && (
+                          <MultiSelectGroup heading="Custom">
+                            {customTags.map((tag) => (
+                              <MultiSelectItem key={tag.name} value={tag.name}>
+                                {tag.name}
+                              </MultiSelectItem>
+                            ))}
+                          </MultiSelectGroup>
+                        )}
                       </MultiSelectContent>
                     </MultiSelect>
                     <FormMessage />

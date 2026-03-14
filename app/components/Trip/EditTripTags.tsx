@@ -16,8 +16,10 @@ import {
   DialogTrigger,
 } from '~/components/ui/dialog'
 import { Form } from '~/components/ui/form'
-import { tripKeys, useUpdateTrip } from '~/services/trips'
-import type { GearListEnumType } from '~/types/GearItem'
+import useAuth from '~/contexts/auth/useAuth'
+import { activityLabelToKey } from '~/lib/gearFilterUtils'
+import { tripKeys, useGeneratePackingList, useUpdateTrip } from '~/services/trips'
+import type { ActivityTypes } from '~/types/GearItem'
 import type { Trip } from '~/types/Trip'
 
 import { Button } from '../ui/button'
@@ -38,12 +40,14 @@ export function EditTripTags({
 }: {
   name: string
   tags: string[]
-  options: GearListEnumType
+  options: { name: string; label: string }[]
   children: React.ReactNode
 }) {
   const { id } = useParams()
+  const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const { mutateAsync: updateTripAsync } = useUpdateTrip(String(id))
+  const { mutateAsync: generatePackingList } = useGeneratePackingList()
   const queryClient = useQueryClient()
 
   const formKeys = options.map((option) => option.label)
@@ -58,10 +62,11 @@ export function EditTripTags({
   })
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!id) return
+    if (!id || !user?.uid) return
 
     const previousTripData = queryClient.getQueryData<Trip>(tripKeys.byId(id))
-    const tagsFromOtherGroups = (previousTripData?.tags ?? []).filter(
+    const previousTags = previousTripData?.tags ?? []
+    const tagsFromOtherGroups = previousTags.filter(
       (tag) => !formKeys.includes(tag)
     )
     const updatedTagsFromThisGroup = formKeys.filter(
@@ -69,12 +74,38 @@ export function EditTripTags({
     )
     const updatedTags = [...tagsFromOtherGroups, ...updatedTagsFromThisGroup]
 
+    const newlyAddedTags = updatedTagsFromThisGroup.filter(
+      (tag) => !previousTags.includes(tag)
+    )
+
     try {
       await updateTripAsync({
         data: {
           tags: updatedTags,
         },
       })
+
+      if (newlyAddedTags.length > 0) {
+        const newActivityKeys = newlyAddedTags
+          .map((label) => activityLabelToKey(label))
+          .filter((key): key is keyof ActivityTypes => !!key)
+        const newCustomTagNames = newlyAddedTags.filter(
+          (label) => !activityLabelToKey(label)
+        )
+
+        if (newActivityKeys.length > 0 || newCustomTagNames.length > 0) {
+          const result = await generatePackingList({
+            tripId: id,
+            activityKeys: newActivityKeys,
+            userId: user.uid,
+            customTagNames: newCustomTagNames,
+          })
+          if (result.length > 0) {
+            toast.success(`Added ${result.length} items to your packing list`)
+          }
+        }
+      }
+
       setOpen(false)
     } catch (error) {
       toast.error(`Error updating trip ${name} tags: ` + (error as Error).message)

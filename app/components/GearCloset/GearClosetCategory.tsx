@@ -9,9 +9,7 @@ type GearClosetCategoryProps = {
   categoryName: string
   items: GearClosetItemWithMeta[]
   onEditItem?: (item: GearClosetItemWithMeta) => void
-  onDeleteItem?: (itemId: string) => void
-  onHideItem?: (itemId: string) => void
-  onRestoreItem?: (itemId: string) => void
+  onDeleteItem?: (item: GearClosetItemWithMeta) => void
 }
 
 const GearClosetCategory = ({
@@ -19,8 +17,6 @@ const GearClosetCategory = ({
   items,
   onEditItem,
   onDeleteItem,
-  onHideItem,
-  onRestoreItem,
 }: GearClosetCategoryProps) => {
   const [accordionOpen, setAccordionOpen] = useState(true)
 
@@ -65,9 +61,7 @@ const GearClosetCategory = ({
                 key={item.id}
                 item={item}
                 onEdit={onEditItem ? () => onEditItem(item) : undefined}
-                onDelete={onDeleteItem ? () => onDeleteItem(item.id) : undefined}
-                onHide={onHideItem ? () => onHideItem(item.id) : undefined}
-                onRestore={onRestoreItem ? () => onRestoreItem(item.id) : undefined}
+                onDelete={onDeleteItem ? () => onDeleteItem(item) : undefined}
               />
             ))}
           </div>

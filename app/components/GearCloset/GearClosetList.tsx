@@ -1,13 +1,15 @@
 import { PackageIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
-import { getGroupKey } from '~/lib/getItemTags'
+import { getItemTags } from '~/lib/getItemTags'
+import { getTagDotClass } from '~/lib/tagColors'
+import { useCustomTagColorMap } from '~/lib/useCustomTagColorMap'
+import { cn } from '~/lib/utils'
 import {
   useDeleteGearClosetItem,
   useRemoveGearItem,
-  useRestoreGearItem,
 } from '~/services/gear'
-import type { GearClosetItem } from '~/types/GearItem'
+import type { GearClosetItem as GearClosetItemType } from '~/types/GearItem'
 
 import { Button } from '../ui/button'
 import {
@@ -19,11 +21,12 @@ import {
   EmptyTitle,
 } from '../ui/empty'
 import { Input } from '../ui/input'
+import { ScrollArea, ScrollBar } from '../ui/scroll-area'
 import AddGearClosetItemDialog from './AddGearClosetItemDialog'
 import EditGearClosetItemDialog from './EditGearClosetItemDialog'
-import GearClosetCategory from './GearClosetCategory'
+import GearClosetItem from './GearClosetItem'
 
-export type GearClosetItemWithMeta = GearClosetItem & {
+export type GearClosetItemWithMeta = GearClosetItemType & {
   category?: string
   isRemoved?: boolean
   isMasterItem?: boolean
@@ -36,13 +39,14 @@ type GearClosetListProps = {
 }
 
 const GearClosetList = ({ userId, masterItems, additions }: GearClosetListProps) => {
+  const colorMap = useCustomTagColorMap(userId)
   const [searchValue, setSearchValue] = useState('')
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [editItem, setEditItem] = useState<GearClosetItemWithMeta | null>(null)
   const [editOpen, setEditOpen] = useState(false)
 
   const { mutateAsync: deleteItem } = useDeleteGearClosetItem(userId)
   const { mutateAsync: hideItem } = useRemoveGearItem(userId)
-  const { mutateAsync: restoreItem } = useRestoreGearItem(userId)
 
   const allItems = useMemo(() => {
     const combined = [
@@ -56,27 +60,51 @@ const GearClosetList = ({ userId, masterItems, additions }: GearClosetListProps)
     )
   }, [masterItems, additions, searchValue])
 
-  const grouped = useMemo(() => {
-    const groups = Object.entries(Object.groupBy(allItems, (item) => getGroupKey(item)))
-    return groups.sort(([a], [b]) => a.localeCompare(b))
+  const allTags = useMemo(() => {
+    const tagCounts = new Map<string, number>()
+    for (const item of allItems) {
+      for (const tag of getItemTags(item)) {
+        tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1)
+      }
+    }
+    return Array.from(tagCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([tag, count]) => ({ tag, count }))
   }, [allItems])
+
+  const tagFilteredItems = useMemo(() => {
+    if (selectedTags.length === 0) return allItems
+    return allItems.filter((item) => {
+      const itemTags = getItemTags(item)
+      return selectedTags.some((tag) => itemTags.includes(tag))
+    })
+  }, [allItems, selectedTags])
+
+  const sortedItems = useMemo(() => {
+    return [...tagFilteredItems].sort((a, b) =>
+      a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+    )
+  }, [tagFilteredItems])
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    )
+  }
 
   const handleEditItem = (item: GearClosetItemWithMeta) => {
     setEditItem(item)
     setEditOpen(true)
   }
 
-  const handleDeleteItem = (itemId: string) => {
-    deleteItem({ itemId })
+  const handleDeleteItem = (item: GearClosetItemWithMeta) => {
+    if (item.isMasterItem) {
+      hideItem({ gearItemId: item.id })
+    } else {
+      deleteItem({ itemId: item.id })
+    }
   }
 
-  const handleHideItem = (itemId: string) => {
-    hideItem({ gearItemId: itemId })
-  }
-
-  const handleRestoreItem = (itemId: string) => {
-    restoreItem({ gearItemId: itemId })
-  }
 
   return (
     <div className="space-y-4">
@@ -89,6 +117,34 @@ const GearClosetList = ({ userId, masterItems, additions }: GearClosetListProps)
         />
       </div>
 
+      {allTags.length > 0 && (
+        <ScrollArea className="w-full whitespace-nowrap">
+          <div className="flex gap-1.5 pb-2">
+            {allTags.map(({ tag, count }) => {
+              const isSelected = selectedTags.includes(tag)
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => toggleTag(tag)}
+                  className={cn(
+                    'flex h-6 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-all select-none',
+                    isSelected
+                      ? 'border-foreground/20 bg-foreground/5 text-foreground'
+                      : 'border-border text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  <span className={cn('h-2 w-2 shrink-0 rounded-full', getTagDotClass(tag, colorMap))} />
+                  {tag}
+                  <span className="opacity-60">({count})</span>
+                </button>
+              )
+            })}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      )}
+
       {allItems.length === 0 && !searchValue ? (
         <Empty>
           <EmptyHeader>
@@ -97,7 +153,7 @@ const GearClosetList = ({ userId, masterItems, additions }: GearClosetListProps)
             </EmptyMedia>
             <EmptyTitle>Your gear closet is empty</EmptyTitle>
             <EmptyDescription>
-              Add custom gear items or manage your categories to see master gear list items.
+              Add custom gear items or manage your tags to see master gear list items.
             </EmptyDescription>
             <EmptyContent className="flex-row justify-center gap-2">
               <AddGearClosetItemDialog userId={userId}>
@@ -116,22 +172,26 @@ const GearClosetList = ({ userId, masterItems, additions }: GearClosetListProps)
             <EmptyDescription>No gear items match &ldquo;{searchValue}&rdquo;</EmptyDescription>
           </EmptyHeader>
         </Empty>
+      ) : tagFilteredItems.length === 0 && selectedTags.length > 0 ? (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <PackageIcon />
+            </EmptyMedia>
+            <EmptyTitle>No items found</EmptyTitle>
+            <EmptyDescription>No gear items match the selected tags</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
-        <div className="space-y-1">
-          {grouped.map(([categoryName, items]) => {
-            if (!items || items.length === 0) return null
-            return (
-              <GearClosetCategory
-                key={categoryName}
-                categoryName={categoryName}
-                items={items}
-                onEditItem={handleEditItem}
-                onDeleteItem={handleDeleteItem}
-                onHideItem={handleHideItem}
-                onRestoreItem={handleRestoreItem}
-              />
-            )
-          })}
+        <div className="space-y-0.5">
+          {sortedItems.map((item) => (
+            <GearClosetItem
+              key={item.id}
+              item={item}
+              onEdit={() => handleEditItem(item)}
+              onDelete={() => handleDeleteItem(item)}
+            />
+          ))}
         </div>
       )}
 

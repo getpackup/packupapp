@@ -1,13 +1,17 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { orderBy } from 'firebase/firestore'
-import { ListIcon } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
+import { ListIcon, Plus, Wand2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 
 import useAuth from '~/contexts/auth/useAuth'
 import { usePackingListState } from '~/contexts/globalState'
-import groupPackingList from '~/lib/groupPackingListItems'
+import { getItemTags } from '~/lib/getItemTags'
+import { getTagDotClass } from '~/lib/tagColors'
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
-import { useTripPackingListQuery } from '~/services/trips'
-import type { PackingListItem } from '~/types/PackingListItem'
+import { useCustomTagColorMap } from '~/lib/useCustomTagColorMap'
+import { cn } from '~/lib/utils'
+import { tripKeys, useTripPackingListQuery } from '~/services/trips'
+import type { Trip } from '~/types/Trip'
 import type { User } from '~/types/User'
 
 import FullPageSpinner from '../FullPageSpinner'
@@ -22,10 +26,12 @@ import {
 } from '../ui/empty'
 import { Input } from '../ui/input'
 import { Progress } from '../ui/progress'
-import { Tabs } from '../ui/tabs'
+import { ScrollArea, ScrollBar } from '../ui/scroll-area'
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group'
 import AddPackingListDialog from './AddPackingListDialog'
+import GeneratePackingListDialog from './GeneratePackingListDialog'
 import TripPackingListCategory from './TripPackingListCategory'
+import TripPackingListItem from './TripPackingListItem'
 
 type TripPackingListProps = {
   tripId: string
@@ -34,10 +40,14 @@ type TripPackingListProps = {
 
 const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
   const { user } = useAuth()
+  const colorMap = useCustomTagColorMap(user?.uid ?? '')
+  const queryClient = useQueryClient()
+  const trip = queryClient.getQueryData<Trip>(tripKeys.byId(tripId))
   const checkboxSounds = useCheckboxSounds()
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const { data: packingList, isLoading } = useTripPackingListQuery({
     tripId,
-    constraints: [orderBy('category', 'asc')],
+    constraints: [orderBy('name', 'asc')],
     queryOptions: {
       enabled: !!tripId,
     },
@@ -50,21 +60,18 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
     setPackingListSearchValue,
   } = usePackingListState()
 
-  // Reset packing list state when component unmounts
   useEffect(() => {
     return () => {
       setPackingListSearchValue('')
     }
   }, [setPackingListSearchValue])
 
-  // take into account if the unpacked or packed filters are selected
   const filteredItems =
     packingList &&
     packingList.length > 0 &&
     packingList.filter((item) =>
       activePackingListFilter === 'Unpacked' ? !item.isPacked : item.isPacked
     )
-  // if the filter is All, just return all the items
   const finalItems = activePackingListFilter === 'All' ? packingList : filteredItems
 
   const searchedItems = useMemo(() => {
@@ -93,10 +100,43 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
         )
       : []
 
-  const getGroupedFinalItems =
-    personalItems && personalItems.length > 0 ? groupPackingList(personalItems) : []
+  const allTags = useMemo(() => {
+    if (!personalItems || personalItems.length === 0) return []
+    const tagCounts = new Map<string, number>()
+    for (const item of personalItems) {
+      for (const tag of getItemTags(item)) {
+        tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1)
+      }
+    }
+    return Array.from(tagCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([tag, count]) => ({ tag, count }))
+  }, [personalItems])
 
-  // filter out only current user's items that are packed
+  const tagFilteredItems = useMemo(() => {
+    if (!personalItems || personalItems.length === 0) return []
+    if (selectedTags.length === 0) return personalItems
+    return personalItems.filter((item) => {
+      const itemTags = getItemTags(item)
+      return selectedTags.some((tag) => itemTags.includes(tag))
+    })
+  }, [personalItems, selectedTags])
+
+  const sortedPersonalItems = useMemo(() => {
+    return [...tagFilteredItems].sort((a, b) => {
+      if (a?.created?.seconds === b?.created?.seconds) {
+        return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+      }
+      return b.created.toDate() > a.created.toDate() ? -1 : 1
+    })
+  }, [tagFilteredItems])
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    )
+  }
+
   const packedItemsLength =
     personalItems && personalItems.length > 0
       ? personalItems.filter((item) => item?.isPacked === true).length
@@ -113,121 +153,151 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
         <span className="text-muted-foreground text-sm">{packedPercent}% packed</span>
         <Progress value={packedPercent} aria-label="Packing progress" />
       </div>
-      <Tabs defaultValue="personal">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="Search items..."
-              className="h-8"
-              value={packingListSearchValue}
-              onChange={(e) => setPackingListSearchValue(e.target.value)}
-            />
-          </div>
-          <ToggleGroup
-            type="single"
-            variant="outline"
-            size="sm"
-            defaultValue="All"
-            onValueChange={setActivePackingListFilter}
-          >
-            <ToggleGroupItem value="All" aria-label="Toggle all" className="px-4">
-              All
-            </ToggleGroupItem>
-            <ToggleGroupItem value="Packed" aria-label="Toggle packed" className="px-4">
-              Packed
-            </ToggleGroupItem>
-            <ToggleGroupItem value="Unpacked" aria-label="Toggle unpacked" className="px-4">
-              Unpacked
-            </ToggleGroupItem>
-          </ToggleGroup>
+      <div className="mb-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Search items..."
+            className="h-8"
+            value={packingListSearchValue}
+            onChange={(e) => setPackingListSearchValue(e.target.value)}
+          />
+          {(packingList?.length ?? 0) > 0 && (
+            <>
+              <GeneratePackingListDialog tripId={tripId} existingTags={trip?.tags}>
+                <Button variant="outline" size="sm" className="h-8 gap-1.5">
+                  <Wand2 className="h-3.5 w-3.5" />
+                  Generate
+                </Button>
+              </GeneratePackingListDialog>
+              <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}}>
+                <Button variant="outline" size="sm" className="h-8 gap-1.5">
+                  <Plus className="h-3.5 w-3.5" />
+                  Add
+                </Button>
+              </AddPackingListDialog>
+            </>
+          )}
         </div>
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          defaultValue="All"
+          onValueChange={setActivePackingListFilter}
+        >
+          <ToggleGroupItem value="All" aria-label="Toggle all" className="px-4">
+            All
+          </ToggleGroupItem>
+          <ToggleGroupItem value="Packed" aria-label="Toggle packed" className="px-4">
+            Packed
+          </ToggleGroupItem>
+          <ToggleGroupItem value="Unpacked" aria-label="Toggle unpacked" className="px-4">
+            Unpacked
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
 
-        {isLoading ? (
-          <FullPageSpinner what="packing list" />
-        ) : (
-          <div className="space-y-1">
-            {users?.length && users?.length > 1 && (
-              <TripPackingListCategory
-                categoryName="Group items"
-                items={sharedItems}
-                isGroup
-                sounds={checkboxSounds}
-              />
-            )}
-
-            {packingList?.length === 0 && (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <ListIcon />
-                  </EmptyMedia>
-                  <EmptyTitle>No items found</EmptyTitle>
-                  <EmptyDescription>You have no items to pack for this trip yet</EmptyDescription>
-                  <EmptyContent className="flex-row justify-center gap-2">
-                    <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}}>
-                      <Button>Add an item</Button>
-                    </AddPackingListDialog>
-                  </EmptyContent>
-                </EmptyHeader>
-              </Empty>
-            )}
-
-            {(packingList?.length ?? 0) > 0 && personalItems?.length === 0 ? (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <ListIcon />
-                  </EmptyMedia>
-                  <EmptyTitle>No items found</EmptyTitle>
-                  <EmptyDescription>You have no items to pack for this trip yet</EmptyDescription>
-                  <EmptyContent className="flex-row justify-center gap-2">
-                    <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}}>
-                      <Button>Add an item</Button>
-                    </AddPackingListDialog>
-                  </EmptyContent>
-                </EmptyHeader>
-              </Empty>
-            ) : (
-              <>
-                {getGroupedFinalItems &&
-                  getGroupedFinalItems.length > 0 &&
-                  getGroupedFinalItems.map(
-                    (
-                      [categoryName, packingListItems]: [string, PackingListItem[] | undefined],
-                      index
-                    ) => {
-                      if (packingListItems === undefined) return null
-                      if (categoryName && packingListItems.length > 0) {
-                        const sortedItems = packingListItems.sort((a, b) => {
-                          //if (a?.isPacked === b?.isPacked) {
-                          // sort by name
-                          if (a?.created?.seconds === b?.created?.seconds) {
-                            return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-                          }
-                          //}
-                          // sort by timestamp
-                          return b.created.toDate() > a.created.toDate() ? -1 : 1
-                          // sort by packed status, with checkedf items last
-                          // return a.isPacked > b.isPacked ? 1 : -1
-                        })
-
-                        return (
-                          <TripPackingListCategory
-                            key={index}
-                            categoryName={categoryName}
-                            items={sortedItems}
-                            sounds={checkboxSounds}
-                          />
-                        )
-                      }
-                      return null
-                    }
+      {allTags.length > 0 && (
+        <ScrollArea className="mb-3 w-full whitespace-nowrap">
+          <div className="flex gap-1.5 pb-2">
+            {allTags.map(({ tag, count }) => {
+              const isSelected = selectedTags.includes(tag)
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => toggleTag(tag)}
+                  className={cn(
+                    'flex h-6 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-all select-none',
+                    isSelected
+                      ? 'border-foreground/20 bg-foreground/5 text-foreground'
+                      : 'border-border text-muted-foreground hover:text-foreground'
                   )}
-              </>
-            )}
+                >
+                  <span className={cn('h-2 w-2 shrink-0 rounded-full', getTagDotClass(tag, colorMap))} />
+                  {tag}
+                  <span className="opacity-60">({count})</span>
+                </button>
+              )
+            })}
           </div>
-        )}
-      </Tabs>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      )}
+
+      {isLoading ? (
+        <FullPageSpinner what="packing list" />
+      ) : (
+        <div className="space-y-1">
+          {users?.length && users?.length > 1 && (
+            <TripPackingListCategory
+              categoryName="Group items"
+              items={sharedItems}
+              isGroup
+              sounds={checkboxSounds}
+            />
+          )}
+
+          {packingList?.length === 0 && (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <ListIcon />
+                </EmptyMedia>
+                <EmptyTitle>No items found</EmptyTitle>
+                <EmptyDescription>You have no items to pack for this trip yet</EmptyDescription>
+                <EmptyContent className="flex-row justify-center gap-2">
+                  <GeneratePackingListDialog tripId={tripId} existingTags={trip?.tags}>
+                    <Button>
+                      <Wand2 className="h-4 w-4" />
+                      Generate packing list
+                    </Button>
+                  </GeneratePackingListDialog>
+                  <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}}>
+                    <Button variant="outline">Add an item</Button>
+                  </AddPackingListDialog>
+                </EmptyContent>
+              </EmptyHeader>
+            </Empty>
+          )}
+
+          {(packingList?.length ?? 0) > 0 && personalItems?.length === 0 ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <ListIcon />
+                </EmptyMedia>
+                <EmptyTitle>No items found</EmptyTitle>
+                <EmptyDescription>You have no items to pack for this trip yet</EmptyDescription>
+                <EmptyContent className="flex-row justify-center gap-2">
+                  <GeneratePackingListDialog tripId={tripId} existingTags={trip?.tags}>
+                    <Button>
+                      <Wand2 className="h-4 w-4" />
+                      Generate packing list
+                    </Button>
+                  </GeneratePackingListDialog>
+                  <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}}>
+                    <Button variant="outline">Add an item</Button>
+                  </AddPackingListDialog>
+                </EmptyContent>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-0.5">
+              {sortedPersonalItems.map((item) => (
+                <TripPackingListItem
+                  key={item.id}
+                  item={item}
+                  isMultiSelecting={false}
+                  isSelected={false}
+                  onItemSelection={() => {}}
+                  sounds={checkboxSounds}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </>
   )
 }

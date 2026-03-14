@@ -219,3 +219,11 @@ body {
   width: var(--radix-popover-trigger-width);
   max-height: var(--radix-popover-content-available-height);
 }
+
+@utility scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

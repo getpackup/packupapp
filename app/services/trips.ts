@@ -18,14 +18,18 @@ import {
   setDoc,
   Timestamp,
   updateDoc,
+  writeBatch,
 } from 'firebase/firestore'
 import { useEffect, useMemo, useRef } from 'react'
 import { toast } from 'sonner'
 
 import { firestoreDb } from '~/firebase/config'
+import { activityKeyToLabel, filterGearByActivities } from '~/lib/gearFilterUtils'
 import type { ChatMessage, UserReadStatus } from '~/types/Chat'
+import type { ActivityTypes, GearClosetItem, GearItem } from '~/types/GearItem'
 import type { PackingListItem } from '~/types/PackingListItem'
 import type { Trip } from '~/types/Trip'
+import type { TripMember } from '~/types/TripMember'
 import type { User } from '~/types/User'
 
 const tripRootKey = ['trips'] as const
@@ -344,6 +348,55 @@ export function useUpdateTrip(tripId: string) {
       queryClient.invalidateQueries({
         queryKey: tripKeys.membersRoot(tripId),
       })
+    },
+  })
+}
+
+export function useDeleteTrip() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ tripId }: { tripId: string }) => {
+      const docRef = doc(firestoreDb, 'trips', tripId)
+      await deleteDoc(docRef)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tripKeys.root })
+      toast.success('Trip deleted')
+    },
+    onError: () => {
+      toast.error('Failed to delete trip')
+    },
+  })
+}
+
+export function useCreateTrip() {
+  const queryClient = useQueryClient()
+
+  return useMutation<
+    Trip,
+    Error,
+    {
+      data: Omit<Trip, 'id' | 'tripId'>
+      tripMembers: Record<string, TripMember>
+    }
+  >({
+    mutationFn: async ({ data, tripMembers }) => {
+      const tripsCollectionRef = collection(firestoreDb, 'trips')
+      const docRef = doc(tripsCollectionRef)
+      const tripData = {
+        ...data,
+        id: docRef.id,
+        tripId: docRef.id,
+        tripMembers,
+        created: Timestamp.now(),
+        updated: Timestamp.now(),
+      }
+      await setDoc(docRef, tripData)
+      return tripData as Trip
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tripKeys.root })
     },
   })
 }
@@ -700,6 +753,107 @@ export function useDeletePackingListItem() {
     onSuccess: () => {
       // Don't invalidate queries - the subscription will handle real-time updates automatically
       // The optimistic update in onMutate already updates the UI, and the subscription will sync with Firestore
+    },
+  })
+}
+
+export function useGeneratePackingList() {
+  const queryClient = useQueryClient()
+
+  return useMutation<
+    PackingListItem[],
+    Error,
+    { tripId: string; activityKeys: Array<keyof ActivityTypes>; userId: string; customTagNames?: string[] }
+  >({
+    mutationFn: async ({ tripId, activityKeys, userId, customTagNames = [] }) => {
+      const [masterSnap, closetSnap, additionsSnap, existingSnap] = await Promise.all([
+        getDocs(collection(firestoreDb, 'gear')),
+        getDoc(doc(firestoreDb, 'gear-closet', userId)),
+        getDocs(collection(firestoreDb, 'gear-closet', userId, 'additions')),
+        getDocs(collection(firestoreDb, 'trips', tripId, 'packing-list')),
+      ])
+
+      const masterItems = masterSnap.docs.map((d) => ({ ...d.data(), id: d.id }) as GearItem)
+      const closetData = closetSnap.data()
+      const removals: string[] = closetData?.removals ?? []
+      const customItems = additionsSnap.docs.map(
+        (d) => ({ id: d.id, ...d.data() }) as GearClosetItem
+      )
+      const existingGearItemIds = new Set<string>(
+        existingSnap.docs
+          .map((d) => d.data().gearItemId as string | undefined)
+          .filter((id): id is string => !!id)
+      )
+
+      const matchingItems = filterGearByActivities(
+        masterItems,
+        customItems,
+        activityKeys,
+        removals,
+        existingGearItemIds,
+        customTagNames
+      )
+
+      if (matchingItems.length === 0) return []
+
+      const tripRelevantTags = new Set([
+        ...activityKeys
+          .map((key) => activityKeyToLabel(key))
+          .filter((label): label is string => !!label),
+        ...customTagNames,
+      ])
+
+      const batch = writeBatch(firestoreDb)
+      const now = Timestamp.now()
+      const createdItems: PackingListItem[] = []
+
+      for (const item of matchingItems) {
+        const docRef = doc(collection(firestoreDb, 'trips', tripId, 'packing-list'))
+        const itemTags = item.tags.filter((tag) => tripRelevantTags.has(tag))
+        const packingListItem: Record<string, unknown> = {
+          name: item.name,
+          category: item.category ?? 'Uncategorized',
+          created: now,
+          description: item.description ?? '',
+          isEssential: item.essential ?? false,
+          isPacked: false,
+          quantity: 1,
+          gearItemId: item.id,
+          gearSource: item.source,
+          packedBy: [{ uid: userId, quantity: 1, isShared: false }],
+        }
+        if (itemTags.length > 0) packingListItem.tags = itemTags
+        if (item.weight) packingListItem.weight = item.weight
+        if (item.weightUnit) packingListItem.weightUnit = item.weightUnit
+        if (item.source === 'custom') packingListItem.gearOwnerId = userId
+        batch.set(docRef, packingListItem)
+        createdItems.push({ ...(packingListItem as Omit<PackingListItem, 'id'>), id: docRef.id })
+      }
+
+      const activityLabels = activityKeys
+        .map((key) => activityKeyToLabel(key))
+        .filter((label): label is string => !!label)
+
+      const tripRef = doc(firestoreDb, 'trips', tripId)
+      const tripSnap = await getDoc(tripRef)
+      const tripData = tripSnap.data() as Trip | undefined
+      const existingTags = tripData?.tags ?? []
+      const mergedTags = Array.from(new Set([...existingTags, ...activityLabels, ...customTagNames]))
+      batch.update(tripRef, { tags: mergedTags, updated: now })
+
+      await batch.commit()
+      return createdItems
+    },
+    onMutate: async ({ tripId }) => {
+      await queryClient.cancelQueries({ queryKey: tripKeys.packingListRoot(tripId) })
+    },
+    onSuccess: (_data, { tripId }) => {
+      queryClient.invalidateQueries({ queryKey: tripKeys.packingListRoot(tripId) })
+      queryClient.invalidateQueries({ queryKey: tripKeys.byId(tripId) })
+    },
+    onError: (err) => {
+      console.error('Generate packing list error:', err)
+      toast.error('Failed to generate packing list')
     },
   })
 }

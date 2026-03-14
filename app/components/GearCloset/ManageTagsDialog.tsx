@@ -14,24 +14,36 @@ import {
   DialogTrigger,
 } from '~/components/ui/dialog'
 import { Label } from '~/components/ui/label'
-import { allGearListItems } from '~/lib/gearListItemEnum'
+import {
+  gearListAccommodations,
+  gearListActivities,
+  gearListCampKitchen,
+  gearListOtherConsiderations,
+} from '~/lib/gearListItemEnum'
+
+const tagGroups = [
+  { label: 'Activities', items: gearListActivities },
+  { label: 'Accommodations', items: gearListAccommodations },
+  { label: 'Camp Kitchen', items: gearListCampKitchen },
+  { label: 'Other', items: gearListOtherConsiderations },
+]
 import { useUpdateGearClosetCategories } from '~/services/gear'
 
-type ManageCategoriesDialogProps = {
+type ManageTagsDialogProps = {
   userId: string
-  currentCategories: string[]
+  currentTags: string[]
   children: React.ReactNode
 }
 
-function ManageCategoriesDialog({
+function ManageTagsDialog({
   userId,
-  currentCategories,
+  currentTags,
   children,
-}: ManageCategoriesDialogProps) {
-  const [selected, setSelected] = useState<string[]>(currentCategories)
+}: ManageTagsDialogProps) {
+  const [selected, setSelected] = useState<string[]>(currentTags)
   const { mutateAsync: updateCategories, isPending } = useUpdateGearClosetCategories(userId)
 
-  const toggleCategory = (name: string) => {
+  const toggleTag = (name: string) => {
     setSelected((prev) => (prev.includes(name) ? prev.filter((c) => c !== name) : [...prev, name]))
   }
 
@@ -43,29 +55,38 @@ function ManageCategoriesDialog({
   return (
     <Dialog
       onOpenChange={(open) => {
-        if (open) setSelected(currentCategories)
+        if (open) setSelected(currentTags)
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Manage categories</DialogTitle>
+          <DialogTitle>Manage tags</DialogTitle>
           <DialogDescription>
             Choose which activity types appear in your gear closet. Items matching selected
             activities will be shown.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid max-h-80 grid-cols-2 gap-3 overflow-y-auto py-2">
-          {allGearListItems.map((item) => (
-            <div key={item.name} className="flex items-center gap-2">
-              <Checkbox
-                id={item.name}
-                checked={selected.includes(item.name)}
-                onCheckedChange={() => toggleCategory(item.name)}
-              />
-              <Label htmlFor={item.name} className="cursor-pointer text-sm">
-                {item.label}
-              </Label>
+        <div className="max-h-80 space-y-4 overflow-y-auto py-2">
+          {tagGroups.map((group) => (
+            <div key={group.label}>
+              <p className="text-muted-foreground mb-2 text-xs font-semibold uppercase tracking-wide">
+                {group.label}
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {group.items.map((item) => (
+                  <div key={item.name} className="flex items-center gap-2">
+                    <Checkbox
+                      id={item.name}
+                      checked={selected.includes(item.name)}
+                      onCheckedChange={() => toggleTag(item.name)}
+                    />
+                    <Label htmlFor={item.name} className="cursor-pointer text-sm">
+                      {item.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
@@ -83,4 +104,4 @@ function ManageCategoriesDialog({
   )
 }
 
-export default ManageCategoriesDialog
+export default ManageTagsDialog
