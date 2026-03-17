@@ -4,6 +4,52 @@ import { Md5 } from 'ts-md5'
 
 import { cn } from '~/lib/utils'
 
+type ImageLoadingStatus = 'idle' | 'loading' | 'loaded' | 'error'
+
+const imageStatusCache = new Map<string, ImageLoadingStatus>()
+const imageStatusListeners = new Map<string, Set<() => void>>()
+
+function useSharedImageLoadingStatus(src: string | undefined) {
+  const subscribe = React.useCallback(
+    (callback: () => void) => {
+      if (!src) return () => {}
+      if (!imageStatusListeners.has(src)) {
+        imageStatusListeners.set(src, new Set())
+      }
+      imageStatusListeners.get(src)!.add(callback)
+      return () => {
+        imageStatusListeners.get(src)?.delete(callback)
+      }
+    },
+    [src]
+  )
+
+  const getSnapshot = React.useCallback(() => {
+    if (!src) return 'idle' as ImageLoadingStatus
+    return imageStatusCache.get(src) ?? ('idle' as ImageLoadingStatus)
+  }, [src])
+
+  const status = React.useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+
+  React.useEffect(() => {
+    if (!src || imageStatusCache.has(src)) return
+
+    imageStatusCache.set(src, 'loading')
+    const img = new Image()
+    img.src = src
+    img.onload = () => {
+      imageStatusCache.set(src, 'loaded')
+      imageStatusListeners.get(src)?.forEach((cb) => cb())
+    }
+    img.onerror = () => {
+      imageStatusCache.set(src, 'error')
+      imageStatusListeners.get(src)?.forEach((cb) => cb())
+    }
+  }, [src])
+
+  return status
+}
+
 function Avatar({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Root>) {
   return (
     <AvatarPrimitive.Root
@@ -21,20 +67,21 @@ function AvatarImage({
 }: React.ComponentProps<typeof AvatarPrimitive.Image> & {
   gravatarEmail?: string
 }) {
-  // This fixes a 429 Too Many Requests error from firebase loading the same image multiple times
-  // Remove any cache-busting params that might differ
-  // const normalizedSrcUrl = props.src?.split('?')[0]
+  const resolvedSrc =
+    (!props.src || props.src === '') && gravatarEmail
+      ? `https://www.gravatar.com/avatar/${Md5.hashStr(gravatarEmail || '')}?d=identicon&s=192`
+      : props.src
+
+  const status = useSharedImageLoadingStatus(resolvedSrc)
+
+  if (status !== 'loaded') return null
 
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
       className={cn('aspect-square size-full', className)}
       {...props}
-      src={
-        (!props.src || props.src === '') && gravatarEmail
-          ? `https://www.gravatar.com/avatar/${Md5.hashStr(gravatarEmail || '')}?d=identicon&s=192`
-          : props.src
-      }
+      src={resolvedSrc}
     />
   )
 }

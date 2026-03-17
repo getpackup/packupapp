@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from 'lucide-react'
+import { ChevronDown, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '~/components/ui/button'
@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
+import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { allPredefinedTags } from '~/lib/gearListItemEnum'
 import { TAG_COLOR_KEYS, type TagColorKey } from '~/lib/tagColors'
 import { cn } from '~/lib/utils'
@@ -26,13 +27,14 @@ type ManageCustomTagsDialogProps = {
   children: React.ReactNode
 }
 
-function ColorPicker({
+function ColorPickerDropdown({
   value,
   onChange,
 }: {
   value: TagColorKey
   onChange: (color: TagColorKey) => void
 }) {
+  const [open, setOpen] = useState(false)
   const colorClasses: Record<TagColorKey, string> = {
     red: 'bg-red-500',
     orange: 'bg-orange-500',
@@ -54,20 +56,36 @@ function ColorPicker({
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {TAG_COLOR_KEYS.map((color) => (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <button
-          key={color}
           type="button"
-          onClick={() => onChange(color)}
           className={cn(
-            'h-5 w-5 rounded-full transition-all',
-            colorClasses[color],
-            value === color ? 'ring-2 ring-offset-2 ring-offset-background ring-foreground' : 'hover:scale-110'
+            'h-9 shrink-0 rounded-md border px-1.5 transition-colors hover:opacity-80',
+            'flex items-center justify-center gap-0.5'
           )}
-        />
-      ))}
-    </div>
+        >
+          <span className={cn('h-4 w-4 rounded-full', colorClasses[value])} />
+          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-3" align="start">
+        <div className="grid grid-cols-6 gap-1.5">
+          {TAG_COLOR_KEYS.map((color) => (
+            <button
+              key={color}
+              type="button"
+              onClick={() => { onChange(color); setOpen(false) }}
+              className={cn(
+                'h-6 w-6 rounded-full transition-all',
+                colorClasses[color],
+                value === color ? 'ring-2 ring-offset-2 ring-offset-background ring-foreground' : 'hover:scale-110'
+              )}
+            />
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -174,14 +192,16 @@ function ManageCustomTagsDialog({ userId, children }: ManageCustomTagsDialogProp
               {customTags.map((tag) =>
                 editingTag === tag.name ? (
                   <div key={tag.name} className="space-y-2 rounded-md border p-3">
-                    <Input
-                      value={editName}
-                      onChange={(e) => { setEditName(e.target.value); setError('') }}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleUpdate() } }}
-                      placeholder="Tag name"
-                      autoFocus
-                    />
-                    <ColorPicker value={editColor} onChange={setEditColor} />
+                    <div className="flex items-center gap-2">
+                      <ColorPickerDropdown value={editColor} onChange={setEditColor} />
+                      <Input
+                        value={editName}
+                        onChange={(e) => { setEditName(e.target.value); setError('') }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleUpdate() } }}
+                        placeholder="Tag name"
+                        autoFocus
+                      />
+                    </div>
                     <div className="flex items-center justify-between">
                       {error && <p className="text-destructive text-xs">{error}</p>}
                       <div className="ml-auto flex gap-2">
@@ -229,13 +249,15 @@ function ManageCustomTagsDialog({ userId, children }: ManageCustomTagsDialogProp
 
           {!editingTag && (
             <div className="space-y-2 rounded-md border p-3">
-              <Input
-                value={newName}
-                onChange={(e) => { setNewName(e.target.value); setError('') }}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCreate() } }}
-                placeholder="New tag name..."
-              />
-              <ColorPicker value={newColor} onChange={setNewColor} />
+              <div className="flex items-center gap-2">
+                <ColorPickerDropdown value={newColor} onChange={setNewColor} />
+                <Input
+                  value={newName}
+                  onChange={(e) => { setNewName(e.target.value); setError('') }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCreate() } }}
+                  placeholder="New tag name..."
+                />
+              </div>
               <div className="flex items-center justify-between">
                 {error && <p className="text-destructive text-xs">{error}</p>}
                 <Button size="sm" className="ml-auto" onClick={handleCreate} disabled={!newName.trim()}>

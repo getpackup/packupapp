@@ -10,6 +10,7 @@ import {
   ShoppingBasket,
   Trash2,
   UserIcon,
+  UserPlus,
   Users,
   X,
 } from 'lucide-react'
@@ -23,7 +24,7 @@ import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { cn } from '~/lib/utils'
 import { useCreateShoppingListItem } from '~/services/shoppingList'
 import { tripKeys, useDeletePackingListItem, useUpdatePackingListItem } from '~/services/trips'
-import { type PackingListItem } from '~/types/PackingListItem'
+import { type PackedByUserType, type PackingListItem } from '~/types/PackingListItem'
 import type { Trip } from '~/types/Trip'
 import type { User } from '~/types/User'
 
@@ -39,6 +40,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import EditPackingListItemDialog from './EditPackingListItemDialog'
 
 type TripPackingListItemProps = {
@@ -47,6 +50,7 @@ type TripPackingListItemProps = {
   isSelected: boolean
   onItemSelection: (itemId: string, isShiftClick: boolean, isCommandClick: boolean) => void
   sounds?: ReturnType<typeof useCheckboxSounds>
+  isGroup?: boolean
 }
 
 const TripPackingListItem = ({
@@ -55,6 +59,7 @@ const TripPackingListItem = ({
   isSelected,
   onItemSelection,
   sounds,
+  isGroup,
 }: TripPackingListItemProps) => {
   const { id } = useParams()
   const { soundsEnabled } = useSoundsState()
@@ -115,13 +120,38 @@ const TripPackingListItem = ({
   }
 
   const handleMoveToOrFromGroupItems = () => {
-    if (!id || !item.id) return
+    if (!id || !item.id || !user) return
 
     const isAlreadyShared = item.packedBy[0].isShared
 
-    updatePackingListItemAsync({
-      data: { id: item.id, packedBy: [{ ...item.packedBy[0], isShared: !isAlreadyShared }] },
-    })
+    if (isAlreadyShared) {
+      updatePackingListItemAsync({
+        data: { id: item.id, packedBy: [{ uid: user.uid, quantity: 1, isShared: false }] },
+      })
+    } else {
+      updatePackingListItemAsync({
+        data: {
+          id: item.id,
+          packedBy: [{ uid: user.uid, quantity: 1, isShared: true }],
+        },
+      })
+    }
+  }
+
+  const handleToggleAssignee = (uid: string) => {
+    if (!id || !item.id) return
+
+    const isAssigned = item.packedBy.some((p) => p.uid === uid)
+    let newPackedBy: PackedByUserType[]
+
+    if (isAssigned) {
+      newPackedBy = item.packedBy.filter((p) => p.uid !== uid)
+      if (newPackedBy.length === 0) return
+    } else {
+      newPackedBy = [...item.packedBy, { uid, quantity: 1, isShared: true }]
+    }
+
+    updatePackingListItemAsync({ data: { id: item.id, packedBy: newPackedBy } })
   }
 
   const handleDelete = () => {
@@ -207,7 +237,9 @@ const TripPackingListItem = ({
                   <Circle className="text-muted-foreground/80 hover:text-muted-foreground h-6 w-6" />
                 )}
               </animated.div>
-              <span className={cn('truncate select-none', item.isPacked && 'text-muted-foreground')}>
+              <span
+                className={cn('truncate select-none', item.isPacked && 'text-muted-foreground')}
+              >
                 {item.name}
               </span>
               {item.weight && (
@@ -231,18 +263,79 @@ const TripPackingListItem = ({
           {!isMultiSelecting && (
             <>
               <TagPills item={item} />
-              <div className="*:data-[slot=avatar]:ring-sidebar flex shrink-0 -space-x-2 *:data-[slot=avatar]:ring-1">
-                {item.packedBy?.map((packedBy) => {
-                  const user = users?.find((user) => user.uid === packedBy.uid)
-                  if (!user || !item.isPacked) return null
-                  return (
-                    <Avatar key={packedBy.uid} className="size-6">
-                      <AvatarImage src={user?.photoURL} />
-                      <AvatarFallback>{user?.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                  )
-                })}
-              </div>
+              {isGroup && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex shrink-0 cursor-pointer items-center -space-x-2 rounded-full transition-opacity hover:opacity-80"
+                    >
+                      {item.packedBy.length > 0 ? (
+                        <div className="*:data-[slot=avatar]:ring-sidebar flex shrink-0 -space-x-2 *:data-[slot=avatar]:ring-1">
+                          {item.packedBy.map((packedBy) => {
+                            const assignedUser = users?.find((u) => u.uid === packedBy.uid)
+                            if (!assignedUser) return null
+                            return (
+                              <Tooltip key={packedBy.uid}>
+                                <TooltipTrigger asChild>
+                                  <Avatar className="size-6 border">
+                                    <AvatarImage
+                                      src={assignedUser.photoURL}
+                                      gravatarEmail={assignedUser.email}
+                                    />
+                                    <AvatarFallback>
+                                      {assignedUser.displayName?.charAt(0).toUpperCase()}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                </TooltipTrigger>
+                                <TooltipContent>{assignedUser.displayName}</TooltipContent>
+                              </Tooltip>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <div className="border-border text-muted-foreground flex h-6 w-6 items-center justify-center rounded-full border border-dashed">
+                          <UserPlus className="h-3 w-3" />
+                        </div>
+                      )}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-2" align="end">
+                    <p className="text-muted-foreground mb-2 px-2 text-xs font-medium">Assign to</p>
+                    {users?.map((u) => {
+                      const isAssigned = item.packedBy.some((p) => p.uid === u.uid)
+                      return (
+                        <div
+                          key={u.uid}
+                          role="button"
+                          tabIndex={0}
+                          className="hover:bg-accent flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                          onClick={() => handleToggleAssignee(u.uid)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              handleToggleAssignee(u.uid)
+                            }
+                          }}
+                        >
+                          <Checkbox
+                            checked={isAssigned}
+                            className="pointer-events-none"
+                            tabIndex={-1}
+                          />
+                          <Avatar className="size-5">
+                            <AvatarImage src={u.photoURL} gravatarEmail={u.email} />
+                            <AvatarFallback>
+                              {u.displayName?.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="truncate">{u.displayName}</span>
+                        </div>
+                      )
+                    })}
+                  </PopoverContent>
+                </Popover>
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon-sm" className="shrink-0">

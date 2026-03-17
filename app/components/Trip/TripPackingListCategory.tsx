@@ -529,6 +529,7 @@ const TripPackingListCategory = ({
                       isSelected={selectedItems.includes(item.id)}
                       onItemSelection={handleItemSelection}
                       sounds={sounds}
+                      isGroup={isGroup}
                     />
                   </AnimatedContainer>
                 )

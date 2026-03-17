@@ -23,6 +23,7 @@ import {
   gearListCampKitchen,
   gearListOtherConsiderations,
 } from '~/lib/gearListItemEnum'
+import { useGearClosetQuery } from '~/services/gear'
 import { useGeneratePackingList } from '~/services/trips'
 import type { ActivityTypes } from '~/types/GearItem'
 
@@ -46,14 +47,25 @@ function GeneratePackingListDialog({
 }: GeneratePackingListDialogProps) {
   const { user } = useAuth()
   const { mutateAsync: generatePackingList, isPending } = useGeneratePackingList()
+  const { data: gearCloset } = useGearClosetQuery({
+    userId: user?.uid ?? '',
+    queryOptions: { enabled: !!user?.uid },
+  })
   const [open, setOpen] = useState(false)
+
+  const customTags = gearCloset?.customTags ?? []
 
   const preSelectedKeys = existingTags
     .map((label) => activityLabelToKey(label))
     .filter((key): key is keyof ActivityTypes => !!key)
 
+  const preSelectedCustomTags = existingTags.filter((label) => !activityLabelToKey(label))
+
   const [selectedKeys, setSelectedKeys] = useState<Set<keyof ActivityTypes>>(
     new Set(preSelectedKeys)
+  )
+  const [selectedCustomTags, setSelectedCustomTags] = useState<Set<string>>(
+    new Set(preSelectedCustomTags)
   )
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -63,6 +75,9 @@ function GeneratePackingListDialog({
         .map((label) => activityLabelToKey(label))
         .filter((key): key is keyof ActivityTypes => !!key)
       setSelectedKeys(new Set(keys))
+      setSelectedCustomTags(
+        new Set(existingTags.filter((label) => !activityLabelToKey(label)))
+      )
     }
   }
 
@@ -78,13 +93,26 @@ function GeneratePackingListDialog({
     })
   }
 
+  const toggleCustomTag = (tagName: string) => {
+    setSelectedCustomTags((prev) => {
+      const next = new Set(prev)
+      if (next.has(tagName)) {
+        next.delete(tagName)
+      } else {
+        next.add(tagName)
+      }
+      return next
+    })
+  }
+
   const handleGenerate = async () => {
-    if (!user?.uid || selectedKeys.size === 0) return
+    if (!user?.uid || (selectedKeys.size === 0 && selectedCustomTags.size === 0)) return
 
     const result = await generatePackingList({
       tripId,
       activityKeys: Array.from(selectedKeys),
       userId: user.uid,
+      customTagNames: Array.from(selectedCustomTags),
     })
 
     if (result.length > 0) {
@@ -128,13 +156,34 @@ function GeneratePackingListDialog({
                 </div>
               </div>
             ))}
+            {customTags.length > 0 && (
+              <div>
+                <h4 className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wider">
+                  Custom Tags
+                </h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {customTags.map((tag) => (
+                    <label
+                      key={tag.name}
+                      className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                    >
+                      <Checkbox
+                        checked={selectedCustomTags.has(tag.name)}
+                        onCheckedChange={() => toggleCustomTag(tag.name)}
+                      />
+                      {tag.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </ScrollArea>
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button onClick={handleGenerate} disabled={isPending || selectedKeys.size === 0}>
+          <Button onClick={handleGenerate} disabled={isPending || (selectedKeys.size === 0 && selectedCustomTags.size === 0)}>
             {isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (

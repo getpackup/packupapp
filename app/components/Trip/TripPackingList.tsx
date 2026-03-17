@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { orderBy } from 'firebase/firestore'
-import { ListIcon, Plus, Wand2 } from 'lucide-react'
+import { ListIcon, Plus, Wand2, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import useAuth from '~/contexts/auth/useAuth'
@@ -31,7 +31,6 @@ import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group'
 import AddPackingListDialog from './AddPackingListDialog'
 import GeneratePackingListDialog from './GeneratePackingListDialog'
 import TripPackingListCategory from './TripPackingListCategory'
-import TripPackingListItem from './TripPackingListItem'
 
 type TripPackingListProps = {
   tripId: string
@@ -131,70 +130,99 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
     })
   }, [tagFilteredItems])
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    )
+  const hasActiveFilters =
+    packingListSearchValue !== '' || selectedTags.length > 0 || activePackingListFilter !== 'All'
+
+  const clearAllFilters = () => {
+    setPackingListSearchValue('')
+    setSelectedTags([])
+    setActivePackingListFilter('All')
   }
 
-  const packedItemsLength =
-    personalItems && personalItems.length > 0
-      ? personalItems.filter((item) => item?.isPacked === true).length
-      : 0
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
+  }
+
+  const allVisibleItems = useMemo(
+    () =>
+      packingList?.filter(
+        (item) =>
+          item.packedBy &&
+          item.packedBy.length > 0 &&
+          (item.packedBy.some((i) => !i.isShared && i.uid === user?.uid) ||
+            item.packedBy.some((i) => i.isShared))
+      ) ?? [],
+    [packingList, user?.uid]
+  )
+
+  const packedItemsLength = allVisibleItems.filter((item) => item.isPacked).length
 
   const packedPercent =
-    personalItems && personalItems.length > 0
-      ? Number(((packedItemsLength / personalItems.length) * 100).toFixed(0))
+    allVisibleItems.length > 0
+      ? Number(((packedItemsLength / allVisibleItems.length) * 100).toFixed(0))
       : 0
 
   return (
     <>
+      {(packingList?.length ?? 0) > 0 && (
+        <div className="mb-0 flex justify-end gap-2">
+          <GeneratePackingListDialog tripId={tripId} existingTags={trip?.tags}>
+            <Button variant="outline" size="sm" className="h-8 gap-1.5">
+              <Wand2 className="h-3.5 w-3.5" />
+              Generate
+            </Button>
+          </GeneratePackingListDialog>
+          <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}}>
+            <Button variant="outline" size="sm" className="h-8 gap-1.5">
+              <Plus className="h-3.5 w-3.5" />
+              Add
+            </Button>
+          </AddPackingListDialog>
+        </div>
+      )}
       <div className="mb-4 text-center">
         <span className="text-muted-foreground text-sm">{packedPercent}% packed</span>
         <Progress value={packedPercent} aria-label="Packing progress" />
       </div>
       <div className="mb-2 flex items-center justify-between">
+        <Input
+          placeholder="Search items..."
+          className="h-8 max-w-xs"
+          value={packingListSearchValue}
+          onChange={(e) => setPackingListSearchValue(e.target.value)}
+        />
         <div className="flex items-center gap-2">
-          <Input
-            placeholder="Search items..."
-            className="h-8"
-            value={packingListSearchValue}
-            onChange={(e) => setPackingListSearchValue(e.target.value)}
-          />
-          {(packingList?.length ?? 0) > 0 && (
-            <>
-              <GeneratePackingListDialog tripId={tripId} existingTags={trip?.tags}>
-                <Button variant="outline" size="sm" className="h-8 gap-1.5">
-                  <Wand2 className="h-3.5 w-3.5" />
-                  Generate
-                </Button>
-              </GeneratePackingListDialog>
-              <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}}>
-                <Button variant="outline" size="sm" className="h-8 gap-1.5">
-                  <Plus className="h-3.5 w-3.5" />
-                  Add
-                </Button>
-              </AddPackingListDialog>
-            </>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1 text-xs"
+              onClick={clearAllFilters}
+            >
+              <X className="h-3.5 w-3.5" />
+              Clear
+            </Button>
           )}
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            value={activePackingListFilter}
+            onValueChange={(val) => {
+              if (val) setActivePackingListFilter(val as 'All' | 'Packed' | 'Unpacked')
+            }}
+          >
+            <ToggleGroupItem value="All" aria-label="Toggle all" className="px-4">
+              All
+            </ToggleGroupItem>
+            <ToggleGroupItem value="Packed" aria-label="Toggle packed" className="px-4">
+              Packed
+            </ToggleGroupItem>
+            <ToggleGroupItem value="Unpacked" aria-label="Toggle unpacked" className="px-4">
+              Unpacked
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          size="sm"
-          defaultValue="All"
-          onValueChange={setActivePackingListFilter}
-        >
-          <ToggleGroupItem value="All" aria-label="Toggle all" className="px-4">
-            All
-          </ToggleGroupItem>
-          <ToggleGroupItem value="Packed" aria-label="Toggle packed" className="px-4">
-            Packed
-          </ToggleGroupItem>
-          <ToggleGroupItem value="Unpacked" aria-label="Toggle unpacked" className="px-4">
-            Unpacked
-          </ToggleGroupItem>
-        </ToggleGroup>
       </div>
 
       {allTags.length > 0 && (
@@ -214,7 +242,9 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
                       : 'border-border text-muted-foreground hover:text-foreground'
                   )}
                 >
-                  <span className={cn('h-2 w-2 shrink-0 rounded-full', getTagDotClass(tag, colorMap))} />
+                  <span
+                    className={cn('h-2 w-2 shrink-0 rounded-full', getTagDotClass(tag, colorMap))}
+                  />
                   {tag}
                   <span className="opacity-60">({count})</span>
                 </button>
@@ -244,8 +274,10 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
                 <EmptyMedia variant="icon">
                   <ListIcon />
                 </EmptyMedia>
-                <EmptyTitle>No items found</EmptyTitle>
-                <EmptyDescription>You have no items to pack for this trip yet</EmptyDescription>
+                <EmptyTitle>No items yet</EmptyTitle>
+                <EmptyDescription>
+                  Get started by generating a packing list or adding items manually
+                </EmptyDescription>
                 <EmptyContent className="flex-row justify-center gap-2">
                   <GeneratePackingListDialog tripId={tripId} existingTags={trip?.tags}>
                     <Button>
@@ -261,14 +293,42 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
             </Empty>
           )}
 
-          {(packingList?.length ?? 0) > 0 && personalItems?.length === 0 ? (
+          {(packingList?.length ?? 0) > 0 &&
+          sortedPersonalItems?.length === 0 &&
+          (packingListSearchValue ||
+            selectedTags.length > 0 ||
+            activePackingListFilter !== 'All') ? (
             <Empty>
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   <ListIcon />
                 </EmptyMedia>
-                <EmptyTitle>No items found</EmptyTitle>
-                <EmptyDescription>You have no items to pack for this trip yet</EmptyDescription>
+                <EmptyTitle>No matching items</EmptyTitle>
+                <EmptyDescription>
+                  {packingListSearchValue
+                    ? `No items match \u201c${packingListSearchValue}\u201d`
+                    : activePackingListFilter === 'Packed'
+                      ? 'No items have been packed yet'
+                      : activePackingListFilter === 'Unpacked'
+                        ? 'All items have been packed'
+                        : 'No items match the selected tags'}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (packingList?.length ?? 0) > 0 &&
+            personalItems?.length === 0 &&
+            !packingListSearchValue &&
+            selectedTags.length === 0 &&
+            activePackingListFilter === 'All' ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <ListIcon />
+                </EmptyMedia>
+                <EmptyTitle>No items yet</EmptyTitle>
+                <EmptyDescription>
+                  Get started by generating a packing list or adding items manually
+                </EmptyDescription>
                 <EmptyContent className="flex-row justify-center gap-2">
                   <GeneratePackingListDialog tripId={tripId} existingTags={trip?.tags}>
                     <Button>
@@ -283,18 +343,11 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
               </EmptyHeader>
             </Empty>
           ) : (
-            <div className="space-y-0.5">
-              {sortedPersonalItems.map((item) => (
-                <TripPackingListItem
-                  key={item.id}
-                  item={item}
-                  isMultiSelecting={false}
-                  isSelected={false}
-                  onItemSelection={() => {}}
-                  sounds={checkboxSounds}
-                />
-              ))}
-            </div>
+            <TripPackingListCategory
+              categoryName="Personal items"
+              items={sortedPersonalItems}
+              sounds={checkboxSounds}
+            />
           )}
         </div>
       )}
