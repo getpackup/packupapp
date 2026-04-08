@@ -97,9 +97,9 @@ export default function GearCloset() {
           <FullPageSpinner what="gear closet" />
         ) : (
           <div className="mx-auto max-w-3xl space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <h2 className="text-2xl font-bold">Gear Closet</h2>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <ManageTagsDialog userId={userId} currentTags={categories}>
                   <Button variant="outline" size="sm">
                     <Settings2 className="mr-1 h-4 w-4" />

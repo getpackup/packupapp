@@ -5,6 +5,7 @@ import ChatSheet from '~/components/Chat/ChatSheet'
 import FullPageSpinner from '~/components/FullPageSpinner'
 import PageContent from '~/components/PageContent'
 import PageHeader from '~/components/PageHeader'
+import MobileTripDetailsDrawer from '~/components/Trip/MobileTripDetailsDrawer'
 import TripDetailsSidebar from '~/components/Trip/TripDetailsSidebar'
 import TripPackingList from '~/components/Trip/TripPackingList'
 import { useTripByIdQuery, useTripMembersQuery } from '~/services/trips'
@@ -51,19 +52,27 @@ export default function TripDetails({ params }: Route.ComponentProps) {
           { label: 'Trips', href: '/trips' },
           { label: trip?.name || 'Trip Details', href: `/trips/${id}` },
         ]}
+        actions={
+          trip && (
+            <div className="flex items-center gap-1 md:hidden">
+              <MobileTripDetailsDrawer trip={trip} users={users} />
+              {users && <ChatSheet trip={trip} users={users} compact />}
+            </div>
+          )
+        }
       />
       <PageContent noPadding>
         {!trip || isLoadingTrip ? (
           <FullPageSpinner what="trip details" />
         ) : (
-          <div className="relative flex h-full min-h-0">
-            <div className="w-2/3 overflow-y-auto p-8">
+          <div className="relative flex h-full min-h-0 flex-col md:flex-row">
+            <div className="flex-1 overflow-y-auto p-4 md:w-2/3 md:p-8">
               <TripPackingList tripId={id} users={users} />
             </div>
-            <div className="bg-sidebar border-sidebar-border w-1/3 overflow-y-auto border-l">
+            <div className="bg-sidebar border-sidebar-border hidden w-1/3 overflow-y-auto border-l md:block">
               <TripDetailsSidebar trip={trip} users={users} />
             </div>
-            <div className="absolute right-4 bottom-4">
+            <div className="absolute right-4 bottom-4 hidden md:block">
               {users && <ChatSheet trip={trip} users={users} />}
             </div>
           </div>
