@@ -15,11 +15,12 @@ type PageHeaderProps = {
     label: string
     href: string
   }[]
+  actions?: React.ReactNode
 }
 
-const PageHeader = ({ crumbs }: PageHeaderProps) => {
+const PageHeader = ({ crumbs, actions }: PageHeaderProps) => {
   return (
-    <div className="border-sidebar-border flex items-center border-b px-8 py-3">
+    <div className="border-sidebar-border flex items-center justify-between border-b px-4 md:px-8 py-3">
       <Breadcrumb>
         <BreadcrumbList>
           {crumbs.map((crumb, index) => {
@@ -46,6 +47,7 @@ const PageHeader = ({ crumbs }: PageHeaderProps) => {
           })}
         </BreadcrumbList>
       </Breadcrumb>
+      {actions && <div className="flex items-center gap-1">{actions}</div>}
     </div>
   )
 }

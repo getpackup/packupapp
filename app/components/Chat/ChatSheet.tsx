@@ -31,6 +31,7 @@ import MessageInput from './MessageInput'
 type ChatSheetProps = {
   trip: Trip
   users: User[]
+  compact?: boolean
 }
 
 const systemUser: User = {
@@ -42,7 +43,7 @@ const systemUser: User = {
   uid: 'system',
 }
 
-function ChatSheet({ trip, users }: ChatSheetProps) {
+function ChatSheet({ trip, users, compact }: ChatSheetProps) {
   const { user } = useAuth()
   const [userMap] = useState<Map<string, User>>(
     new Map([...(users || []).map((u): [string, User] => [u.id, u]), [systemUser.id, systemUser]])
@@ -166,10 +167,17 @@ function ChatSheet({ trip, users }: ChatSheetProps) {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="accent" size="lg" className="shadow-2xl">
-          <MessageCircleIcon className="size-4" />
-          Trip Chat
-        </Button>
+        {compact ? (
+          <Button variant="ghost" size="icon">
+            <MessageCircleIcon className="size-5" />
+            <span className="sr-only">Trip Chat</span>
+          </Button>
+        ) : (
+          <Button variant="accent" size="lg" className="shadow-2xl">
+            <MessageCircleIcon className="size-4" />
+            Trip Chat
+          </Button>
+        )}
       </SheetTrigger>
       <SheetContent className="gap-0">
         <SheetHeader className="border-b">

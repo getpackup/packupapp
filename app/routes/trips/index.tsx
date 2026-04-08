@@ -106,18 +106,18 @@ export default function Trips() {
           <div className="mx-auto w-full max-w-4xl">
             {isLoading && <FullPageSpinner what="trips" />}
             {!isLoading && tripsWithStatus.length > 0 && (
-              <div className="-ml-18 space-y-0">
+              <div className="space-y-0 md:-ml-18">
                 {sortedYears.map((year) => (
-                  <div key={year} className="flex gap-6">
-                    <div className="w-12 shrink-0">
-                      <div className="sticky top-0 py-4">
+                  <div key={year} className="flex flex-col md:flex-row md:gap-6">
+                    <div className="shrink-0 py-2 md:w-12 md:py-0">
+                      <div className="md:sticky md:top-0 md:py-4">
                         <Badge variant="default" className="text-sm">
                           {year}
                         </Badge>
                       </div>
                     </div>
 
-                    <div className="flex-1 space-y-4 py-4">
+                    <div className="flex-1 space-y-4 pb-4 md:py-4">
                       {tripsByYear[year]
                         .sort((a, b) => b.startDate.seconds - a.startDate.seconds)
                         .map((trip) => (

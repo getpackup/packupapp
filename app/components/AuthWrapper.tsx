@@ -6,6 +6,7 @@ import { firebaseAuth } from '~/firebase/config'
 import { trackPage } from '~/lib/analytics'
 import { isAuth } from '~/services/auth'
 
+import { BottomNav } from './BottomNav'
 import { Sidebar } from './Sidebar'
 
 const pageNameMap = (id?: string) => ({
@@ -57,10 +58,11 @@ export default function AuthWrapper() {
   return (
     <AuthProvider>
       <div className="flex h-screen">
-        <Sidebar />
-        <main className="flex flex-1 flex-col overflow-hidden bg-gray-100 dark:bg-gray-800/50">
+        <Sidebar className="hidden md:flex" />
+        <main className="flex flex-1 flex-col overflow-hidden bg-gray-100 pb-16 md:pb-0 dark:bg-gray-800/50">
           <Outlet />
         </main>
+        <BottomNav className="md:hidden" />
       </div>
     </AuthProvider>
   )
