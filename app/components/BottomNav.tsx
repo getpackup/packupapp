@@ -166,7 +166,7 @@ export function BottomNav({ className }: BottomNavProps) {
                   </Avatar>
                   <div className="grid text-left leading-tight">
                     <span className="font-bold">
-                      {isAnonymous ? 'Guest' : user?.displayName}
+                      {isAnonymous ? 'Anonymous User' : user?.displayName}
                     </span>
                     {!isAnonymous && (
                       <span className="text-muted-foreground text-sm font-normal">
