@@ -12,6 +12,7 @@ import {
   ShirtIcon,
   ShoppingCartIcon,
   User,
+  UserPlus,
   UsersIcon,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -20,6 +21,7 @@ import { Link, useLocation, useNavigate } from 'react-router'
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { useAuth } from '~/contexts/auth/useAuth'
 import { firebaseAuth } from '~/firebase/config'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
 
 import {
@@ -54,6 +56,7 @@ interface BottomNavProps {
 
 export function BottomNav({ className }: BottomNavProps) {
   const { user, setUser } = useAuth()
+  const isAnonymous = useIsAnonymous()
   const location = useLocation()
   const navigate = useNavigate()
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -143,46 +146,73 @@ export function BottomNav({ className }: BottomNavProps) {
               <DrawerTitle>
                 <div className="flex items-center gap-3">
                   <Avatar className="size-10 border">
-                    <AvatarImage
-                      src={user?.photoURL ?? ''}
-                      alt={`${user?.username.toLocaleLowerCase()} avatar`}
-                      gravatarEmail={user?.email}
-                    />
-                    <AvatarFallback>
-                      {user?.displayName?.charAt(0) ??
-                        (user ? <Loader2 className="size-4 animate-spin" /> : '?')}
-                    </AvatarFallback>
+                    {isAnonymous ? (
+                      <AvatarFallback>
+                        <User className="size-5" />
+                      </AvatarFallback>
+                    ) : (
+                      <>
+                        <AvatarImage
+                          src={user?.photoURL ?? ''}
+                          alt={`${user?.username.toLocaleLowerCase()} avatar`}
+                          gravatarEmail={user?.email}
+                        />
+                        <AvatarFallback>
+                          {user?.displayName?.charAt(0) ??
+                            (user ? <Loader2 className="size-4 animate-spin" /> : '?')}
+                        </AvatarFallback>
+                      </>
+                    )}
                   </Avatar>
                   <div className="grid text-left leading-tight">
-                    <span className="font-bold">{user?.displayName}</span>
-                    <span className="text-muted-foreground text-sm font-normal">
-                      @{user?.username.toLocaleLowerCase()}
+                    <span className="font-bold">
+                      {isAnonymous ? 'Guest' : user?.displayName}
                     </span>
-                    <span className="text-muted-foreground text-xs font-normal">
-                      Joined {format(user?.createdAt?.toDate() ?? new Date(), 'MMMM yyyy')}
-                    </span>
+                    {!isAnonymous && (
+                      <span className="text-muted-foreground text-sm font-normal">
+                        @{user?.username.toLocaleLowerCase()}
+                      </span>
+                    )}
+                    {!isAnonymous && (
+                      <span className="text-muted-foreground text-xs font-normal">
+                        Joined {format(user?.createdAt?.toDate() ?? new Date(), 'MMMM yyyy')}
+                      </span>
+                    )}
                   </div>
                 </div>
               </DrawerTitle>
             </DrawerHeader>
             <Separator />
             <div className="flex flex-col p-2">
-              {moreItems.map((item) => (
-                <DrawerClose key={item.href} asChild>
+              {isAnonymous && (
+                <DrawerClose asChild>
                   <Link
-                    to={item.href}
-                    className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
-                      isActive(item.href)
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                        : 'text-foreground hover:bg-sidebar-accent'
-                    )}
+                    to="/signup"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition-colors text-foreground hover:bg-sidebar-accent"
                   >
-                    <item.icon className="size-5" />
-                    {item.label}
+                    <UserPlus className="size-5" />
+                    Create Account
                   </Link>
                 </DrawerClose>
-              ))}
+              )}
+              {moreItems
+                .filter((item) => !isAnonymous || item.label !== 'Profile')
+                .map((item) => (
+                  <DrawerClose key={item.href} asChild>
+                    <Link
+                      to={item.href}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
+                        isActive(item.href)
+                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                          : 'text-foreground hover:bg-sidebar-accent'
+                      )}
+                    >
+                      <item.icon className="size-5" />
+                      {item.label}
+                    </Link>
+                  </DrawerClose>
+                ))}
             </div>
             <Separator />
             <div className="p-2">

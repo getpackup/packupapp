@@ -1,10 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
+  linkWithCredential,
   sendSignInLinkToEmail,
   type UserCredential,
 } from 'firebase/auth'
-import { Timestamp } from 'firebase/firestore'
+import { doc, Timestamp, updateDoc } from 'firebase/firestore'
 import { BadgeCheck, ChevronLeft, ChevronRight, Loader2, Mail, UserPlus } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
 import { useCallback, useEffect, useState } from 'react'
@@ -14,7 +16,7 @@ import { animated } from 'react-spring'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
-import { firebaseAuth } from '~/firebase/config'
+import { firebaseAuth, firestoreDb } from '~/firebase/config'
 import { generatePassword } from '~/lib/generatePassword'
 import useBoop from '~/lib/useBoop'
 import { cn } from '~/lib/utils'
@@ -210,23 +212,45 @@ export function SignupForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true)
     const password = await generatePassword(16)
+    const currentUser = firebaseAuth.currentUser
+    const isUpgrading = currentUser?.isAnonymous === true
 
     window.localStorage.setItem('emailForSignIn', values.email)
 
-    createUserWithEmailAndPassword(firebaseAuth, values.email, password)
-      .then((result) => {
-        if (result.user && result.user.email) {
-          createUserFromAuthResult(result, values.username, values.displayName)
+    try {
+      if (isUpgrading && currentUser) {
+        const credential = EmailAuthProvider.credential(values.email, password)
+        const result = await linkWithCredential(currentUser, credential)
+
+        const userDocRef = doc(firestoreDb, 'users', result.user.uid)
+        await updateDoc(userDocRef, {
+          isAnonymous: false,
+          email: values.email,
+          displayName: values.displayName,
+          username: values.username,
+          lastUpdated: Timestamp.now(),
+        })
+
+        if (result.user.email) {
+          const actionCodeSettings = {
+            url: `${window.location.origin}/signin`,
+            handleCodeInApp: true,
+          }
+          sendSignInLinkToEmail(firebaseAuth, result.user.email, actionCodeSettings)
         }
-      })
-      .catch((error) => {
-        toast.error('Failed to create account. Please try again.')
-        console.error('Signup error:', error)
-      })
-      .finally(() => {
-        setLoading(false)
-        setSubmitted(true)
-      })
+      } else {
+        const result = await createUserWithEmailAndPassword(firebaseAuth, values.email, password)
+        if (result.user && result.user.email) {
+          await createUserFromAuthResult(result, values.username, values.displayName)
+        }
+      }
+    } catch (error) {
+      toast.error('Failed to create account. Please try again.')
+      console.error('Signup error:', error)
+    } finally {
+      setLoading(false)
+      setSubmitted(true)
+    }
   }
 
   const isIOS = /iphone|ipad/.test(navigator.userAgent.toLowerCase())

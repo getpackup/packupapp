@@ -32,8 +32,7 @@ export default function Signup() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
-      if (user) {
-        // Add a small delay to ensure the component has fully rendered
+      if (user && !user.isAnonymous) {
         setTimeout(() => {
           navigate('/trips', { replace: true })
         }, 100)

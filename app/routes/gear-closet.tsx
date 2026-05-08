@@ -10,7 +10,9 @@ import ManageTagsDialog from '~/components/GearCloset/ManageTagsDialog'
 import PageContent from '~/components/PageContent'
 import PageHeader from '~/components/PageHeader'
 import { Button } from '~/components/ui/button'
+import { UpgradeAccountGate } from '~/components/UpgradeAccountGate'
 import useAuth from '~/contexts/auth/useAuth'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import {
   useGearClosetAdditionsQuery,
   useGearClosetQuery,
@@ -44,6 +46,7 @@ function masterItemToClosetItem(item: GearItem, removals: string[]): GearClosetI
 
 export default function GearCloset() {
   const { user } = useAuth()
+  const isAnonymous = useIsAnonymous()
   const userId = user?.uid ?? ''
 
   const {
@@ -93,7 +96,11 @@ export default function GearCloset() {
     <>
       <PageHeader crumbs={[{ label: 'Gear Closet', href: '/gear-closet' }]} />
       <PageContent>
-        {isLoading ? (
+        {isAnonymous ? (
+          <UpgradeAccountGate message="Create an account to build your personal gear closet">
+            <div />
+          </UpgradeAccountGate>
+        ) : isLoading ? (
           <FullPageSpinner what="gear closet" />
         ) : (
           <div className="mx-auto max-w-3xl space-y-4">

@@ -1,6 +1,6 @@
 import { where } from 'firebase/firestore'
-import { PlusCircle } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
+import { Info, PlusCircle, UserPlus, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 
@@ -11,8 +11,17 @@ import PageHeader from '~/components/PageHeader'
 import TripCard from '~/components/Trip/TripCard'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '~/components/ui/empty'
 import { useAuth } from '~/contexts/auth/useAuth'
 import { isAfterToday, isBeforeToday } from '~/lib/date'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { useTripsQuery } from '~/services/trips'
 import type { Trip } from '~/types/Trip'
 import { TripMemberStatus } from '~/types/TripMember'
@@ -44,6 +53,8 @@ function groupTripsByYear(trips: TripWithStatus[]): { [year: string]: TripWithSt
 
 export default function Trips() {
   const { user } = useAuth()
+  const isAnonymous = useIsAnonymous()
+  const [showBanner, setShowBanner] = useState(true)
 
   const constraints = useMemo(
     () => [
@@ -104,6 +115,28 @@ export default function Trips() {
       <PageContent>
         <div className="">
           <div className="mx-auto w-full max-w-4xl">
+            {isAnonymous && showBanner && (
+              <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/50">
+                <div className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200">
+                  <Info className="size-4 shrink-0" />
+                  <span>Sign up to save your trips and access them from any device.</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to="/signup">
+                      <UserPlus className="size-3" />
+                      Sign up
+                    </Link>
+                  </Button>
+                  <button
+                    onClick={() => setShowBanner(false)}
+                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              </div>
+            )}
             {isLoading && <FullPageSpinner what="trips" />}
             {!isLoading && tripsWithStatus.length > 0 && (
               <div className="space-y-0 md:-ml-18">
@@ -143,21 +176,42 @@ export default function Trips() {
               </div>
             )}
             {!isLoading && tripsWithStatus.length === 0 && (
-              <div className="mx-auto flex max-w-md flex-col items-center space-y-8 text-center">
-                <Logo className="size-16" fill="var(--muted-foreground)" />
-                <h2 className="text-2xl font-bold">Welcome, adventurer!</h2>
-                <p>
-                  No trips found yet. Create your first trip and start packing for your next
-                  adventure.
-                </p>
-                <Button asChild variant="accent" className="group">
-                  <Link to="/trips/new">
-                    <PlusCircle className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:rotate-90" />
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <Logo fill="var(--muted-foreground)" />
+                  </EmptyMedia>
+                  <EmptyTitle>Welcome, adventurer!</EmptyTitle>
+                  <EmptyDescription>
+                    No trips found yet. Create your first trip and start packing for your next
+                    adventure.
+                  </EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  <Button variant="accent" size="lg" asChild>
+                    <Link to="/trips/new">
+                      <PlusCircle className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:rotate-90" />
+                      Add new trip
+                    </Link>
+                  </Button>
+                </EmptyContent>
+              </Empty>
 
-                    <span className="truncate">Create a new trip</span>
-                  </Link>
-                </Button>
-              </div>
+              // <div className="mx-auto flex max-w-md flex-col items-center space-y-8 text-center">
+              //   <Logo className="size-16" fill="var(--muted-foreground)" />
+              //   <h2 className="text-2xl font-bold">Welcome, adventurer!</h2>
+              //   <p>
+              //     No trips found yet. Create your first trip and start packing for your next
+              //     adventure.
+              //   </p>
+              //   <Button asChild variant="accent" className="group">
+              //     <Link to="/trips/new">
+              //       <PlusCircle className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:rotate-90" />
+
+              //       <span className="truncate">Create a new trip</span>
+              //     </Link>
+              //   </Button>
+              // </div>
             )}
           </div>
         </div>

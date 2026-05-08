@@ -1,10 +1,12 @@
 import { onAuthStateChanged } from 'firebase/auth'
+import { ArrowRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 
 import FullPageSpinner from '~/components/FullPageSpinner'
 import { LoginForm } from '~/components/LoginForm'
 import { Logo } from '~/components/Logo'
+import { Button } from '~/components/ui/button'
 import { Separator } from '~/components/ui/separator'
 import { firebaseAuth } from '~/firebase/config'
 import { trackPage } from '~/lib/analytics'
@@ -34,7 +36,6 @@ export default function Home() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
       if (user) {
-        // Add a small delay to ensure the component has fully rendered
         setTimeout(() => {
           navigate('/trips', { replace: true })
         }, 100)
@@ -69,6 +70,15 @@ export default function Home() {
               </div>
             </>
           )}
+        </div>
+
+        <div className="w-full text-center">
+          <Button variant="ghost" size="lg" asChild className="w-full">
+            <Link to="/get-started">
+              Try it free — no account needed
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

@@ -1,7 +1,8 @@
 import { formatDistanceToNow, isAfter, subSeconds } from 'date-fns'
 import { orderBy } from 'firebase/firestore'
-import { Dot, MessageCircleIcon, Reply, XIcon } from 'lucide-react'
+import { Dot, MessageCircleIcon, Reply, UserPlus, XIcon } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
+import { Link } from 'react-router'
 
 import { Button } from '~/components/ui/button'
 import {
@@ -15,6 +16,7 @@ import {
 } from '~/components/ui/sheet'
 import useAuth from '~/contexts/auth/useAuth'
 import { createChatMessage } from '~/lib/chat'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
 import {
   useCreateChatMessage,
@@ -45,6 +47,7 @@ const systemUser: User = {
 
 function ChatSheet({ trip, users, compact }: ChatSheetProps) {
   const { user } = useAuth()
+  const isAnonymous = useIsAnonymous()
   const [userMap] = useState<Map<string, User>>(
     new Map([...(users || []).map((u): [string, User] => [u.id, u]), [systemUser.id, systemUser]])
   )
@@ -192,6 +195,21 @@ function ChatSheet({ trip, users, compact }: ChatSheetProps) {
               : `Planning and discussion for ${trip.name}`}
           </SheetDescription>
         </SheetHeader>
+        {isAnonymous ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+            <UserPlus className="text-muted-foreground size-8" />
+            <p className="text-muted-foreground">
+              Create an account to chat with trip members
+            </p>
+            <Button variant="accent" asChild>
+              <Link to="/signup">
+                <UserPlus className="size-4" />
+                Create Account
+              </Link>
+            </Button>
+          </div>
+        ) : (
+          <>
         <ChatContainer
           messages={messages ?? []}
           currentUserId={user?.uid ?? ''}
@@ -246,6 +264,8 @@ function ChatSheet({ trip, users, compact }: ChatSheetProps) {
             />
           </div>
         </SheetFooter>
+          </>
+        )}
       </SheetContent>
     </Sheet>
   )

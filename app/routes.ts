@@ -4,6 +4,7 @@ export default [
   index('routes/home.tsx'),
   route('signin', 'routes/signin.tsx'),
   route('signup', 'routes/signup.tsx'),
+  route('get-started', 'routes/get-started.tsx'),
   layout('components/AuthWrapper.tsx', [
     route('feedback', 'routes/feedback.tsx'),
     route('friends', 'routes/friends.tsx'),

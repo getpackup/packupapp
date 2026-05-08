@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover
 import { useAuth } from '~/contexts/auth/useAuth'
 import { createSystemMessage } from '~/lib/chat'
 import { formattedDateRange } from '~/lib/date'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { algoliaSearch } from '~/services/algoliaSearch'
 import { useCreateChatMessage, useUpdateTrip } from '~/services/trips'
 import type { Trip } from '~/types/Trip'
@@ -41,6 +42,7 @@ export function AddTripPartyMember({
   const { mutateAsync: updateTrip } = useUpdateTrip(trip.tripId)
   const { mutateAsync: sendMessage } = useCreateChatMessage()
   const { user } = useAuth()
+  const isAnonymous = useIsAnonymous()
   const { id } = useParams()
   const fetcher = useFetcher()
 
@@ -235,6 +237,10 @@ export function AddTripPartyMember({
       console.error('Error adding member to trip:', error)
       setIsAddingMember(null)
     }
+  }
+
+  if (isAnonymous) {
+    return null
   }
 
   return (

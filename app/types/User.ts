@@ -4,6 +4,7 @@ export type User = {
   bio?: string
   displayName: string
   email: string
+  isAnonymous?: boolean
   emergencyContacts?: Array<{ name: string; email: string; phoneNumber: string }>
   isAdmin?: boolean
   location?: string

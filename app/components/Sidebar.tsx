@@ -13,6 +13,7 @@ import {
   ShirtIcon,
   ShoppingCartIcon,
   User,
+  UserPlus,
   UsersIcon,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -24,6 +25,7 @@ import { useAuth } from '~/contexts/auth/useAuth'
 import { useSidebarState } from '~/contexts/globalState'
 import { firebaseAuth } from '~/firebase/config'
 import useBoop from '~/lib/useBoop'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
 
 import { Logo } from './Logo'
@@ -43,6 +45,7 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   const { user, setUser } = useAuth()
+  const isAnonymous = useIsAnonymous()
   const { isSidebarCollapsed, setIsSidebarCollapsed } = useSidebarState()
   const [nextStyle, triggerNext] = useBoop({ x: 2 }) as [any, () => void]
   const [animatingItem, setAnimatingItem] = useState<string | null>(null)
@@ -167,23 +170,35 @@ export function Sidebar({ className }: SidebarProps) {
             <DropdownMenuTrigger asChild>
               <div className="text-sidebar-foreground hover:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent hover:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground flex items-center justify-center gap-2 rounded-lg px-3 py-2 transition-colors">
                 <Avatar className="h-8 w-8 border">
-                  <AvatarImage
-                    src={user?.photoURL ?? ''}
-                    alt={`${user?.username.toLocaleLowerCase()} avatar`}
-                    gravatarEmail={user?.email}
-                  />
-                  <AvatarFallback>
-                    {user?.displayName?.charAt(0) ??
-                      (user ? <Loader2 className="h-4 w-4 animate-spin" /> : '?')}
-                  </AvatarFallback>
+                  {isAnonymous ? (
+                    <AvatarFallback>
+                      <User className="size-4" />
+                    </AvatarFallback>
+                  ) : (
+                    <>
+                      <AvatarImage
+                        src={user?.photoURL ?? ''}
+                        alt={`${user?.username.toLocaleLowerCase()} avatar`}
+                        gravatarEmail={user?.email}
+                      />
+                      <AvatarFallback>
+                        {user?.displayName?.charAt(0) ??
+                          (user ? <Loader2 className="h-4 w-4 animate-spin" /> : '?')}
+                      </AvatarFallback>
+                    </>
+                  )}
                 </Avatar>
                 {!isSidebarCollapsed && (
                   <>
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-medium">{user?.displayName}</span>
-                      <span className="text-muted-foreground truncate text-xs">
-                        @{user?.username.toLocaleLowerCase()}
+                      <span className="truncate font-medium">
+                        {isAnonymous ? 'Guest' : user?.displayName}
                       </span>
+                      {!isAnonymous && (
+                        <span className="text-muted-foreground truncate text-xs">
+                          @{user?.username.toLocaleLowerCase()}
+                        </span>
+                      )}
                     </div>
                     <EllipsisVertical className="ml-auto size-4" />
                   </>
@@ -199,36 +214,71 @@ export function Sidebar({ className }: SidebarProps) {
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-start gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar className="size-12 border">
-                    <AvatarImage
-                      src={user?.photoURL ?? ''}
-                      alt={`${user?.username.toLocaleLowerCase()} avatar`}
-                      gravatarEmail={user?.email}
-                    />
-                    <AvatarFallback>
-                      {user?.displayName?.charAt(0) ??
-                        (user ? <Loader2 className="h-4 w-4 animate-spin" /> : '?')}
-                    </AvatarFallback>
+                    {isAnonymous ? (
+                      <AvatarFallback>
+                        <User className="size-6" />
+                      </AvatarFallback>
+                    ) : (
+                      <>
+                        <AvatarImage
+                          src={user?.photoURL ?? ''}
+                          alt={`${user?.username.toLocaleLowerCase()} avatar`}
+                          gravatarEmail={user?.email}
+                        />
+                        <AvatarFallback>
+                          {user?.displayName?.charAt(0) ??
+                            (user ? <Loader2 className="h-4 w-4 animate-spin" /> : '?')}
+                        </AvatarFallback>
+                      </>
+                    )}
                   </Avatar>
                   <div className="grid flex-1 text-left leading-tight">
-                    <span className="font-bold">{user?.displayName}</span>
-                    <span className="">@{user?.username.toLocaleLowerCase()}</span>
-                    <span className="text-muted-foreground text-xs">
-                      Joined {format(user?.createdAt?.toDate() ?? new Date(), 'MMMM yyyy')}
+                    <span className="font-bold">
+                      {isAnonymous ? 'Guest' : user?.displayName}
                     </span>
+                    {!isAnonymous && (
+                      <span className="">@{user?.username.toLocaleLowerCase()}</span>
+                    )}
+                    {!isAnonymous && (
+                      <span className="text-muted-foreground text-xs">
+                        Joined {format(user?.createdAt?.toDate() ?? new Date(), 'MMMM yyyy')}
+                      </span>
+                    )}
                   </div>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                {bottomItems.map((item) => (
-                  <DropdownMenuItem key={item.label} asChild>
-                    <Link to={item.href}>
-                      <item.icon />
-                      {item.label}
+              {isAnonymous ? (
+                <DropdownMenuGroup>
+                  <DropdownMenuItem asChild>
+                    <Link to="/signup" className="font-bold">
+                      <UserPlus className="size-4" />
+                      Create Account
                     </Link>
                   </DropdownMenuItem>
-                ))}
-              </DropdownMenuGroup>
+                  {bottomItems
+                    .filter((item) => item.label !== 'Profile')
+                    .map((item) => (
+                      <DropdownMenuItem key={item.label} asChild>
+                        <Link to={item.href}>
+                          <item.icon />
+                          {item.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                </DropdownMenuGroup>
+              ) : (
+                <DropdownMenuGroup>
+                  {bottomItems.map((item) => (
+                    <DropdownMenuItem key={item.label} asChild>
+                      <Link to={item.href}>
+                        <item.icon />
+                        {item.label}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuGroup>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} variant="destructive">
                 <LogOut />
