@@ -2,7 +2,6 @@ import './app.css'
 
 // import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 // import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { useEffect } from 'react'
 import {
@@ -148,7 +147,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {children}
             {loaderData.showCookieBanner && <CookieBanner />}
           </TooltipProvider>
-          <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
+          {/* <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" /> */}
         </QueryClientProvider>
         <ScrollRestoration />
         <Scripts />

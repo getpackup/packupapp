@@ -7,7 +7,7 @@ import netlify from '@netlify/vite-plugin'
 
 export default defineConfig({
   server: {
-    open: true,
+    open: false,
   },
   ssr: {
     noExternal: ['use-sound'],

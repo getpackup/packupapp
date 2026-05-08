@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Mail, WandSparkles } from 'lucide-react'
+import { AlertTriangle, Loader2, Mail, WandSparkles } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
 import { useState } from 'react'
 import { type MouseEventHandler } from 'react'
@@ -9,6 +9,7 @@ import { animated } from 'react-spring'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
+import { firebaseAuth } from '~/firebase/config'
 import useBoop from '~/lib/useBoop'
 
 import AnimatedContainer from './AnimatedContainer'
@@ -83,8 +84,22 @@ export function LoginForm() {
     }
   }
 
+  const hasAnonymousSession = firebaseAuth.currentUser?.isAnonymous === true
+
   return (
     <div className="flex flex-col items-center">
+      {hasAnonymousSession && (
+        <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-800 dark:bg-amber-950/50">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p className="text-amber-800 dark:text-amber-200">
+            You have trips from this session. Create a{' '}
+            <a href="/signup" className="font-bold underline">
+              new account
+            </a>{' '}
+            to keep them, or sign in to your existing account (these trips won't transfer).
+          </p>
+        </div>
+      )}
       <AnimatePresence mode="wait">
         {sent ? (
           <AnimatedContainer

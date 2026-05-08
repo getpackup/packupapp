@@ -70,15 +70,17 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (currentUser) {
       setUser(currentUser)
-      identify(
-        currentUser.email,
-        currentUser.uid,
-        currentUser.displayName,
-        currentUser.createdAt?.toDate().toISOString() ?? '',
-        currentUser?.username
-      )
+      if (!firebaseUser?.isAnonymous) {
+        identify(
+          currentUser.email,
+          currentUser.uid,
+          currentUser.displayName,
+          currentUser.createdAt?.toDate().toISOString() ?? '',
+          currentUser?.username
+        )
+      }
     }
-  }, [currentUser])
+  }, [currentUser, firebaseUser?.isAnonymous])
 
   // Don't show loading spinner if we already have a user
   // This prevents the spinner from showing on route changes
