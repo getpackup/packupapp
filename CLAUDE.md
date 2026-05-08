@@ -81,3 +81,17 @@ This is a **React Router v7** application with server-side rendering using a ful
 
 ### Comments
 DO NOT add comments to code explaining what the code is doing unless it is overly complex. Only add comments to help a developer understand why the code is doing what it is doing.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues for getpackup/packupapp (uses the `gh` CLI). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default label vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
