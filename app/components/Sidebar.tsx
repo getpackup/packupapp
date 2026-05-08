@@ -192,7 +192,7 @@ export function Sidebar({ className }: SidebarProps) {
                   <>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-medium">
-                        {isAnonymous ? 'Guest' : user?.displayName}
+                        {isAnonymous ? 'Anonymous User' : user?.displayName}
                       </span>
                       {!isAnonymous && (
                         <span className="text-muted-foreground truncate text-xs">
@@ -234,7 +234,7 @@ export function Sidebar({ className }: SidebarProps) {
                   </Avatar>
                   <div className="grid flex-1 text-left leading-tight">
                     <span className="font-bold">
-                      {isAnonymous ? 'Guest' : user?.displayName}
+                      {isAnonymous ? 'Anonymous User' : user?.displayName}
                     </span>
                     {!isAnonymous && (
                       <span className="">@{user?.username.toLocaleLowerCase()}</span>
