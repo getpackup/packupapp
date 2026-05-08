@@ -11,3 +11,5 @@
 
 .idea
 .claude/*.local.*
+.sandcastle/worktrees/*
+.pnpm-store/
