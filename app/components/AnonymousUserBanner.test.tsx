@@ -1,12 +1,11 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { AnonymousUserBanner } from './AnonymousUserBanner'
 
 function renderWithRouter(ui: React.ReactElement) {
-  // Minimal MemoryRouter wrapper
-  const { MemoryRouter } = require('react-router')
   return render(<MemoryRouter>{ui}</MemoryRouter>)
 }
 
