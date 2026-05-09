@@ -15,12 +15,13 @@ import {
   X,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
 import { animated, useSpring } from 'react-spring'
 
 import useAuth from '~/contexts/auth/useAuth'
 import { useSoundsState } from '~/contexts/globalState'
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
 import { useCreateShoppingListItem } from '~/services/shoppingList'
 import { tripKeys, useDeletePackingListItem, useUpdatePackingListItem } from '~/services/trips'
@@ -33,6 +34,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,8 +93,10 @@ const TripPackingListItem = ({
     clamp: !item.isPacked,
   }
 
+  const isAnonymous = useIsAnonymous()
   const [active, setActive] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
+  const [showAccountGate, setShowAccountGate] = useState(false)
 
   const filledScale = item.isPacked ? (active ? 1.4 : 1) : 0
   const filledSpring = useSpring({
@@ -174,6 +185,11 @@ const TripPackingListItem = ({
   }
 
   const handleSendToShoppingList = () => {
+    if (isAnonymous) {
+      setShowAccountGate(true)
+      return
+    }
+
     if (!id || !item.id || !trip || !user) return
 
     createShoppingListItemAsync({
@@ -199,6 +215,26 @@ const TripPackingListItem = ({
   return (
     <div className="text-sidebar-foreground hover:bg-sidebar-accent/40 rounded-lg px-3 py-2">
       <EditPackingListItemDialog item={item} open={editOpen} onOpenChange={setEditOpen} />
+      <Dialog open={showAccountGate} onOpenChange={setShowAccountGate}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Create an account to build your shopping list across all your trips.
+            </DialogTitle>
+            <DialogDescription>
+              Keep your trips, invite friends, and access your data from any device.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="accent" size="lg" asChild>
+              <Link to="/signup">
+                <UserPlus className="size-4" />
+                Create account
+              </Link>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="flex items-center justify-between">
         <div className="flex min-w-0 items-center gap-4">
           {isMultiSelecting ? (
