@@ -21,6 +21,7 @@ import { animated, useSpring } from 'react-spring'
 import useAuth from '~/contexts/auth/useAuth'
 import { useSoundsState } from '~/contexts/globalState'
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
 import { useCreateShoppingListItem } from '~/services/shoppingList'
 import { tripKeys, useDeletePackingListItem, useUpdatePackingListItem } from '~/services/trips'
@@ -28,6 +29,7 @@ import { type PackedByUserType, type PackingListItem } from '~/types/PackingList
 import type { Trip } from '~/types/Trip'
 import type { User } from '~/types/User'
 
+import { AccountGateDialog } from '../AccountGateDialog'
 import TagPills from '../TagPills'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Badge } from '../ui/badge'
@@ -84,8 +86,10 @@ const TripPackingListItem = ({
     clamp: !item.isPacked,
   }
 
+  const isAnonymous = useIsAnonymous()
   const [active, setActive] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
+  const [showAccountGate, setShowAccountGate] = useState(false)
 
   const filledScale = item.isPacked ? (active ? 1.4 : 1) : 0
   const filledSpring = useSpring({
@@ -174,6 +178,11 @@ const TripPackingListItem = ({
   }
 
   const handleSendToShoppingList = () => {
+    if (isAnonymous) {
+      setShowAccountGate(true)
+      return
+    }
+
     if (!id || !item.id || !trip || !user) return
 
     createShoppingListItemAsync({
@@ -199,6 +208,11 @@ const TripPackingListItem = ({
   return (
     <div className="text-sidebar-foreground hover:bg-sidebar-accent/40 rounded-lg px-3 py-2">
       <EditPackingListItemDialog item={item} open={editOpen} onOpenChange={setEditOpen} />
+      <AccountGateDialog
+        open={showAccountGate}
+        onOpenChange={setShowAccountGate}
+        message="Create an account to build your shopping list across all your trips."
+      />
       <div className="flex items-center justify-between">
         <div className="flex min-w-0 items-center gap-4">
           {isMultiSelecting ? (
