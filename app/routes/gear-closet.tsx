@@ -96,45 +96,49 @@ export default function GearCloset() {
     <>
       <PageHeader crumbs={[{ label: 'Gear Closet', href: '/gear-closet' }]} />
       <PageContent>
-        {isAnonymous ? (
-          <UpgradeAccountGate message="Create an account to build your personal gear closet">
-            <div />
-          </UpgradeAccountGate>
-        ) : isLoading ? (
-          <FullPageSpinner what="gear closet" />
-        ) : (
-          <div className="mx-auto max-w-3xl space-y-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <h2 className="text-2xl font-bold">Gear Closet</h2>
-              <div className="flex flex-wrap gap-2">
+        <div className="mx-auto max-w-3xl space-y-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <h2 className="text-2xl font-bold">Gear Closet</h2>
+            <div className="flex flex-wrap gap-2">
+              {!isAnonymous && (
                 <ManageTagsDialog userId={userId} currentTags={categories}>
                   <Button variant="outline" size="sm">
                     <Settings2 className="mr-1 h-4 w-4" />
                     Tags
                   </Button>
                 </ManageTagsDialog>
-                <ManageCustomTagsDialog userId={userId}>
-                  <Button variant="outline" size="sm">
-                    <Tags className="mr-1 h-4 w-4" />
-                    Custom Tags
-                  </Button>
-                </ManageCustomTagsDialog>
+              )}
+              <ManageCustomTagsDialog userId={userId}>
+                <Button variant="outline" size="sm">
+                  <Tags className="mr-1 h-4 w-4" />
+                  Custom Tags
+                </Button>
+              </ManageCustomTagsDialog>
+              {!isAnonymous && (
                 <AddGearClosetItemDialog userId={userId}>
                   <Button size="sm">
                     <Plus className="mr-1 h-4 w-4" />
                     Add item
                   </Button>
                 </AddGearClosetItemDialog>
-              </div>
+              )}
             </div>
+          </div>
 
+          {isAnonymous ? (
+            <UpgradeAccountGate message="Create an account to build your personal gear closet">
+              <div />
+            </UpgradeAccountGate>
+          ) : isLoading ? (
+            <FullPageSpinner what="gear closet" />
+          ) : (
             <GearClosetList
               userId={userId}
               masterItems={filteredMasterItems}
               additions={closetAdditions}
             />
-          </div>
-        )}
+          )}
+        </div>
       </PageContent>
     </>
   )
