@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { animated, useSpring } from 'react-spring'
 
 import useAuth from '~/contexts/auth/useAuth'
@@ -29,19 +29,12 @@ import { type PackedByUserType, type PackingListItem } from '~/types/PackingList
 import type { Trip } from '~/types/Trip'
 import type { User } from '~/types/User'
 
+import { AccountGateDialog } from '../AccountGateDialog'
 import TagPills from '../TagPills'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -215,26 +208,11 @@ const TripPackingListItem = ({
   return (
     <div className="text-sidebar-foreground hover:bg-sidebar-accent/40 rounded-lg px-3 py-2">
       <EditPackingListItemDialog item={item} open={editOpen} onOpenChange={setEditOpen} />
-      <Dialog open={showAccountGate} onOpenChange={setShowAccountGate}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              Create an account to build your shopping list across all your trips.
-            </DialogTitle>
-            <DialogDescription>
-              Keep your trips, invite friends, and access your data from any device.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="accent" size="lg" asChild>
-              <Link to="/signup">
-                <UserPlus className="size-4" />
-                Create account
-              </Link>
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AccountGateDialog
+        open={showAccountGate}
+        onOpenChange={setShowAccountGate}
+        message="Create an account to build your shopping list across all your trips."
+      />
       <div className="flex items-center justify-between">
         <div className="flex min-w-0 items-center gap-4">
           {isMultiSelecting ? (
