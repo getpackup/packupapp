@@ -15,11 +15,17 @@ import {
 } from './ui/empty'
 
 interface UpgradeAccountGateProps {
-  message: string
+  message?: string
   children: ReactNode
 }
 
-export function UpgradeAccountGate({ message, children }: UpgradeAccountGateProps) {
+const DEFAULT_MESSAGE =
+  'Plan on your computer, pack from your phone — and bring your whole crew.'
+
+export function UpgradeAccountGate({
+  message = DEFAULT_MESSAGE,
+  children,
+}: UpgradeAccountGateProps) {
   const isAnonymous = useIsAnonymous()
 
   if (!isAnonymous) {
@@ -41,29 +47,12 @@ export function UpgradeAccountGate({ message, children }: UpgradeAccountGateProp
             <Button variant="accent" size="lg" asChild>
               <Link to="/signup">
                 <UserPlus className="size-4" />
-                Create Account
+                Create account
               </Link>
             </Button>
           </EmptyContent>
         </EmptyHeader>
       </Empty>
-      {/* <div className="flex flex-col items-center justify-center gap-6 py-16 text-center">
-        <div className="bg-muted rounded-full p-4">
-          <UserPlus className="text-muted-foreground size-8" />
-        </div>
-        <div className="max-w-sm space-y-2">
-          <p className="text-lg font-medium">{message}</p>
-          <p className="text-muted-foreground text-sm">
-            Keep your trips, invite friends, and access your data from any device.
-          </p>
-        </div>
-        <Button variant="accent" size="lg" asChild>
-          <Link to="/signup">
-            <UserPlus className="size-4" />
-            Create Account
-          </Link>
-        </Button>
-      </div> */}
     </>
   )
 }
