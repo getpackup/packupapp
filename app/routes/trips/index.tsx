@@ -1,9 +1,10 @@
 import { where } from 'firebase/firestore'
-import { Info, PlusCircle, UserPlus, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { PlusCircle } from 'lucide-react'
+import { useEffect, useMemo } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 
+import { AnonymousUserBanner } from '~/components/AnonymousUserBanner'
 import FullPageSpinner from '~/components/FullPageSpinner'
 import { Logo } from '~/components/Logo'
 import PageContent from '~/components/PageContent'
@@ -54,7 +55,6 @@ function groupTripsByYear(trips: TripWithStatus[]): { [year: string]: TripWithSt
 export default function Trips() {
   const { user } = useAuth()
   const isAnonymous = useIsAnonymous()
-  const [showBanner, setShowBanner] = useState(true)
 
   const constraints = useMemo(
     () => [
@@ -115,27 +115,11 @@ export default function Trips() {
       <PageContent>
         <div className="">
           <div className="mx-auto w-full max-w-4xl">
-            {isAnonymous && showBanner && (
-              <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/50">
-                <div className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200">
-                  <Info className="size-4 shrink-0" />
-                  <span>Sign up to save your trips and access them from any device.</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link to="/signup">
-                      <UserPlus className="size-3" />
-                      Sign up
-                    </Link>
-                  </Button>
-                  <button
-                    onClick={() => setShowBanner(false)}
-                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
-                  >
-                    <X className="size-4" />
-                  </button>
-                </div>
-              </div>
+            {isAnonymous && (
+              <AnonymousUserBanner
+                primary="Pack together — assign gear, chat in-trip, and shop for what you need."
+                secondary="Sign up free — your session isn't saved yet."
+              />
             )}
             {isLoading && <FullPageSpinner what="trips" />}
             {!isLoading && tripsWithStatus.length > 0 && (
