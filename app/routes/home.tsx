@@ -73,7 +73,7 @@ export default function Home() {
         </div>
 
         <div className="w-full text-center">
-          <Button variant="ghost" size="lg" asChild className="w-full">
+          <Button variant="outline" size="lg" asChild className="w-full">
             <Link to="/get-started">
               Try it free — no account needed
               <ArrowRight className="size-4" />

@@ -236,14 +236,14 @@ export function Sidebar({ className }: SidebarProps) {
                     <span className="font-bold">
                       {isAnonymous ? 'Anonymous User' : user?.displayName}
                     </span>
-                    {!isAnonymous && (
-                      <span className="">@{user?.username.toLocaleLowerCase()}</span>
-                    )}
-                    {!isAnonymous && (
-                      <span className="text-muted-foreground text-xs">
-                        Joined {format(user?.createdAt?.toDate() ?? new Date(), 'MMMM yyyy')}
-                      </span>
-                    )}
+                    
+                    <span className={isAnonymous ? "italic": undefined}>{isAnonymous ? "Pending account creation" : `@${user?.username.toLocaleLowerCase()}`}</span>
+                    
+                    
+                    <span className="text-muted-foreground text-xs">
+                      Joined {format(user?.createdAt?.toDate() ?? new Date(), 'MMMM yyyy')}
+                    </span>
+                    
                   </div>
                 </div>
               </DropdownMenuLabel>
