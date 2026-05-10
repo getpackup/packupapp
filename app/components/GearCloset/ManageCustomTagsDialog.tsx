@@ -1,6 +1,7 @@
 import { ChevronDown, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
+import { AccountGateDialog } from '~/components/AccountGateDialog'
 import { Button } from '~/components/ui/button'
 import {
   Dialog,
@@ -14,6 +15,7 @@ import { Input } from '~/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { allPredefinedTags } from '~/lib/gearListItemEnum'
 import { TAG_COLOR_KEYS, type TagColorKey } from '~/lib/tagColors'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
 import {
   useCreateCustomTag,
@@ -90,6 +92,9 @@ function ColorPickerDropdown({
 }
 
 function ManageCustomTagsDialog({ userId, children }: ManageCustomTagsDialogProps) {
+  const isAnonymous = useIsAnonymous()
+  const [gateOpen, setGateOpen] = useState(false)
+
   const { data: closet } = useGearClosetQuery({ userId, queryOptions: { enabled: !!userId } })
   const customTags = closet?.customTags ?? []
 
@@ -173,6 +178,19 @@ function ManageCustomTagsDialog({ userId, children }: ManageCustomTagsDialogProp
     fuchsia: 'bg-fuchsia-500',
     pink: 'bg-pink-500',
     rose: 'bg-rose-500',
+  }
+
+  if (isAnonymous) {
+    return (
+      <>
+        <span onClick={() => setGateOpen(true)}>{children}</span>
+        <AccountGateDialog
+          open={gateOpen}
+          onOpenChange={setGateOpen}
+          message="Create an account to add custom categories to your gear closet."
+        />
+      </>
+    )
   }
 
   return (
