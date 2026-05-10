@@ -23,6 +23,8 @@ const emergencyContactSchema = z.object({
 
 type EmergencyContactFormValues = z.infer<typeof emergencyContactSchema>
 
+const EMPTY_CONTACT: EmergencyContactFormValues = { name: '', phoneNumber: '', email: '' }
+
 const MAX_CONTACTS = 3
 
 export function EmergencyContacts() {
@@ -41,7 +43,7 @@ export function EmergencyContacts() {
     formState: { errors },
   } = useForm<EmergencyContactFormValues>({
     resolver: zodResolver(emergencyContactSchema),
-    defaultValues: { name: '', phoneNumber: '', email: '' },
+    defaultValues: EMPTY_CONTACT,
   })
 
   const onSubmit = async (values: EmergencyContactFormValues) => {
@@ -54,7 +56,7 @@ export function EmergencyContacts() {
     await updateUserAsync({ data: { emergencyContacts: updated } })
     setIsAdding(false)
     setEditingIndex(null)
-    reset({ name: '', phoneNumber: '', email: '' })
+    reset(EMPTY_CONTACT)
   }
 
   const handleDelete = async (index: number) => {
@@ -72,7 +74,7 @@ export function EmergencyContacts() {
   const handleCancel = () => {
     setIsAdding(false)
     setEditingIndex(null)
-    reset({ name: '', phoneNumber: '', email: '' })
+    reset(EMPTY_CONTACT)
   }
 
   if (isAnonymous) {
