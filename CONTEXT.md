@@ -54,6 +54,14 @@ _Avoid_: Upgrade gate (implies paid tier), login wall
 A UI pattern that blocks registered free users from paid-plan features. Not yet implemented.
 _Avoid_: Paywall (too blunt), premium gate
 
+**Trip Settings**:
+A modal accessible from the trip sidebar that consolidates per-trip actions: Delete Trip (owner only), Leave Trip (non-owner members), and the per-member Safety Itinerary opt-out toggle. Distinct from the inline detail-editing controls already in the sidebar.
+_Avoid_: Trip options, trip menu, trip preferences
+
+**Leave Trip**:
+The act of a non-owner Trip Member voluntarily removing themselves from a Trip. Sets their status to `Left`. Distinct from `Removed` (owner-initiated) and `Declined` (never accepted). A member who Left is shown in the Safety Itinerary member list for SAR accuracy.
+_Avoid_: Exit trip, quit trip, remove yourself
+
 **Assign**:
 The act of designating a packing list item to a Trip Member — used when someone else (e.g. a trip organizer) allocates responsibility.
 _Avoid_: Delegate, allocate
@@ -72,6 +80,21 @@ _Avoid_: Take, grab, pick
 - A **Gear Closet** belongs to exactly one registered user, independent of any Trip
 - An **Anonymous User** has a real Firestore identity but cannot access their data from another device and cannot have Trip Members
 - An **Archived Trip** is excluded from all UI views including the Shopping List
+- A **Safety Itinerary** is sent to each Trip Member with status Owner, Accepted, or Pending — each recipient's copy includes their own **Emergency Contacts**
+- Each Trip Member controls their own Safety Itinerary opt-out per trip; a global opt-out in Settings applies across all trips
+- An **Emergency Contact** belongs to exactly one registered User and is not trip-specific
+- A Trip Member who **Leaves** a Trip gets status `Left` — distinct from `Removed` (owner-initiated) and `Declined` (never accepted)
+- **Trip Settings** is accessible from the trip sidebar and groups per-trip actions: Delete Trip, Leave Trip, and the Safety Itinerary opt-out toggle
+
+### Safety & Notifications
+
+**Safety Itinerary**:
+A pre-trip summary email sent automatically to Trip Members with status Owner, Accepted, or Pending the day before a Trip's start date (noon UTC). Contains trip details (name, location, dates, all Trip Members with statuses Owner/Accepted/Pending/Declined) and the recipient's own Emergency Contacts. Static placeholder prompts for local SAR and police numbers are included to prompt the recipient to fill them in before sharing. Trip details are identical for all recipients; Emergency Contacts are personalized per recipient. Intended to be forwarded, printed, or shared before heading out — each person's copy in their vehicle gives Search and Rescue multiple access points to the same information. Available to all registered users; not available to Anonymous Users. Each member controls their own opt-out per trip; a global opt-out in Settings overrides all trips.
+_Avoid_: Itinerary email, safety email, alert
+
+**Emergency Contact**:
+A person stored on a User's profile — not trip-specific. Fields: name (required), phoneNumber (required), email (optional). Maximum 3 per user. Included in the recipient's Safety Itinerary so they can share their whereabouts with trusted contacts. Managed in Settings.
+_Avoid_: Contact, emergency person
 
 ## Example dialogue
 
@@ -83,6 +106,17 @@ _Avoid_: Take, grab, pick
 
 > **Dev:** "Is 'deleting' a trip reversible?"
 > **Domain expert:** "Yes — Delete sets `archived: true`. Nothing is hard-deleted. But the UI has no way to unarchive yet."
+
+## Example dialogue
+
+> **Dev:** "If a Pending member opts out of the Safety Itinerary, do they still appear in other members' emails?"
+> **Domain expert:** "Yes — they're listed in all emails for SAR headcount purposes. Their opt-out only controls whether they personally receive the email."
+
+> **Dev:** "Can an Owner leave a trip?"
+> **Domain expert:** "No — Leave Trip is only available to non-owner members. The owner can only delete the trip."
+
+> **Dev:** "If someone leaves a trip after the Safety Itinerary was already sent, does anything happen?"
+> **Domain expert:** "No — the email is a point-in-time snapshot sent the day before. Status changes after that don't affect it."
 
 ## Flagged ambiguities
 
