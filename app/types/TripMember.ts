@@ -11,6 +11,8 @@ export enum TripMemberStatus {
   Declined = 'Declined',
   /** Removed by trip owner */
   Removed = 'Removed',
+  /** User left the trip voluntarily */
+  Left = 'Left',
 }
 
 export type TripMember = {
