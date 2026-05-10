@@ -1,6 +1,8 @@
 import { render } from '@react-email/render'
 import { describe, expect, it } from 'vitest'
 
+import { TripMemberStatus } from '../types/TripMember'
+
 import { SafetyItineraryEmail } from './safety-itinerary'
 
 const baseProps = {
@@ -9,11 +11,11 @@ const baseProps = {
   dateRange: 'Jun 15 – Jun 18, 2026',
   description: 'Three-night trip to Berg Lake via the North Boundary Trail.',
   members: [
-    { displayName: 'Alice', status: 'Owner' as const },
-    { displayName: 'Bob', status: 'Accepted' as const },
-    { displayName: 'Charlie', status: 'Pending' as const },
-    { displayName: 'Dana', status: 'Declined' as const },
-    { displayName: 'Eve', status: 'Left' as const },
+    { displayName: 'Alice', status: TripMemberStatus.Owner },
+    { displayName: 'Bob', status: TripMemberStatus.Accepted },
+    { displayName: 'Charlie', status: TripMemberStatus.Pending },
+    { displayName: 'Dana', status: TripMemberStatus.Declined },
+    { displayName: 'Eve', status: TripMemberStatus.Left },
   ],
   emergencyContacts: [
     { name: 'John Doe', phoneNumber: '+1-555-0100', email: 'john@example.com' },
@@ -50,7 +52,7 @@ describe('SafetyItineraryEmail', () => {
       ...baseProps,
       members: [
         ...baseProps.members,
-        { displayName: 'Mallory', status: 'Removed' as const },
+        { displayName: 'Mallory', status: TripMemberStatus.Removed },
       ],
     }
     const html = await render(<SafetyItineraryEmail {...propsWithRemoved} />)
@@ -86,7 +88,7 @@ describe('SafetyItineraryEmail', () => {
       startingPoint: 'Local Trailhead',
       dateRange: 'Jul 1, 2026',
       description: '',
-      members: [{ displayName: 'Solo', status: 'Owner' as const }],
+      members: [{ displayName: 'Solo', status: TripMemberStatus.Owner }],
       emergencyContacts: [],
       url: 'https://packupapp.com',
     }

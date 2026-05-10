@@ -1,10 +1,12 @@
 import { Column, Hr, Link, Row, Section, Text } from '@react-email/components'
 
+import { TripMemberStatus } from '~/types/TripMember'
+
 import BaseEmailTemplate from './base'
 
 interface SafetyItineraryMember {
   displayName: string
-  status: 'Owner' | 'Accepted' | 'Pending' | 'Declined' | 'Left' | 'Removed'
+  status: TripMemberStatus
 }
 
 interface EmergencyContact {
@@ -32,7 +34,7 @@ export const SafetyItineraryEmail = ({
   emergencyContacts,
   url,
 }: SafetyItineraryEmailProps) => {
-  const visibleMembers = members.filter((m) => m.status !== 'Removed')
+  const visibleMembers = members.filter((m) => m.status !== TripMemberStatus.Removed)
 
   return (
     <BaseEmailTemplate
