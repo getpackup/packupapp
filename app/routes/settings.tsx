@@ -1,6 +1,7 @@
 import { EmergencyContacts } from '~/components/EmergencyContacts'
 import PageContent from '~/components/PageContent'
 import PageHeader from '~/components/PageHeader'
+import { SafetyItineraryToggle } from '~/components/SafetyItineraryToggle'
 import { SoundsToggle } from '~/components/SoundsToggle'
 import { ThemeToggle } from '~/components/ThemeToggle'
 
@@ -17,6 +18,7 @@ export default function Settings() {
       <PageContent>
         <ThemeToggle />
         <SoundsToggle />
+        <SafetyItineraryToggle />
         <EmergencyContacts />
       </PageContent>
     </>
