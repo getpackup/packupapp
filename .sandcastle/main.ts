@@ -35,7 +35,7 @@ const MAX_ITERATIONS = 10
 // Hooks run inside the sandbox before the agent starts each iteration.
 // pnpm install ensures the sandbox always has fresh dependencies.
 const hooks = {
-  sandbox: { onSandboxReady: [{ command: 'CI=true pnpm install', timeoutMs: 180_000 }] },
+  sandbox: { onSandboxReady: [{ command: 'CI=true pnpm install', timeoutMs: 300_000 }] },
 }
 
 const copyToWorktree: string[] = []

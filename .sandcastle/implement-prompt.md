@@ -35,7 +35,7 @@ If applicable, use RGR to complete the task.
 
 # FEEDBACK LOOPS
 
-Before committing, run `npm run typecheck` and `npm run test` to ensure the tests pass.
+Before committing, run `pnpm typecheck` and `pnpm test` to ensure the tests pass.
 
 # COMMIT
 
@@ -54,6 +54,8 @@ Keep it concise.
 If the task is not complete, leave a comment on the issue with what was done.
 
 Do not close the issue - this will be done later.
+
+If there is a comment on the issue saying it has been completed, and there is a commit that is not yet on the `main` branch, output <promise>COMPLETE</promise>.
 
 Once complete, output <promise>COMPLETE</promise>.
 
