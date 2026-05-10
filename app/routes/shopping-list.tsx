@@ -8,9 +8,11 @@ import PageHeader from '~/components/PageHeader'
 import ShoppingListCategory from '~/components/ShoppingList/ShoppingListCategory'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '~/components/ui/empty'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
+import { UpgradeAccountGate } from '~/components/UpgradeAccountGate'
 import useAuth from '~/contexts/auth/useAuth'
 import { isBeforeToday } from '~/lib/date'
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { useShoppingListQuery } from '~/services/shoppingList'
 import { useTripsQuery } from '~/services/trips'
 import { TripMemberStatus } from '~/types/TripMember'
@@ -23,6 +25,7 @@ export function meta({}: Route.MetaArgs) {
 
 export default function ShoppingList() {
   const { user } = useAuth()
+  const isAnonymous = useIsAnonymous()
   const checkboxSounds = useCheckboxSounds()
 
   const constraints = useMemo(
@@ -124,83 +127,89 @@ export default function ShoppingList() {
     <>
       <PageHeader crumbs={[{ label: 'Shopping List', href: '/shopping-list' }]} />
       <PageContent>
-        <div className="">
-          <div className="mx-auto w-full max-w-4xl">
-            <div>
-              <Tabs defaultValue="current">
-                <TabsList>
-                  <TabsTrigger value="current">Current</TabsTrigger>
-                  <TabsTrigger value="past">Past</TabsTrigger>
-                </TabsList>
-                {(isLoadingTrips || isLoading) && <FullPageSpinner what="shopping list" />}
-                {!isLoading && !isLoadingTrips && (shoppingList?.length ?? 0) > 0 ? (
-                  <>
-                    <TabsContent value="current">
-                      {currentTrips.length > 0 ? (
-                        currentTrips.map(([tripId, items]) => (
-                          <ShoppingListCategory
-                            trip={trips?.find((trip) => trip.tripId === tripId)!}
-                            items={items ?? []}
-                            key={tripId}
-                            sounds={checkboxSounds}
-                          />
-                        ))
-                      ) : (
-                        <Empty>
-                          <EmptyHeader>
-                            <EmptyMedia variant="icon">
-                              <ShoppingCart />
-                            </EmptyMedia>
-                            <EmptyTitle>Your current shopping list is empty</EmptyTitle>
-                            <EmptyDescription>
-                              You have no current shopping list items to display
-                            </EmptyDescription>
-                          </EmptyHeader>
-                        </Empty>
-                      )}
-                    </TabsContent>
-                    <TabsContent value="past">
-                      {pastTrips.length > 0 ? (
-                        pastTrips.map(([tripId, items]) => (
-                          <ShoppingListCategory
-                            trip={trips?.find((trip) => trip.tripId === tripId)!}
-                            items={items ?? []}
-                            key={tripId}
-                            sounds={checkboxSounds}
-                          />
-                        ))
-                      ) : (
-                        <Empty>
-                          <EmptyHeader>
-                            <EmptyMedia variant="icon">
-                              <ShoppingCart />
-                            </EmptyMedia>
-                            <EmptyTitle>Your past shopping list is empty</EmptyTitle>
-                            <EmptyDescription>
-                              You have no past shopping list items to display
-                            </EmptyDescription>
-                          </EmptyHeader>
-                        </Empty>
-                      )}
-                    </TabsContent>
-                  </>
-                ) : (
-                  <Empty>
-                    <EmptyHeader>
-                      <EmptyMedia variant="icon">
-                        <ShoppingCart />
-                      </EmptyMedia>
-                      <EmptyTitle>Your shopping list is empty</EmptyTitle>
-                      <EmptyDescription>
-                        You have no current or past shopping list items to display
-                      </EmptyDescription>
-                    </EmptyHeader>
-                  </Empty>
-                )}
-              </Tabs>
+        {isAnonymous ? (
+          <UpgradeAccountGate message="Create an account to see everything you need to buy before your trips.">
+            <div />
+          </UpgradeAccountGate>
+        ) : (
+          <div className="">
+            <div className="mx-auto w-full max-w-4xl">
+              <div>
+                <Tabs defaultValue="current">
+                  <TabsList>
+                    <TabsTrigger value="current">Current</TabsTrigger>
+                    <TabsTrigger value="past">Past</TabsTrigger>
+                  </TabsList>
+                  {(isLoadingTrips || isLoading) && <FullPageSpinner what="shopping list" />}
+                  {!isLoading && !isLoadingTrips && (shoppingList?.length ?? 0) > 0 ? (
+                    <>
+                      <TabsContent value="current">
+                        {currentTrips.length > 0 ? (
+                          currentTrips.map(([tripId, items]) => (
+                            <ShoppingListCategory
+                              trip={trips?.find((trip) => trip.tripId === tripId)!}
+                              items={items ?? []}
+                              key={tripId}
+                              sounds={checkboxSounds}
+                            />
+                          ))
+                        ) : (
+                          <Empty>
+                            <EmptyHeader>
+                              <EmptyMedia variant="icon">
+                                <ShoppingCart />
+                              </EmptyMedia>
+                              <EmptyTitle>Your current shopping list is empty</EmptyTitle>
+                              <EmptyDescription>
+                                You have no current shopping list items to display
+                              </EmptyDescription>
+                            </EmptyHeader>
+                          </Empty>
+                        )}
+                      </TabsContent>
+                      <TabsContent value="past">
+                        {pastTrips.length > 0 ? (
+                          pastTrips.map(([tripId, items]) => (
+                            <ShoppingListCategory
+                              trip={trips?.find((trip) => trip.tripId === tripId)!}
+                              items={items ?? []}
+                              key={tripId}
+                              sounds={checkboxSounds}
+                            />
+                          ))
+                        ) : (
+                          <Empty>
+                            <EmptyHeader>
+                              <EmptyMedia variant="icon">
+                                <ShoppingCart />
+                              </EmptyMedia>
+                              <EmptyTitle>Your past shopping list is empty</EmptyTitle>
+                              <EmptyDescription>
+                                You have no past shopping list items to display
+                              </EmptyDescription>
+                            </EmptyHeader>
+                          </Empty>
+                        )}
+                      </TabsContent>
+                    </>
+                  ) : (
+                    <Empty>
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <ShoppingCart />
+                        </EmptyMedia>
+                        <EmptyTitle>Your shopping list is empty</EmptyTitle>
+                        <EmptyDescription>
+                          You have no current or past shopping list items to display
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  )}
+                </Tabs>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </PageContent>
     </>
   )
