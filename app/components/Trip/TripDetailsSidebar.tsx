@@ -1,6 +1,5 @@
-import { BadgeInfo, CalendarIcon, Ellipsis, MapPinIcon, MessageSquareMore, Trash2 } from 'lucide-react'
+import { BadgeInfo, CalendarIcon, Ellipsis, MapPinIcon, MessageSquareMore } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
 
 import useAuth from '~/contexts/auth/useAuth'
 import { formattedDate, formattedDateRange } from '~/lib/date'
@@ -14,7 +13,6 @@ import { getTagDotClass } from '~/lib/tagColors'
 import { useCustomTagColorMap } from '~/lib/useCustomTagColorMap'
 import { cn } from '~/lib/utils'
 import { useGearClosetQuery } from '~/services/gear'
-import { useDeleteTrip } from '~/services/trips'
 import type { Trip } from '~/types/Trip'
 import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
@@ -23,16 +21,6 @@ import StaticMapImage from '../StaticMapImage'
 import { AspectRatio } from '../ui/aspect-ratio'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +36,7 @@ import { EditTripLocation } from './EditTripLocation'
 import { EditTripName } from './EditTripName'
 import { EditTripTags } from './EditTripTags'
 import TripPartyMemberBadge from './TripPartyMemberBadge'
+import { TripSettings } from './TripSettings'
 import TripWeather from './TripWeather'
 
 type TripDetailsSidebarProps = {
@@ -75,8 +64,6 @@ const SubHeading = ({ children }: { children: React.ReactNode }) => {
 
 const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
   const { user } = useAuth()
-  const navigate = useNavigate()
-  const { mutateAsync: deleteTrip, isPending: isDeleting } = useDeleteTrip()
   const [showAllMembers, setShowAllMembers] = useState(false)
   const tripMembers = showAllMembers
     ? Object.values(trip.tripMembers)
@@ -360,41 +347,11 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
             </SubHeading>
           )}
 
-          {user?.uid === trip.owner && (
+          {user && !user.isAnonymous && (
             <>
               <Separator className="my-4" />
               <div className="px-3 pb-2">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive w-full justify-start gap-2">
-                      <Trash2 className="h-4 w-4" />
-                      Delete trip
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Delete trip</DialogTitle>
-                      <DialogDescription>
-                        Are you sure you want to delete &ldquo;{trip.name}&rdquo;? This action cannot be undone.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button variant="outline">Cancel</Button>
-                      </DialogClose>
-                      <Button
-                        variant="destructive"
-                        disabled={isDeleting}
-                        onClick={async () => {
-                          await deleteTrip({ tripId: trip.tripId })
-                          navigate('/trips')
-                        }}
-                      >
-                        {isDeleting ? 'Deleting...' : 'Delete'}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                <TripSettings trip={trip} />
               </div>
             </>
           )}
