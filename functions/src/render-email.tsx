@@ -1,6 +1,7 @@
 import { render } from '@react-email/render'
 
 import { SafetyItineraryEmail } from '../../app/emails/safety-itinerary'
+import type { TripMemberStatus } from '../../app/types/TripMember'
 
 import type { EmailPayload } from './safety-itinerary'
 
@@ -13,7 +14,7 @@ export async function renderSafetyItineraryHtml(payload: EmailPayload): Promise<
       startingPoint={payload.startingPoint}
       dateRange={payload.dateRange}
       description={payload.description}
-      members={payload.members as Array<{ displayName: string; status: any }>}
+      members={payload.members as Array<{ displayName: string; status: TripMemberStatus }>}
       emergencyContacts={payload.emergencyContacts}
       url={APP_URL}
     />
