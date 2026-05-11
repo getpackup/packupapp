@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { toast } from 'sonner'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -19,6 +20,10 @@ vi.mock('../services/users', () => ({
   useUpdateUser: vi.fn(() => ({
     mutateAsync: mockUpdateUserAsync,
   })),
+}))
+
+vi.mock('sonner', () => ({
+  toast: { success: vi.fn() },
 }))
 
 import { useAuth } from '../contexts/auth/useAuth'
@@ -48,9 +53,9 @@ describe('SafetyItineraryToggle', () => {
       mockUpdateUserAsync.mockReset()
     })
 
-    it('shows the Safety Itinerary label', () => {
+    it('renders the switch', () => {
       renderComponent()
-      expect(screen.getByText('Safety Itinerary')).toBeInTheDocument()
+      expect(screen.getByRole('switch')).toBeInTheDocument()
     })
 
     it('defaults to on (opted in) when safetyItineraryEnabled is absent', () => {
@@ -122,6 +127,42 @@ describe('SafetyItineraryToggle', () => {
       expect(mockUpdateUserAsync).toHaveBeenCalledWith({
         data: { preferences: { safetyItineraryEnabled: true } },
       })
+    })
+
+    it('shows success toast when toggling off', async () => {
+      const user = userEvent.setup()
+      vi.mocked(useAuth).mockReturnValue({
+        user: {
+          uid: 'u1',
+          username: 'testuser',
+          email: 'test@test.com',
+          preferences: { safetyItineraryEnabled: true },
+        },
+        setUser: vi.fn(),
+      } as any)
+      renderComponent()
+      await user.click(screen.getByRole('switch'))
+      expect(toast.success).toHaveBeenCalledWith(
+        'You will no longer receive Safety Itinerary emails'
+      )
+    })
+
+    it('shows success toast when toggling on', async () => {
+      const user = userEvent.setup()
+      vi.mocked(useAuth).mockReturnValue({
+        user: {
+          uid: 'u1',
+          username: 'testuser',
+          email: 'test@test.com',
+          preferences: { safetyItineraryEnabled: false },
+        },
+        setUser: vi.fn(),
+      } as any)
+      renderComponent()
+      await user.click(screen.getByRole('switch'))
+      expect(toast.success).toHaveBeenCalledWith(
+        'You will now receive Safety Itinerary emails the day before a trip'
+      )
     })
   })
 })
