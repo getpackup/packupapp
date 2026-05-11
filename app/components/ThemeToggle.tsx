@@ -47,8 +47,7 @@ export function ThemeToggle() {
   }
 
   return (
-    <Form method="post" action="/resource/toggle-theme" className="flex items-center">
-      <span className="mr-5">Display Theme</span>
+    <Form method="post" action="/resource/toggle-theme">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
