@@ -9,12 +9,12 @@ admin.initializeApp()
 export const sendSafetyItineraries = onSchedule('every day 12:00', async () => {
   const db = admin.firestore()
 
-  const sendEmail = async (payload: EmailPayload): Promise<void> => {
-    const sgMail = await import('@sendgrid/mail')
-    const apiKey = process.env.SENDGRID_API_KEY
-    if (!apiKey) throw new Error('SENDGRID_API_KEY not configured')
-    sgMail.default.setApiKey(apiKey)
+  const sgMail = await import('@sendgrid/mail')
+  const apiKey = process.env.SENDGRID_API_KEY
+  if (!apiKey) throw new Error('SENDGRID_API_KEY not configured')
+  sgMail.default.setApiKey(apiKey)
 
+  const sendEmail = async (payload: EmailPayload): Promise<void> => {
     await sgMail.default.send({
       to: payload.to,
       from: 'Packup <noreply@getpackup.com>',

@@ -50,7 +50,7 @@ export interface Dependencies {
   sendEmail: (payload: EmailPayload) => Promise<void>
 }
 
-const ELIGIBLE_STATUSES = new Set(['Owner', 'Accepted', 'Pending'])
+const ELIGIBLE_STATUSES: Set<TripMember['status']> = new Set(['Owner', 'Accepted', 'Pending'])
 
 function formatDateRange(startDate: Timestamp, endDate: Timestamp): string {
   const start = startDate.toDate()
@@ -106,11 +106,13 @@ export async function processSafetyItineraries(deps: Dependencies): Promise<numb
   return emailsSent
 }
 
-export function buildFirestoreDeps(db: Firestore, sendGridSend: (payload: EmailPayload) => Promise<void>): Dependencies {
+export function buildFirestoreDeps(
+  db: Firestore,
+  sendEmail: (payload: EmailPayload) => Promise<void>
+): Dependencies {
   return {
     getTripsStartingTomorrow: async () => {
-      const now = new Date()
-      const tomorrow = new Date(now)
+      const tomorrow = new Date()
       tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
       tomorrow.setUTCHours(0, 0, 0, 0)
       const dayAfter = new Date(tomorrow)
@@ -152,6 +154,6 @@ export function buildFirestoreDeps(db: Firestore, sendGridSend: (payload: EmailP
       return map
     },
 
-    sendEmail: sendGridSend,
+    sendEmail,
   }
 }
