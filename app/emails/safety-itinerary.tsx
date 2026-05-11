@@ -1,7 +1,7 @@
 import { Column, Hr, Link, Row, Section, Text } from '@react-email/components'
 
-import { TripMemberStatus } from '../types/TripMember'
 import type { SafetyItineraryEmailProps } from '../types/SafetyItinerary'
+import { TripMemberStatus } from '../types/TripMember'
 import BaseEmailTemplate from './base'
 
 export const SafetyItineraryEmail = ({

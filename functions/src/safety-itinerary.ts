@@ -4,8 +4,6 @@ import type { EmergencyContact } from '../../app/types/EmergencyContact'
 import type { SafetyItineraryEmailPayload } from '../../app/types/SafetyItinerary'
 import { TripMemberStatus } from '../../app/types/TripMember'
 
-export type { SafetyItineraryEmailPayload }
-
 interface TripMember {
   uid: string
   status: TripMemberStatus

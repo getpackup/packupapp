@@ -1,5 +1,5 @@
-import type { TripMemberStatus } from './TripMember'
 import type { EmergencyContact } from './EmergencyContact'
+import type { TripMemberStatus } from './TripMember'
 
 export type SafetyItineraryMember = {
   displayName: string

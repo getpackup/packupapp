@@ -1,7 +1,8 @@
 import * as admin from 'firebase-admin'
 import { onSchedule } from 'firebase-functions/v2/scheduler'
 
-import type { SafetyItineraryEmailPayload } from './safety-itinerary'
+import type { SafetyItineraryEmailPayload } from '../../app/types/SafetyItinerary'
+
 import { buildFirestoreDeps, processSafetyItineraries } from './safety-itinerary'
 import { renderSafetyItineraryHtml } from './render-email'
 
