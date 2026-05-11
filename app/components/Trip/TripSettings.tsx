@@ -34,6 +34,10 @@ export function TripSettings({ trip }: { trip: Trip }) {
   const currentMember = user?.uid ? trip.tripMembers[user.uid] : undefined
   const globalOptOut = user?.preferences?.safetyItineraryEnabled === false
   const isOptedOut = currentMember?.safetyItineraryOptedOut ?? false
+  const activeMemberCount = Object.values(trip.tripMembers).filter(
+    (m) => m.status !== TripMemberStatus.Left && m.status !== TripMemberStatus.Declined && m.status !== TripMemberStatus.Removed,
+  ).length
+  const hasOtherMembers = activeMemberCount > 1
 
   const updateCurrentMember = async (fields: Partial<TripMember>) => {
     if (!user?.uid || !currentMember) return
@@ -83,15 +87,19 @@ export function TripSettings({ trip }: { trip: Trip }) {
             />
             <div className="grid gap-1">
               <Label htmlFor="safety-itinerary">Safety Itinerary</Label>
-              {globalOptOut && (
-                <p className="text-muted-foreground text-xs">
-                  Safety Itinerary is globally disabled. Go to{' '}
-                  <Link to="/settings" className="underline">
-                    Settings
-                  </Link>{' '}
-                  to enable it.
-                </p>
-              )}
+              <p className="text-muted-foreground text-xs">
+                {globalOptOut ? (
+                  <>
+                    Safety Itinerary is globally disabled. Go to{' '}
+                    <Link to="/settings" className="underline">
+                      Settings
+                    </Link>{' '}
+                    to enable it.
+                  </>
+                ) : (
+                  'When enabled, an email with trip details, members, and emergency contacts will be sent the day before your trip starts.'
+                )}
+              </p>
             </div>
           </div>
 
@@ -101,7 +109,10 @@ export function TripSettings({ trip }: { trip: Trip }) {
             <div className="space-y-3">
               <h4 className="text-destructive text-sm font-medium">Delete Trip</h4>
               <p className="text-muted-foreground text-sm">
-                This will permanently delete &ldquo;{trip.name}&rdquo;. This action cannot be undone.
+                This will permanently delete &ldquo;{trip.name}&rdquo;.{' '}
+                {hasOtherMembers
+                  ? 'This will delete the trip for all members.'
+                  : 'This action cannot be undone.'}
               </p>
               <Input
                 placeholder="Type DELETE to confirm"

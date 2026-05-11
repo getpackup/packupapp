@@ -263,5 +263,45 @@ describe('TripSettings', () => {
       expect(screen.getByText(/globally disabled/i)).toBeInTheDocument()
       expect(screen.getByRole('link', { name: /settings/i })).toHaveAttribute('href', '/settings')
     })
+
+    it('shows help text describing what the safety itinerary does', async () => {
+      const user = userEvent.setup()
+      renderAsMember()
+      await user.click(screen.getByRole('button', { name: /trip settings/i }))
+      expect(screen.getByText(/email.*day before/i)).toBeInTheDocument()
+    })
+  })
+
+  describe('delete trip copy', () => {
+    it('warns that deleting removes the trip for everyone when multiple active members', async () => {
+      const user = userEvent.setup()
+      renderAsOwner()
+      await user.click(screen.getByRole('button', { name: /trip settings/i }))
+      expect(screen.getByText(/delete.*for all members/i)).toBeInTheDocument()
+    })
+
+    it('does not show multi-member warning when owner is the only active member', async () => {
+      const user = userEvent.setup()
+      renderAsOwner({
+        tripMembers: {
+          'owner-uid': { uid: 'owner-uid', status: TripMemberStatus.Owner, invitedAt: ts },
+        },
+      })
+      await user.click(screen.getByRole('button', { name: /trip settings/i }))
+      expect(screen.queryByText(/delete.*for all members/i)).not.toBeInTheDocument()
+    })
+
+    it('does not count Left or Declined members as active', async () => {
+      const user = userEvent.setup()
+      renderAsOwner({
+        tripMembers: {
+          'owner-uid': { uid: 'owner-uid', status: TripMemberStatus.Owner, invitedAt: ts },
+          'left-uid': { uid: 'left-uid', status: TripMemberStatus.Left, invitedAt: ts },
+          'declined-uid': { uid: 'declined-uid', status: TripMemberStatus.Declined, invitedAt: ts },
+        },
+      })
+      await user.click(screen.getByRole('button', { name: /trip settings/i }))
+      expect(screen.queryByText(/delete.*for all members/i)).not.toBeInTheDocument()
+    })
   })
 })
