@@ -1,7 +1,6 @@
 import { Column, Hr, Link, Row, Section, Text } from '@react-email/components'
 
-import { TripMemberStatus } from '~/types/TripMember'
-
+import { TripMemberStatus } from '../types/TripMember'
 import BaseEmailTemplate from './base'
 
 interface SafetyItineraryMember {
