@@ -1,11 +1,13 @@
 import type { Timestamp } from 'firebase/firestore'
 
+import type { EmergencyContact } from './EmergencyContact'
+
 export type User = {
   bio?: string
   displayName: string
   email: string
   isAnonymous?: boolean
-  emergencyContacts?: Array<{ name: string; email: string; phoneNumber: string }>
+  emergencyContacts?: EmergencyContact[]
   isAdmin?: boolean
   location?: string
   photoURL?: string

@@ -1,28 +1,8 @@
 import { Column, Hr, Link, Row, Section, Text } from '@react-email/components'
 
+import type { SafetyItineraryEmailProps } from '../types/SafetyItinerary'
 import { TripMemberStatus } from '../types/TripMember'
 import BaseEmailTemplate from './base'
-
-interface SafetyItineraryMember {
-  displayName: string
-  status: TripMemberStatus
-}
-
-interface EmergencyContact {
-  name: string
-  phoneNumber: string
-  email: string
-}
-
-interface SafetyItineraryEmailProps {
-  tripName: string
-  startingPoint: string
-  dateRange: string
-  description: string
-  members: SafetyItineraryMember[]
-  emergencyContacts: EmergencyContact[]
-  url: string
-}
 
 export const SafetyItineraryEmail = ({
   tripName,

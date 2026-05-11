@@ -1,7 +1,8 @@
 import * as admin from 'firebase-admin'
 import { onSchedule } from 'firebase-functions/v2/scheduler'
 
-import type { EmailPayload } from './safety-itinerary'
+import type { SafetyItineraryEmailPayload } from '../../app/types/SafetyItinerary'
+
 import { buildFirestoreDeps, processSafetyItineraries } from './safety-itinerary'
 import { renderSafetyItineraryHtml } from './render-email'
 
@@ -15,7 +16,7 @@ export const sendSafetyItineraries = onSchedule('every day 12:00', async () => {
   if (!apiKey) throw new Error('SENDGRID_API_KEY not configured')
   sgMail.default.setApiKey(apiKey)
 
-  const sendEmail = async (payload: EmailPayload): Promise<void> => {
+  const sendEmail = async (payload: SafetyItineraryEmailPayload): Promise<void> => {
     const html = await renderSafetyItineraryHtml(payload)
 
     await sgMail.default.send({

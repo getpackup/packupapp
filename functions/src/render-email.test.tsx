@@ -1,18 +1,19 @@
 import { describe, expect, it } from 'vitest'
 
-import type { EmailPayload } from './safety-itinerary'
+import type { SafetyItineraryEmailPayload } from '../../app/types/SafetyItinerary'
+import { TripMemberStatus } from '../../app/types/TripMember'
 import { renderSafetyItineraryHtml } from './render-email'
 
-const basePayload: EmailPayload = {
+const basePayload: SafetyItineraryEmailPayload = {
   to: 'alice@example.com',
   tripName: 'Mt. Robson Backpacking',
   startingPoint: 'Berg Lake Trailhead, BC',
   dateRange: 'Jun 15, 2026 – Jun 18, 2026',
   description: 'Three-night trip to Berg Lake via the North Boundary Trail.',
   members: [
-    { displayName: 'Alice', status: 'Owner' },
-    { displayName: 'Bob', status: 'Accepted' },
-    { displayName: 'Charlie', status: 'Pending' },
+    { displayName: 'Alice', status: TripMemberStatus.Owner },
+    { displayName: 'Bob', status: TripMemberStatus.Accepted },
+    { displayName: 'Charlie', status: TripMemberStatus.Pending },
   ],
   emergencyContacts: [
     { name: 'John Doe', phoneNumber: '+1-555-0100', email: 'john@example.com' },
