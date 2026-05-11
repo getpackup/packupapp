@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router'
 import { useAuth } from '~/contexts/auth/useAuth'
 import { useDeleteTrip, useUpdateTrip } from '~/services/trips'
 import type { Trip } from '~/types/Trip'
-import { TripMemberStatus } from '~/types/TripMember'
+import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 
 import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
@@ -35,34 +35,27 @@ export function TripSettings({ trip }: { trip: Trip }) {
   const globalOptOut = user?.preferences?.safetyItineraryEnabled === false
   const isOptedOut = currentMember?.safetyItineraryOptedOut ?? false
 
+  const updateCurrentMember = async (fields: Partial<TripMember>) => {
+    if (!user?.uid || !currentMember) return
+    await updateTrip({
+      data: {
+        [`tripMembers.${user.uid}`]: { ...currentMember, ...fields },
+      } as any,
+    })
+  }
+
   const handleDelete = async () => {
     await deleteTrip({ tripId: trip.tripId })
     navigate('/trips')
   }
 
   const handleLeave = async () => {
-    if (!user?.uid || !currentMember) return
-    await updateTrip({
-      data: {
-        [`tripMembers.${user.uid}`]: {
-          ...currentMember,
-          status: TripMemberStatus.Left,
-        },
-      } as any,
-    })
+    await updateCurrentMember({ status: TripMemberStatus.Left })
     navigate('/trips')
   }
 
   const handleToggleSafetyItinerary = async () => {
-    if (!user?.uid || !currentMember) return
-    await updateTrip({
-      data: {
-        [`tripMembers.${user.uid}`]: {
-          ...currentMember,
-          safetyItineraryOptedOut: !isOptedOut,
-        },
-      } as any,
-    })
+    await updateCurrentMember({ safetyItineraryOptedOut: !isOptedOut })
   }
 
   return (
@@ -86,7 +79,7 @@ export function TripSettings({ trip }: { trip: Trip }) {
               aria-label="Safety Itinerary"
               checked={!isOptedOut && !globalOptOut}
               disabled={globalOptOut}
-              onCheckedChange={() => handleToggleSafetyItinerary()}
+              onCheckedChange={handleToggleSafetyItinerary}
             />
             <div className="grid gap-1">
               <Label htmlFor="safety-itinerary">Safety Itinerary</Label>
