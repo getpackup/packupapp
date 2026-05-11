@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import type { Dependencies, EmailPayload, TripDoc, UserDoc } from './safety-itinerary'
+import type { SafetyItineraryEmailPayload } from '../../app/types/SafetyItinerary'
+import { TripMemberStatus } from '../../app/types/TripMember'
+import type { Dependencies, TripDoc, UserDoc } from './safety-itinerary'
 import { processSafetyItineraries } from './safety-itinerary'
 
 function makeTimestamp(date: Date) {
@@ -22,9 +24,9 @@ function makeTripStartingTomorrow(overrides: Partial<TripDoc> = {}): TripDoc {
     endDate: makeTimestamp(endDate),
     description: 'Three-night trip',
     tripMembers: {
-      'user-owner': { uid: 'user-owner', status: 'Owner' },
-      'user-accepted': { uid: 'user-accepted', status: 'Accepted' },
-      'user-pending': { uid: 'user-pending', status: 'Pending' },
+      'user-owner': { uid: 'user-owner', status: TripMemberStatus.Owner },
+      'user-accepted': { uid: 'user-accepted', status: TripMemberStatus.Accepted },
+      'user-pending': { uid: 'user-pending', status: TripMemberStatus.Pending },
     },
     ...overrides,
   }
@@ -44,7 +46,7 @@ function makeDeps(
   trips: TripDoc[] = [],
   users: Map<string, UserDoc> = new Map()
 ): { deps: Dependencies; sendEmail: ReturnType<typeof vi.fn> } {
-  const sendEmail = vi.fn<(payload: EmailPayload) => Promise<void>>().mockResolvedValue(undefined)
+  const sendEmail = vi.fn<(payload: SafetyItineraryEmailPayload) => Promise<void>>().mockResolvedValue(undefined)
   return {
     deps: {
       getTripsStartingTomorrow: vi.fn().mockResolvedValue(trips),
@@ -59,8 +61,8 @@ describe('processSafetyItineraries', () => {
   it('does not send emails for members with Declined status', async () => {
     const trip = makeTripStartingTomorrow({
       tripMembers: {
-        'user-declined': { uid: 'user-declined', status: 'Declined' },
-        'user-owner': { uid: 'user-owner', status: 'Owner' },
+        'user-declined': { uid: 'user-declined', status: TripMemberStatus.Declined },
+        'user-owner': { uid: 'user-owner', status: TripMemberStatus.Owner },
       },
     })
     const users = new Map([
@@ -78,8 +80,8 @@ describe('processSafetyItineraries', () => {
   it('does not send emails for members with Removed status', async () => {
     const trip = makeTripStartingTomorrow({
       tripMembers: {
-        'user-removed': { uid: 'user-removed', status: 'Removed' },
-        'user-owner': { uid: 'user-owner', status: 'Owner' },
+        'user-removed': { uid: 'user-removed', status: TripMemberStatus.Removed },
+        'user-owner': { uid: 'user-owner', status: TripMemberStatus.Owner },
       },
     })
     const users = new Map([
@@ -97,8 +99,8 @@ describe('processSafetyItineraries', () => {
   it('does not send emails for members with Left status', async () => {
     const trip = makeTripStartingTomorrow({
       tripMembers: {
-        'user-left': { uid: 'user-left', status: 'Left' },
-        'user-owner': { uid: 'user-owner', status: 'Owner' },
+        'user-left': { uid: 'user-left', status: TripMemberStatus.Left },
+        'user-owner': { uid: 'user-owner', status: TripMemberStatus.Owner },
       },
     })
     const users = new Map([
@@ -116,8 +118,8 @@ describe('processSafetyItineraries', () => {
   it('skips members with safetyItineraryOptedOut set to true', async () => {
     const trip = makeTripStartingTomorrow({
       tripMembers: {
-        'user-opted-out': { uid: 'user-opted-out', status: 'Accepted', safetyItineraryOptedOut: true },
-        'user-owner': { uid: 'user-owner', status: 'Owner' },
+        'user-opted-out': { uid: 'user-opted-out', status: TripMemberStatus.Accepted, safetyItineraryOptedOut: true },
+        'user-owner': { uid: 'user-owner', status: TripMemberStatus.Owner },
       },
     })
     const users = new Map([
@@ -136,8 +138,8 @@ describe('processSafetyItineraries', () => {
   it('skips members whose global safetyItineraryEnabled is false', async () => {
     const trip = makeTripStartingTomorrow({
       tripMembers: {
-        'user-global-out': { uid: 'user-global-out', status: 'Accepted' },
-        'user-owner': { uid: 'user-owner', status: 'Owner' },
+        'user-global-out': { uid: 'user-global-out', status: TripMemberStatus.Accepted },
+        'user-owner': { uid: 'user-owner', status: TripMemberStatus.Owner },
       },
     })
     const users = new Map([
@@ -156,7 +158,7 @@ describe('processSafetyItineraries', () => {
   it('sends emails to members with Pending status', async () => {
     const trip = makeTripStartingTomorrow({
       tripMembers: {
-        'user-pending': { uid: 'user-pending', status: 'Pending' },
+        'user-pending': { uid: 'user-pending', status: TripMemberStatus.Pending },
       },
     })
     const users = new Map([['user-pending', makeUser('user-pending')]])
@@ -185,8 +187,8 @@ describe('processSafetyItineraries', () => {
   it('includes each recipient their own emergency contacts, not another members', async () => {
     const trip = makeTripStartingTomorrow({
       tripMembers: {
-        'alice': { uid: 'alice', status: 'Owner' },
-        'bob': { uid: 'bob', status: 'Accepted' },
+        'alice': { uid: 'alice', status: TripMemberStatus.Owner },
+        'bob': { uid: 'bob', status: TripMemberStatus.Accepted },
       },
     })
     const aliceContacts = [{ name: 'Alice Mom', phoneNumber: '555-1111', email: 'amom@test.com' }]

@@ -1,15 +1,15 @@
 import type { Firestore, Timestamp } from 'firebase-admin/firestore'
 
-export interface TripMember {
-  uid: string
-  status: 'Owner' | 'Accepted' | 'Pending' | 'Declined' | 'Removed' | 'Left'
-  safetyItineraryOptedOut?: boolean
-}
+import type { EmergencyContact } from '../../app/types/EmergencyContact'
+import type { SafetyItineraryEmailPayload } from '../../app/types/SafetyItinerary'
+import { TripMemberStatus } from '../../app/types/TripMember'
 
-export interface EmergencyContact {
-  name: string
-  phoneNumber: string
-  email: string
+export type { SafetyItineraryEmailPayload }
+
+interface TripMember {
+  uid: string
+  status: TripMemberStatus
+  safetyItineraryOptedOut?: boolean
 }
 
 export interface UserDoc {
@@ -33,24 +33,13 @@ export interface TripDoc {
   tripMembers: { [uid: string]: TripMember }
 }
 
-export interface EmailPayload {
-  to: string
-  tripName: string
-  startingPoint: string
-  dateRange: string
-  description: string
-  members: Array<{ displayName: string; status: string }>
-  emergencyContacts: EmergencyContact[]
-  recipientUid: string
-}
-
 export interface Dependencies {
   getTripsStartingTomorrow: () => Promise<TripDoc[]>
   getUsersByUids: (uids: string[]) => Promise<Map<string, UserDoc>>
-  sendEmail: (payload: EmailPayload) => Promise<void>
+  sendEmail: (payload: SafetyItineraryEmailPayload) => Promise<void>
 }
 
-const ELIGIBLE_STATUSES: Set<TripMember['status']> = new Set(['Owner', 'Accepted', 'Pending'])
+const ELIGIBLE_STATUSES = new Set<TripMemberStatus>([TripMemberStatus.Owner, TripMemberStatus.Accepted, TripMemberStatus.Pending])
 
 function formatDateRange(startDate: Timestamp, endDate: Timestamp): string {
   const start = startDate.toDate()
@@ -75,7 +64,7 @@ export async function processSafetyItineraries(deps: Dependencies): Promise<numb
     const usersMap = await deps.getUsersByUids(uids)
 
     const allMembers = members
-      .filter((m) => m.status !== 'Removed')
+      .filter((m) => m.status !== TripMemberStatus.Removed)
       .map((m) => {
         const user = usersMap.get(m.uid)
         return { displayName: user?.displayName ?? 'Unknown', status: m.status }
@@ -108,7 +97,7 @@ export async function processSafetyItineraries(deps: Dependencies): Promise<numb
 
 export function buildFirestoreDeps(
   db: Firestore,
-  sendEmail: (payload: EmailPayload) => Promise<void>
+  sendEmail: (payload: SafetyItineraryEmailPayload) => Promise<void>
 ): Dependencies {
   return {
     getTripsStartingTomorrow: async () => {

@@ -13,6 +13,6 @@
     "sourceMap": true,
     "jsx": "react-jsx"
   },
-  "include": ["src/**/*", "../app/emails/safety-itinerary.tsx", "../app/emails/base.tsx", "../app/types/TripMember.ts"],
+  "include": ["src/**/*", "../app/emails/safety-itinerary.tsx", "../app/emails/base.tsx", "../app/types/TripMember.ts", "../app/types/EmergencyContact.ts", "../app/types/SafetyItinerary.ts"],
   "exclude": ["node_modules", "lib"]
 }
