@@ -9,8 +9,15 @@ export default defineConfig({
   server: {
     open: false,
   },
+  optimizeDeps: {
+    // CJS-only dep; react-router uses named imports — prebundle for ESM interop in dev.
+    include: ['cookie'],
+  },
   ssr: {
     noExternal: ['use-sound'],
+    optimizeDeps: {
+      include: ['cookie'],
+    },
   },
   plugins: [
     tailwindcss(),
