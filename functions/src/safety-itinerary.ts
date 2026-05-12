@@ -1,43 +1,21 @@
 import type { Firestore, Timestamp } from 'firebase-admin/firestore'
 
-import type { EmergencyContact } from '../../app/types/EmergencyContact'
+import type { Trip } from '../../app/types/Trip'
 import type { SafetyItineraryEmailPayload } from '../../app/types/SafetyItinerary'
 import { TripMemberStatus } from '../../app/types/TripMember'
+import { User } from '../../app/types/User'
 
-interface TripMember {
-  uid: string
-  status: TripMemberStatus
-  safetyItineraryOptedOut?: boolean
-}
-
-export interface UserDoc {
-  uid: string
-  email: string
-  displayName: string
-  emergencyContacts?: EmergencyContact[]
-  preferences?: {
-    safetyItineraryEnabled?: boolean
-  }
-}
-
-export interface TripDoc {
-  tripId: string
-  name: string
-  startingPoint: string
-  startDate: Timestamp
-  endDate: Timestamp
-  description: string
-  archived?: boolean
-  tripMembers: { [uid: string]: TripMember }
-}
-
-export interface Dependencies {
-  getTripsStartingTomorrow: () => Promise<TripDoc[]>
-  getUsersByUids: (uids: string[]) => Promise<Map<string, UserDoc>>
+export interface SafetyItineraryEmailProps {
+  getTripsStartingTomorrow: () => Promise<Trip[]>
+  getUsersByUids: (uids: string[]) => Promise<Map<string, User>>
   sendEmail: (payload: SafetyItineraryEmailPayload) => Promise<void>
 }
 
-const ELIGIBLE_STATUSES = new Set<TripMemberStatus>([TripMemberStatus.Owner, TripMemberStatus.Accepted, TripMemberStatus.Pending])
+const ELIGIBLE_STATUSES = new Set<TripMemberStatus>([
+  TripMemberStatus.Owner,
+  TripMemberStatus.Accepted,
+  TripMemberStatus.Pending,
+])
 
 function formatDateRange(startDate: Timestamp, endDate: Timestamp): string {
   const start = startDate.toDate()
@@ -46,7 +24,7 @@ function formatDateRange(startDate: Timestamp, endDate: Timestamp): string {
   return `${start.toLocaleDateString('en-US', opts)} – ${end.toLocaleDateString('en-US', opts)}`
 }
 
-export async function processSafetyItineraries(deps: Dependencies): Promise<number> {
+export async function processSafetyItineraries(deps: SafetyItineraryEmailProps): Promise<number> {
   const trips = await deps.getTripsStartingTomorrow()
   let emailsSent = 0
 
@@ -96,7 +74,7 @@ export async function processSafetyItineraries(deps: Dependencies): Promise<numb
 export function buildFirestoreDeps(
   db: Firestore,
   sendEmail: (payload: SafetyItineraryEmailPayload) => Promise<void>
-): Dependencies {
+): SafetyItineraryEmailProps {
   return {
     getTripsStartingTomorrow: async () => {
       const tomorrow = new Date()
@@ -115,11 +93,11 @@ export function buildFirestoreDeps(
         .where('startDate', '<', endOfDay)
         .get()
 
-      return snapshot.docs.map((doc) => doc.data() as TripDoc)
+      return snapshot.docs.map((doc) => doc.data() as Trip)
     },
 
     getUsersByUids: async (uids: string[]) => {
-      const map = new Map<string, UserDoc>()
+      const map = new Map<string, User>()
       if (uids.length === 0) return map
 
       const batches: string[][] = []
@@ -128,12 +106,9 @@ export function buildFirestoreDeps(
       }
 
       for (const batch of batches) {
-        const snapshot = await db
-          .collection('users')
-          .where('uid', 'in', batch)
-          .get()
+        const snapshot = await db.collection('users').where('uid', 'in', batch).get()
         for (const doc of snapshot.docs) {
-          const data = doc.data() as UserDoc
+          const data = doc.data() as User
           map.set(data.uid, data)
         }
       }

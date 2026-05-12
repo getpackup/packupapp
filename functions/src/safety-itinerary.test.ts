@@ -2,14 +2,17 @@ import { describe, expect, it, vi } from 'vitest'
 
 import type { SafetyItineraryEmailPayload } from '../../app/types/SafetyItinerary'
 import { TripMemberStatus } from '../../app/types/TripMember'
-import type { Dependencies, TripDoc, UserDoc } from './safety-itinerary'
+import { Trip } from '../../app/types/Trip'
+import { User } from '../../app/types/User'
+import type { SafetyItineraryEmailProps } from './safety-itinerary'
 import { processSafetyItineraries } from './safety-itinerary'
+import { Timestamp } from 'firebase/firestore'
 
 function makeTimestamp(date: Date) {
   return { toDate: () => date } as any
 }
 
-function makeTripStartingTomorrow(overrides: Partial<TripDoc> = {}): TripDoc {
+function makeTripStartingTomorrow(overrides: Partial<Trip> = {}): Partial<Trip> {
   const tomorrow = new Date()
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
   tomorrow.setUTCHours(8, 0, 0, 0)
@@ -18,21 +21,34 @@ function makeTripStartingTomorrow(overrides: Partial<TripDoc> = {}): TripDoc {
 
   return {
     tripId: 'trip-1',
+    id: 'trip-1',
     name: 'Mt. Robson Backpacking',
     startingPoint: 'Berg Lake Trailhead, BC',
     startDate: makeTimestamp(tomorrow),
     endDate: makeTimestamp(endDate),
     description: 'Three-night trip',
     tripMembers: {
-      'user-owner': { uid: 'user-owner', status: TripMemberStatus.Owner },
-      'user-accepted': { uid: 'user-accepted', status: TripMemberStatus.Accepted },
-      'user-pending': { uid: 'user-pending', status: TripMemberStatus.Pending },
+      'user-owner': {
+        uid: 'user-owner',
+        status: TripMemberStatus.Owner,
+        invitedAt: Timestamp.now(),
+      },
+      'user-accepted': {
+        uid: 'user-accepted',
+        status: TripMemberStatus.Accepted,
+        invitedAt: Timestamp.now(),
+      },
+      'user-pending': {
+        uid: 'user-pending',
+        status: TripMemberStatus.Pending,
+        invitedAt: Timestamp.now(),
+      },
     },
     ...overrides,
   }
 }
 
-function makeUser(uid: string, overrides: Partial<UserDoc> = {}): UserDoc {
+function makeUser(uid: string, overrides: Partial<User> = {}): Partial<User> {
   return {
     uid,
     email: `${uid}@example.com`,
@@ -43,10 +59,12 @@ function makeUser(uid: string, overrides: Partial<UserDoc> = {}): UserDoc {
 }
 
 function makeDeps(
-  trips: TripDoc[] = [],
-  users: Map<string, UserDoc> = new Map()
-): { deps: Dependencies; sendEmail: ReturnType<typeof vi.fn> } {
-  const sendEmail = vi.fn<(payload: SafetyItineraryEmailPayload) => Promise<void>>().mockResolvedValue(undefined)
+  trips: Partial<Trip>[] = [],
+  users: Map<string, Partial<User>> = new Map()
+): { deps: SafetyItineraryEmailProps; sendEmail: ReturnType<typeof vi.fn> } {
+  const sendEmail = vi
+    .fn<(payload: SafetyItineraryEmailPayload) => Promise<void>>()
+    .mockResolvedValue(undefined)
   return {
     deps: {
       getTripsStartingTomorrow: vi.fn().mockResolvedValue(trips),
@@ -61,8 +79,16 @@ describe('processSafetyItineraries', () => {
   it('does not send emails for members with Declined status', async () => {
     const trip = makeTripStartingTomorrow({
       tripMembers: {
-        'user-declined': { uid: 'user-declined', status: TripMemberStatus.Declined },
-        'user-owner': { uid: 'user-owner', status: TripMemberStatus.Owner },
+        'user-declined': {
+          uid: 'user-declined',
+          status: TripMemberStatus.Declined,
+          invitedAt: Timestamp.now(),
+        },
+        'user-owner': {
+          uid: 'user-owner',
+          status: TripMemberStatus.Owner,
+          invitedAt: Timestamp.now(),
+        },
       },
     })
     const users = new Map([
@@ -80,8 +106,16 @@ describe('processSafetyItineraries', () => {
   it('does not send emails for members with Removed status', async () => {
     const trip = makeTripStartingTomorrow({
       tripMembers: {
-        'user-removed': { uid: 'user-removed', status: TripMemberStatus.Removed },
-        'user-owner': { uid: 'user-owner', status: TripMemberStatus.Owner },
+        'user-removed': {
+          uid: 'user-removed',
+          status: TripMemberStatus.Removed,
+          invitedAt: Timestamp.now(),
+        },
+        'user-owner': {
+          uid: 'user-owner',
+          status: TripMemberStatus.Owner,
+          invitedAt: Timestamp.now(),
+        },
       },
     })
     const users = new Map([
@@ -99,8 +133,16 @@ describe('processSafetyItineraries', () => {
   it('does not send emails for members with Left status', async () => {
     const trip = makeTripStartingTomorrow({
       tripMembers: {
-        'user-left': { uid: 'user-left', status: TripMemberStatus.Left },
-        'user-owner': { uid: 'user-owner', status: TripMemberStatus.Owner },
+        'user-left': {
+          uid: 'user-left',
+          status: TripMemberStatus.Left,
+          invitedAt: Timestamp.now(),
+        },
+        'user-owner': {
+          uid: 'user-owner',
+          status: TripMemberStatus.Owner,
+          invitedAt: Timestamp.now(),
+        },
       },
     })
     const users = new Map([
@@ -118,8 +160,17 @@ describe('processSafetyItineraries', () => {
   it('skips members with safetyItineraryOptedOut set to true', async () => {
     const trip = makeTripStartingTomorrow({
       tripMembers: {
-        'user-opted-out': { uid: 'user-opted-out', status: TripMemberStatus.Accepted, safetyItineraryOptedOut: true },
-        'user-owner': { uid: 'user-owner', status: TripMemberStatus.Owner },
+        'user-opted-out': {
+          uid: 'user-opted-out',
+          status: TripMemberStatus.Accepted,
+          safetyItineraryOptedOut: true,
+          invitedAt: Timestamp.now(),
+        },
+        'user-owner': {
+          uid: 'user-owner',
+          status: TripMemberStatus.Owner,
+          invitedAt: Timestamp.now(),
+        },
       },
     })
     const users = new Map([
@@ -138,12 +189,23 @@ describe('processSafetyItineraries', () => {
   it('skips members whose global safetyItineraryEnabled is false', async () => {
     const trip = makeTripStartingTomorrow({
       tripMembers: {
-        'user-global-out': { uid: 'user-global-out', status: TripMemberStatus.Accepted },
-        'user-owner': { uid: 'user-owner', status: TripMemberStatus.Owner },
+        'user-global-out': {
+          uid: 'user-global-out',
+          status: TripMemberStatus.Accepted,
+          invitedAt: Timestamp.now(),
+        },
+        'user-owner': {
+          uid: 'user-owner',
+          status: TripMemberStatus.Owner,
+          invitedAt: Timestamp.now(),
+        },
       },
     })
     const users = new Map([
-      ['user-global-out', makeUser('user-global-out', { preferences: { safetyItineraryEnabled: false } })],
+      [
+        'user-global-out',
+        makeUser('user-global-out', { preferences: { safetyItineraryEnabled: false } }),
+      ],
       ['user-owner', makeUser('user-owner')],
     ])
     const { deps, sendEmail } = makeDeps([trip], users)
@@ -158,7 +220,11 @@ describe('processSafetyItineraries', () => {
   it('sends emails to members with Pending status', async () => {
     const trip = makeTripStartingTomorrow({
       tripMembers: {
-        'user-pending': { uid: 'user-pending', status: TripMemberStatus.Pending },
+        'user-pending': {
+          uid: 'user-pending',
+          status: TripMemberStatus.Pending,
+          invitedAt: Timestamp.now(),
+        },
       },
     })
     const users = new Map([['user-pending', makeUser('user-pending')]])
@@ -187,8 +253,8 @@ describe('processSafetyItineraries', () => {
   it('includes each recipient their own emergency contacts, not another members', async () => {
     const trip = makeTripStartingTomorrow({
       tripMembers: {
-        'alice': { uid: 'alice', status: TripMemberStatus.Owner },
-        'bob': { uid: 'bob', status: TripMemberStatus.Accepted },
+        alice: { uid: 'alice', status: TripMemberStatus.Owner, invitedAt: Timestamp.now() },
+        bob: { uid: 'bob', status: TripMemberStatus.Accepted, invitedAt: Timestamp.now() },
       },
     })
     const aliceContacts = [{ name: 'Alice Mom', phoneNumber: '555-1111', email: 'amom@test.com' }]
