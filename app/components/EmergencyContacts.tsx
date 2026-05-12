@@ -87,7 +87,7 @@ export function EmergencyContacts() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Emergency Contacts</h3>
+      <h3 className="mb-2 text-lg font-bold">Emergency Contacts</h3>
 
       {contacts.map((contact, index) => (
         <div
@@ -98,9 +98,7 @@ export function EmergencyContacts() {
           <div className="min-w-0 space-y-0.5">
             <p className="font-medium">{contact.name}</p>
             <p className="text-muted-foreground text-sm">{contact.phoneNumber}</p>
-            {contact.email && (
-              <p className="text-muted-foreground text-sm">{contact.email}</p>
-            )}
+            {contact.email && <p className="text-muted-foreground text-sm">{contact.email}</p>}
           </div>
           <div className="flex gap-1">
             <Button
@@ -128,9 +126,7 @@ export function EmergencyContacts() {
           <div className="grid gap-1.5">
             <Label htmlFor="ec-name">Name</Label>
             <Input id="ec-name" {...register('name')} />
-            {errors.name && (
-              <p className="text-destructive text-sm">{errors.name.message}</p>
-            )}
+            {errors.name && <p className="text-destructive text-sm">{errors.name.message}</p>}
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="ec-phone">Phone number</Label>
@@ -142,9 +138,7 @@ export function EmergencyContacts() {
           <div className="grid gap-1.5">
             <Label htmlFor="ec-email">Email</Label>
             <Input id="ec-email" type="email" {...register('email')} />
-            {errors.email && (
-              <p className="text-destructive text-sm">{errors.email.message}</p>
-            )}
+            {errors.email && <p className="text-destructive text-sm">{errors.email.message}</p>}
           </div>
           <div className="flex gap-2">
             <Button type="submit">Save</Button>
