@@ -8,7 +8,6 @@ import type { Trip } from '~/types/Trip'
 import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 
 import { Button } from '../ui/button'
-import { Checkbox } from '../ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -18,8 +17,8 @@ import {
   DialogTrigger,
 } from '../ui/dialog'
 import { Input } from '../ui/input'
-import { Label } from '../ui/label'
 import { Separator } from '../ui/separator'
+import { Switch } from '../ui/switch'
 
 export function TripSettings({ trip }: { trip: Trip }) {
   const { user } = useAuth()
@@ -35,7 +34,10 @@ export function TripSettings({ trip }: { trip: Trip }) {
   const globalOptOut = user?.preferences?.safetyItineraryEnabled === false
   const isOptedOut = currentMember?.safetyItineraryOptedOut ?? false
   const activeMemberCount = Object.values(trip.tripMembers).filter(
-    (m) => m.status !== TripMemberStatus.Left && m.status !== TripMemberStatus.Declined && m.status !== TripMemberStatus.Removed,
+    (m) =>
+      m.status !== TripMemberStatus.Left &&
+      m.status !== TripMemberStatus.Declined &&
+      m.status !== TripMemberStatus.Removed
   ).length
   const hasOtherMembers = activeMemberCount > 1
 
@@ -63,9 +65,21 @@ export function TripSettings({ trip }: { trip: Trip }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); setDeleteConfirm(''); setLeaveConfirm('') }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v)
+        setDeleteConfirm('')
+        setLeaveConfirm('')
+      }}
+    >
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="w-full justify-start gap-2" aria-label="Trip settings">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start gap-2"
+          aria-label="Trip settings"
+        >
           <Settings className="h-4 w-4" />
           Trip Settings
         </Button>
@@ -77,17 +91,10 @@ export function TripSettings({ trip }: { trip: Trip }) {
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Checkbox
-              id="safety-itinerary"
-              aria-label="Safety Itinerary"
-              checked={!isOptedOut && !globalOptOut}
-              disabled={globalOptOut}
-              onCheckedChange={handleToggleSafetyItinerary}
-            />
-            <div className="grid gap-1">
-              <Label htmlFor="safety-itinerary">Safety Itinerary</Label>
-              <p className="text-muted-foreground text-xs">
+          <div className="flex items-center justify-between gap-4 py-3">
+            <div className="flex flex-col gap-1">
+              <span className="text-base font-medium">Safety Itinerary Email</span>
+              <span className="text-muted-foreground text-sm">
                 {globalOptOut ? (
                   <>
                     Safety Itinerary is globally disabled. Go to{' '}
@@ -99,54 +106,64 @@ export function TripSettings({ trip }: { trip: Trip }) {
                 ) : (
                   'When enabled, an email with trip details, members, and emergency contacts will be sent the day before your trip starts.'
                 )}
-              </p>
+              </span>
+            </div>
+            <div className="shrink-0">
+              <Switch
+                checked={!isOptedOut && !globalOptOut}
+                disabled={globalOptOut}
+                onCheckedChange={handleToggleSafetyItinerary}
+              />
             </div>
           </div>
 
           <Separator />
 
           {isOwner ? (
-            <div className="space-y-3">
-              <h4 className="text-destructive text-sm font-medium">Delete Trip</h4>
+            <div className="flex flex-col gap-1">
+              <h4 className="text-destructive font-base">Delete Trip</h4>
               <p className="text-muted-foreground text-sm">
-                This will permanently delete &ldquo;{trip.name}&rdquo;.{' '}
-                {hasOtherMembers
-                  ? 'This will delete the trip for all members.'
-                  : 'This action cannot be undone.'}
+                This will permanently delete <strong>{trip.name}</strong>.{' '}
+                {hasOtherMembers && 'This will delete the trip for all members. '}
+                This action cannot be undone.
               </p>
-              <Input
-                placeholder="Type DELETE to confirm"
-                value={deleteConfirm}
-                onChange={(e) => setDeleteConfirm(e.target.value)}
-              />
-              <Button
-                variant="destructive"
-                disabled={deleteConfirm !== 'DELETE' || isDeleting}
-                onClick={handleDelete}
-                aria-label="Confirm delete"
-              >
-                {isDeleting ? 'Deleting...' : 'Confirm Delete'}
-              </Button>
+              <div className="mt-3 space-y-3">
+                <Input
+                  placeholder="Type DELETE to confirm"
+                  value={deleteConfirm}
+                  onChange={(e) => setDeleteConfirm(e.target.value)}
+                />
+                <Button
+                  variant="destructive"
+                  disabled={deleteConfirm !== 'DELETE' || isDeleting}
+                  onClick={handleDelete}
+                  aria-label="Confirm delete"
+                >
+                  {isDeleting ? 'Deleting...' : 'Confirm Delete'}
+                </Button>
+              </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              <h4 className="text-sm font-medium">Leave Trip</h4>
+            <div className="flex flex-col gap-1">
+              <h4 className="text-base font-medium">Leave Trip</h4>
               <p className="text-muted-foreground text-sm">
-                You will be removed from this trip. Other members will still see you in the Safety Itinerary.
+                You will be removed from this trip. Other members will still see that you left.
               </p>
-              <Input
-                placeholder="Type LEAVE to confirm"
-                value={leaveConfirm}
-                onChange={(e) => setLeaveConfirm(e.target.value)}
-              />
-              <Button
-                variant="destructive"
-                disabled={leaveConfirm !== 'LEAVE'}
-                onClick={handleLeave}
-                aria-label="Confirm leave"
-              >
-                Confirm Leave
-              </Button>
+              <div className="mt-3 space-y-3">
+                <Input
+                  placeholder="Type LEAVE to confirm"
+                  value={leaveConfirm}
+                  onChange={(e) => setLeaveConfirm(e.target.value)}
+                />
+                <Button
+                  variant="destructive"
+                  disabled={leaveConfirm !== 'LEAVE'}
+                  onClick={handleLeave}
+                  aria-label="Confirm leave"
+                >
+                  Confirm Leave
+                </Button>
+              </div>
             </div>
           )}
         </div>
