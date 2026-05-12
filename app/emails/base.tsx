@@ -76,7 +76,7 @@ export const BaseEmailTemplate = ({ heading, children, preview, url }: BaseEmail
             <Section className="bg-white py-6 dark:bg-gray-900">
               <Link href={url}>
                 <Img
-                  src={`${url}/icons/yak-brand.png`}
+                  src="https://packupapp.com/icons/yak-brand.png"
                   width="60"
                   height="33"
                   alt="Packup yak"
