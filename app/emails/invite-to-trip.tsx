@@ -1,22 +1,24 @@
 import { Column, Row, Section, Text } from '@react-email/components'
+import type { FC } from 'react'
 
+import type { InviteToTripEmailProps } from '../types/InviteToTrip'
 import BaseEmailTemplate from './base'
 import CallToAction from './components/call-to-action'
 import DarkAndLightIconsFromBase64 from './components/DarkAndLightIconsFromBase64'
 
-interface InviteToTripEmailProps {
-  invitedBy: string
-  email: string
-  greetingName: string
-  tripName: string
-  where: string
-  why: string
-  when: string
-  tags: string
-  url: string
+const testData: InviteToTripEmailProps = {
+  invitedBy: 'alex_hiker',
+  email: 'preview@example.com',
+  greetingName: 'Sam',
+  tripName: 'Garibaldi Lake overnight',
+  where: 'Rubble Creek Trailhead, BC',
+  why: 'Checking out the turquoise lake before the snow flies.',
+  when: 'Sep 14 - Sep 15, 2026',
+  tags: 'backpacking, alpine',
+  url: 'http://localhost:5173',
 }
 
-export const InviteToTripEmail = ({
+const InviteToTripEmailImpl: FC<InviteToTripEmailProps> = ({
   greetingName,
   invitedBy,
   tripName,
@@ -25,7 +27,7 @@ export const InviteToTripEmail = ({
   when,
   tags,
   url,
-}: InviteToTripEmailProps) => {
+}) => {
   return (
     <BaseEmailTemplate
       url={url}
@@ -35,7 +37,7 @@ export const InviteToTripEmail = ({
       <Text className="text-primary m-0 mb-6 text-left font-sans text-base leading-relaxed dark:text-gray-300">
         Hey{greetingName ? ` ${greetingName}` : ', there'}!<br />
         <b className="text-primary font-sans font-bold dark:text-gray-300">@{invitedBy}</b> has
-        created a trip on Packup and is inviting you to join in on the fun.
+        created a trip on Packup and is inviting you to join in on the adventure.
       </Text>
       <Section className="mb-10 rounded border border-solid border-gray-200 bg-gray-200/50 p-4 dark:border-gray-600 dark:bg-gray-700">
         <Text className="text-primary m-0 mb-2 text-left font-sans text-xs leading-relaxed font-semibold tracking-wide uppercase dark:text-gray-300">
@@ -110,6 +112,12 @@ export const InviteToTripEmail = ({
       <CallToAction text="View Trip Invitation" url={url} />
     </BaseEmailTemplate>
   )
+}
+
+export const InviteToTripEmail = Object.assign(InviteToTripEmailImpl, {
+  PreviewProps: testData,
+}) as FC<InviteToTripEmailProps> & {
+  PreviewProps: InviteToTripEmailProps
 }
 
 export default InviteToTripEmail

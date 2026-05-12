@@ -21,6 +21,13 @@ interface BaseEmailTemplateProps {
   url: string
 }
 
+function packupFontUrl(filename: string) {
+  if (typeof process !== 'undefined' && process.env.REACT_EMAIL_INTERNAL_USER_PROJECT_LOCATION) {
+    return `/static/fonts/${filename}`
+  }
+  return `https://packupapp.com/fonts/${filename}`
+}
+
 export const BaseEmailTemplate = ({ heading, children, preview, url }: BaseEmailTemplateProps) => {
   return (
     <Tailwind
@@ -53,7 +60,7 @@ export const BaseEmailTemplate = ({ heading, children, preview, url }: BaseEmail
             fontFamily="Packup"
             fallbackFontFamily="Verdana"
             webFont={{
-              url: 'https://packupapp.com/fonts/packup-regular-webfont.woff2',
+              url: packupFontUrl('packup-regular-webfont.woff2'),
               format: 'woff2',
             }}
             fontWeight={400}
@@ -63,7 +70,7 @@ export const BaseEmailTemplate = ({ heading, children, preview, url }: BaseEmail
             fontFamily="Packup"
             fallbackFontFamily="Verdana"
             webFont={{
-              url: 'https://packupapp.com/fonts/packup-bold-webfont.woff2',
+              url: packupFontUrl('packup-bold-webfont.woff2'),
               format: 'woff2',
             }}
             fontWeight={700}

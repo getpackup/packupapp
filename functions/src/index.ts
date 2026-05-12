@@ -8,15 +8,15 @@ import {
 import { onSchedule } from 'firebase-functions/v2/scheduler'
 import algoliasearch from 'algoliasearch'
 
-import { renderSafetyItineraryHtml } from './render-email'
+import { renderSafetyItineraryHtml } from './render-safety-itinerary-email'
+import { renderInviteToTripHtml } from './render-invite-to-trip-email'
 import { buildFirestoreDeps, processSafetyItineraries } from './safety-itinerary'
 import type { SafetyItineraryEmailPayload } from '../../app/types/SafetyItinerary'
 import type { User } from '../../app/types/User'
 import { formattedDateRange } from '../../app/lib/date'
 import { Trip } from '../../app/types/Trip'
-
-// TODO: update to use new email from app/emails/ dir
-import inviteToTripEmail from './invite-to-trip-email'
+import { InviteToTripEmailProps } from '../../app/types/InviteToTrip'
+import { toPlainText } from '@react-email/render'
 
 admin.initializeApp()
 
@@ -234,41 +234,69 @@ export const incrementTripCount = onDocumentCreated('trips/{documentId}', async 
 // Trip invitation email
 // ---------------------------------------------------------------------------
 
-export const sendInvitationToTripEmail = onRequest({ cors: true }, async (req, res) => {
-  const { to, subject, username, tripId, isTestEnv, greetingName } = req.query
+export const sendInvitationToTripEmail = onRequest(
+  {
+    cors: [
+      'http://localhost:4200',
+      'http://localhost:5173',
+      'https://packupapp.com',
+      'https://new.packupapp.com',
+    ],
+  },
+  async (req, res) => {
+    const { invitedBy, email, greetingName, tripName, where, why, when, tags } = req.query
 
-  if (
-    typeof greetingName === 'string' &&
-    typeof username === 'string' &&
-    typeof tripId === 'string'
-  ) {
+    if (
+      typeof invitedBy !== 'string' ||
+      typeof email !== 'string' ||
+      typeof greetingName !== 'string' ||
+      typeof tripName !== 'string' ||
+      typeof where !== 'string' ||
+      typeof why !== 'string' ||
+      typeof when !== 'string' ||
+      typeof tags !== 'string'
+    ) {
+      console.log({ invitedBy, email, greetingName, tripName, where, why, when, tags })
+      res.status(400).send('Missing required query parameters')
+      return
+    }
+
     const sgMail = await import('@sendgrid/mail')
     const apiKey = process.env.SENDGRID_API_KEY
     if (!apiKey) throw new Error('SENDGRID_API_KEY not configured')
     sgMail.default.setApiKey(apiKey)
 
-    const generatedEmail = inviteToTripEmail({
+    const payload = {
       greetingName,
-      username,
-      isTestEnv: isTestEnv === 'true',
-    })
+      tripName,
+      invitedBy,
+      email,
+      where,
+      why,
+      when,
+      tags,
+      url: process.env.APP_URL!,
+    }
+
+    const html = await renderInviteToTripHtml(payload)
+    const text = toPlainText(html)
 
     try {
       await sgMail.default.send({
-        from: 'The Packup Team <hello@getpackup.com>',
-        to: to as string,
-        subject: subject as string,
-        html: generatedEmail.htmlTemplate,
-        text: generatedEmail.textOnlyTemplate,
+        from: 'Packup <noreply@getpackup.com>',
+        to: email,
+        subject: `@${invitedBy} has invited you on a trip 🏕️`,
+        html,
+        text,
       })
       res.send('Email sent successfully')
-    } catch (error: any) {
-      res.send(error.toString())
+      return
+    } catch (error: unknown) {
+      res.send(error instanceof Error ? error.message : String(error))
+      return
     }
-  } else {
-    res.status(400).send('Missing required query parameters')
   }
-})
+)
 
 // ---------------------------------------------------------------------------
 // Safety Itinerary
@@ -285,12 +313,14 @@ export const sendSafetyItineraries = onSchedule('every day 12:00', async () => {
 
   const sendEmail = async (payload: SafetyItineraryEmailPayload): Promise<void> => {
     const html = await renderSafetyItineraryHtml(payload)
+    const text = toPlainText(html)
 
     await sgMail.default.send({
       to: payload.to,
       from: 'Packup <noreply@getpackup.com>',
       subject: `Safety Itinerary: ${payload.tripName}`,
       html,
+      text,
     })
   }
 

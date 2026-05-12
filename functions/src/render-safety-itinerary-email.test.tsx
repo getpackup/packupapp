@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { SafetyItineraryEmailPayload } from '../../app/types/SafetyItinerary'
 import { TripMemberStatus } from '../../app/types/TripMember'
-import { renderSafetyItineraryHtml } from './render-email'
+import { renderSafetyItineraryHtml } from './render-safety-itinerary-email'
 
 const basePayload: SafetyItineraryEmailPayload = {
   to: 'alice@example.com',
@@ -15,9 +15,7 @@ const basePayload: SafetyItineraryEmailPayload = {
     { displayName: 'Bob', status: TripMemberStatus.Accepted },
     { displayName: 'Charlie', status: TripMemberStatus.Pending },
   ],
-  emergencyContacts: [
-    { name: 'John Doe', phoneNumber: '+1-555-0100', email: 'john@example.com' },
-  ],
+  emergencyContacts: [{ name: 'John Doe', phoneNumber: '+1-555-0100', email: 'john@example.com' }],
   recipientUid: 'alice-uid',
 }
 
