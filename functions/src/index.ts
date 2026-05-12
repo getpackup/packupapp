@@ -126,8 +126,11 @@ export const newUserSignupPostToSlack = onDocumentCreated('users/{documentId}', 
   const newUserData = event.data?.data()
   const isAnonymous = newUserData?.isAnonymous
 
+  const webhookUrl = process.env.SLACK_NEW_USER_NOTIFS_CHANNEL_WEBHOOK_URL
+  if (!webhookUrl) throw new Error('SLACK_NEW_USER_NOTIFS_CHANNEL_WEBHOOK_URL not configured')
+
   await postToSlack(
-    process.env.SLACK_NEW_USER_NOTIFS_CHANNEL_WEBHOOK_URL!,
+    webhookUrl,
     `New :packup: user signup from ${isAnonymous ? 'Anonymous' : `${newUserData?.displayName} - ${newUserData?.email}`}!`
   )
 })
@@ -199,7 +202,10 @@ export const newTripCreatedPostToSlack = onDocumentCreated('trips/{documentId}',
 
   const fallbackText = `New Trip Created: ${tripName} (${dateRange})`
 
-  await postSlackIncomingWebhook(process.env.SLACK_NEW_TRIP_NOTIFS_CHANNEL_WEBHOOK_URL!, {
+  const webhookUrl = process.env.SLACK_NEW_TRIP_NOTIFS_CHANNEL_WEBHOOK_URL
+  if (!webhookUrl) throw new Error('SLACK_NEW_TRIP_NOTIFS_CHANNEL_WEBHOOK_URL not configured')
+
+  await postSlackIncomingWebhook(webhookUrl, {
     text: fallbackText,
     blocks: [
       {
