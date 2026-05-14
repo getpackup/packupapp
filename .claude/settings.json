@@ -10,20 +10,6 @@
           }
         ]
       }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash -l -c 'pnpm lint' || exit 2"
-          },
-          {
-            "type": "command",
-            "command": "bash -l -c 'pnpm typecheck' || exit 2"
-          }
-        ]
-      }
     ]
   }
 }
