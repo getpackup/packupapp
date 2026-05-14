@@ -147,7 +147,9 @@ const NewTripForm = ({}: NewTripFormProps) => {
           }
         } catch (genErr) {
           console.error('Packing list generation failed:', genErr)
-          toast.success('Trip created (packing list generation failed — you can retry from the trip page)')
+          toast.success(
+            'Trip created (packing list generation failed — you can retry from the trip page)'
+          )
         }
       } else {
         toast.success('Trip created')
@@ -199,12 +201,7 @@ const NewTripForm = ({}: NewTripFormProps) => {
             >
               Previous
             </Button>
-            <Button
-              type="button"
-              variant="accent"
-              onClick={handleNext}
-              disabled={isSubmitting}
-            >
+            <Button type="button" variant="accent" onClick={handleNext} disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {isLastStep ? (isSubmitting ? 'Creating...' : 'Create trip') : 'Next'}
             </Button>

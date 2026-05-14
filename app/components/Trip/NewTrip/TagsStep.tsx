@@ -11,9 +11,6 @@ import {
   gearListCampKitchen,
   gearListOtherConsiderations,
 } from '~/lib/gearListItemEnum'
-import { getTagDotClass } from '~/lib/tagColors'
-import { useCustomTagColorMap } from '~/lib/useCustomTagColorMap'
-import { cn } from '~/lib/utils'
 import { useGearClosetQuery } from '~/services/gear'
 
 import AnimatedContainer from '../../AnimatedContainer'
@@ -35,7 +32,6 @@ const TagsStep = ({ form }: TagsStepProps) => {
   const userId = user?.uid ?? ''
   const { data: closet } = useGearClosetQuery({ userId, queryOptions: { enabled: !!userId } })
   const customTags = closet?.customTags ?? []
-  const colorMap = useCustomTagColorMap(userId)
   const tags = form.watch('tags') ?? []
 
   const toggleTag = (key: string) => {
@@ -58,7 +54,7 @@ const TagsStep = ({ form }: TagsStepProps) => {
           <div className="space-y-6">
             {activityGroups.map((group) => (
               <div key={group.label}>
-                <h4 className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wider">
+                <h4 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
                   {group.label}
                 </h4>
                 <div className="grid grid-cols-2 gap-2">
@@ -79,8 +75,8 @@ const TagsStep = ({ form }: TagsStepProps) => {
             ))}
             {customTags.length > 0 && (
               <div>
-                <h4 className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wider">
-                  Custom Tags
+                <h4 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
+                  My Custom Tags
                 </h4>
                 <div className="grid grid-cols-2 gap-2">
                   {customTags.map((ct) => (
@@ -92,12 +88,7 @@ const TagsStep = ({ form }: TagsStepProps) => {
                         checked={tags.includes(ct.name)}
                         onCheckedChange={() => toggleTag(ct.name)}
                       />
-                      <span
-                        className={cn(
-                          'inline-block h-2 w-2 shrink-0 rounded-full',
-                          getTagDotClass(ct.name, colorMap)
-                        )}
-                      />
+
                       {ct.name}
                     </label>
                   ))}

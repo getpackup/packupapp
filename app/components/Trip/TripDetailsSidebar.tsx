@@ -62,6 +62,14 @@ const SubHeading = ({ children }: { children: React.ReactNode }) => {
   )
 }
 
+const EllipsisButtonWrapper = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <div className="focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-muted hover:text-muted-foreground inline-flex size-8 shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+      {children}
+    </div>
+  )
+}
+
 const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
   const { user } = useAuth()
   const [showAllMembers, setShowAllMembers] = useState(false)
@@ -75,9 +83,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
   const colorMap = useCustomTagColorMap(userId)
   const customTagNames = new Set(customTagDefs.map((ct) => ct.name))
 
-  const onlyCustomTags = trip
-    ? trip.tags.filter((tag) => customTagNames.has(tag))
-    : []
+  const onlyCustomTags = trip ? trip.tags.filter((tag) => customTagNames.has(tag)) : []
 
   const customTagOptions = customTagDefs.map((ct) => ({
     name: ct.name,
@@ -228,24 +234,32 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           <EditTripTags tags={onlyActivityTags} options={gearListActivities} name="Activities">
             <SubHeading>
               Activities{' '}
-              <div className="focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-muted hover:text-muted-foreground inline-flex size-8 shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+              <EllipsisButtonWrapper>
                 <Ellipsis className="h-4 w-4" />
-              </div>
+              </EllipsisButtonWrapper>
             </SubHeading>
           </EditTripTags>
           <SidebarItem>
             <div className="flex flex-wrap items-center gap-2">
-              {onlyActivityTags.map((tag: string) => (
-                <Badge key={`${tag}tag`} variant="secondary" className="flex items-center gap-1.5">
-                  <span
-                    className={cn(
-                      'inline-block h-2 w-2 shrink-0 rounded-full',
-                      getTagDotClass(tag, colorMap)
-                    )}
-                  />
-                  {tag}
-                </Badge>
-              ))}
+              {onlyActivityTags.length > 0 ? (
+                onlyActivityTags.map((tag: string) => (
+                  <Badge
+                    key={`${tag}tag`}
+                    variant="secondary"
+                    className="flex items-center gap-1.5"
+                  >
+                    <span
+                      className={cn(
+                        'inline-block h-2 w-2 shrink-0 rounded-full',
+                        getTagDotClass(tag, colorMap)
+                      )}
+                    />
+                    {tag}
+                  </Badge>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-xs italic">No Activities tags added</p>
+              )}
             </div>
           </SidebarItem>
           <EditTripTags
@@ -255,24 +269,34 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           >
             <SubHeading>
               Accommodations/Kitchen{' '}
-              <div className="focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-muted hover:text-muted-foreground inline-flex size-8 shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+              <EllipsisButtonWrapper>
                 <Ellipsis className="h-4 w-4" />
-              </div>
+              </EllipsisButtonWrapper>
             </SubHeading>
           </EditTripTags>
           <SidebarItem>
             <div className="flex flex-wrap items-center gap-2">
-              {onlyAccommodationOrCampKitchenTags.map((tag: string) => (
-                <Badge key={`${tag}tag`} variant="secondary" className="flex items-center gap-1.5">
-                  <span
-                    className={cn(
-                      'inline-block h-2 w-2 shrink-0 rounded-full',
-                      getTagDotClass(tag, colorMap)
-                    )}
-                  />
-                  {tag}
-                </Badge>
-              ))}
+              {onlyAccommodationOrCampKitchenTags.length > 0 ? (
+                onlyAccommodationOrCampKitchenTags.map((tag: string) => (
+                  <Badge
+                    key={`${tag}tag`}
+                    variant="secondary"
+                    className="flex items-center gap-1.5"
+                  >
+                    <span
+                      className={cn(
+                        'inline-block h-2 w-2 shrink-0 rounded-full',
+                        getTagDotClass(tag, colorMap)
+                      )}
+                    />
+                    {tag}
+                  </Badge>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-xs italic">
+                  No other Accommodations/Kitchen tags added
+                </p>
+              )}
             </div>
           </SidebarItem>
           <EditTripTags
@@ -282,53 +306,67 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           >
             <SubHeading>
               Other Considerations{' '}
-              <div className="focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-muted hover:text-muted-foreground inline-flex size-8 shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+              <EllipsisButtonWrapper>
                 <Ellipsis className="h-4 w-4" />
-              </div>
+              </EllipsisButtonWrapper>
             </SubHeading>
           </EditTripTags>
           <SidebarItem>
             <div className="flex flex-wrap items-center gap-2">
-              {onlyOtherConsiderationsTags.map((tag: string) => (
-                <Badge key={`${tag}tag`} variant="secondary" className="flex items-center gap-1.5">
-                  <span
-                    className={cn(
-                      'inline-block h-2 w-2 shrink-0 rounded-full',
-                      getTagDotClass(tag, colorMap)
-                    )}
-                  />
-                  {tag}
-                </Badge>
-              ))}
+              {onlyOtherConsiderationsTags.length > 0 ? (
+                onlyOtherConsiderationsTags.map((tag: string) => (
+                  <Badge
+                    key={`${tag}tag`}
+                    variant="secondary"
+                    className="flex items-center gap-1.5"
+                  >
+                    <span
+                      className={cn(
+                        'inline-block h-2 w-2 shrink-0 rounded-full',
+                        getTagDotClass(tag, colorMap)
+                      )}
+                    />
+                    {tag}
+                  </Badge>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-xs italic">
+                  No Other Considerations tags added
+                </p>
+              )}
             </div>
           </SidebarItem>
           {customTagDefs.length > 0 && (
             <>
-              <EditTripTags
-                tags={onlyCustomTags}
-                options={customTagOptions}
-                name="Custom Tags"
-              >
+              <EditTripTags tags={onlyCustomTags} options={customTagOptions} name="Custom Tags">
                 <SubHeading>
                   Custom Tags{' '}
-                  <div className="focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-muted hover:text-muted-foreground inline-flex size-8 shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+                  <EllipsisButtonWrapper>
                     <Ellipsis className="h-4 w-4" />
-                  </div>
+                  </EllipsisButtonWrapper>
                 </SubHeading>
               </EditTripTags>
               <SidebarItem>
                 <div className="flex flex-wrap items-center gap-2">
-                  {onlyCustomTags.map((tag: string) => (
-                    <Badge key={`${tag}tag`} variant="secondary" className="flex items-center gap-1.5">
-                      <span
-                        className={cn(
-                          'inline-block h-2 w-2 shrink-0 rounded-full',
-                          getTagDotClass(tag, colorMap)
-                        )}
-                      />
-                      {tag}
-                    </Badge>
-                  ))}
+                  {onlyCustomTags.length > 0 ? (
+                    onlyCustomTags.map((tag: string) => (
+                      <Badge
+                        key={`${tag}tag`}
+                        variant="secondary"
+                        className="flex items-center gap-1.5"
+                      >
+                        <span
+                          className={cn(
+                            'inline-block h-2 w-2 shrink-0 rounded-full',
+                            getTagDotClass(tag, colorMap)
+                          )}
+                        />
+                        {tag}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground text-xs italic">No Custom Tags added</p>
+                  )}
                 </div>
               </SidebarItem>
             </>
