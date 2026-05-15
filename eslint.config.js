@@ -8,7 +8,17 @@ import typescriptPlugin from '@typescript-eslint/eslint-plugin'
 
 export default [
   {
-    ignores: ['node_modules', 'build', '.cache', '.react-router/**', 'react-router.config.ts', '**/*.test.ts', '**/*.test.tsx'],
+    ignores: [
+      'node_modules',
+      'build',
+      '.cache',
+      '.react-router/**',
+      'react-router.config.ts',
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      '.sandcastle/**',
+      'functions/**',
+    ],
   },
   {
     files: ['./app/**/*.{js,jsx,ts,tsx}'],
