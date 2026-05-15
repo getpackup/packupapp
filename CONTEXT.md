@@ -40,6 +40,39 @@ _Avoid_: Gear library, gear templates, inventory
 The tags a registered user has selected most often across their past trips, derived from a count stored on the User record (`tagCounts`). Surfaced at the top of the tag selection step during trip creation — unchecked by default — to speed up selection. The section is hidden entirely when no counts exist. Capped at a configurable maximum (default 5–6) to keep the signal useful. Predefined tags (activities, accommodations, camp kitchen, other considerations) and custom tags from the user's Gear Closet are both eligible; custom tags that have since been deleted from the Gear Closet are filtered out at display time. Counts are incremented at trip creation only.
 _Avoid_: Frequently used tags, recent favorites, popular tags
 
+### Friends & Social
+
+**Friend**:
+A registered user who has a mutual, accepted connection with another registered user. Both sides must have consented — one by sending a Friend Request, the other by accepting it.
+_Avoid_: Connection, follower, contact
+
+**Friend Request**:
+A pending invitation from one registered user to another to become Friends. The recipient must Accept or Decline it; until then, no friendship exists. Distinct from a Trip Invitation.
+_Avoid_: Friend invitation, connection request, follow request
+
+**Send Friend Request**:
+The act of initiating a Friend Request. Does not create a friendship until the recipient accepts.
+_Avoid_: Add friend, follow, connect
+
+**Accept / Decline**:
+The two possible responses to a Friend Request. Accepting creates a mutual Friend relationship; Declining does not. A Declined Friend Request leaves no visible trace to the sender. A sender whose request was Declined may re-send after a 30-day cooldown.
+_Avoid_: Approve, reject, ignore (use Decline)
+
+**Unfriend**:
+The act of removing a mutual Friend relationship. Either party can Unfriend the other at any time. The action is silent — the removed person receives no notification and simply no longer appears in each other's Friends lists.
+_Avoid_: Remove friend, disconnect, block (Unfriend is not the same as blocking)
+
+**Friend Request Notification**:
+When a Friend Request is received, the recipient sees an in-app badge on the Friends nav item and receives an email notification. Email can be disabled per-user via a preference in Settings (analogous to the Safety Itinerary opt-out). In-app badge cannot be disabled.
+
+**Trip Invitation**:
+An invitation to join a specific Trip as a Trip Member. Distinct from a Friend Request — the two can be bundled together when inviting a non-Friend to a trip, but are independent: accepting one does not require accepting the other.
+_Avoid_: Trip invite (in formal copy — fine in UI shorthand)
+
+**Public Profile** _(planned)_:
+A per-user page visible to others, showing name, avatar, bio, and location to anyone; past trip history visible to Friends only. Trip history is opt-out: trips appear on a user's profile by default, and each Trip Member independently controls whether to hide individual trips from their profile. Non-friends and logged-out visitors see name, avatar, bio, and location only — no trip history. Designed to support an asymmetric Follow model in the future (where anyone can follow a public profile for trip content) without requiring a redesign — "visible to Friends" is a placeholder for "visible to Followers."
+_Avoid_: Profile page (too generic — the public-facing view is the Public Profile; the editing surface is Settings)
+
 ### Users & Identity
 
 **Anonymous User**:
@@ -76,6 +109,9 @@ _Avoid_: Take, grab, pick
 
 ## Relationships
 
+- A **Friend** relationship is mutual and symmetric — both users must consent; neither is "following" the other
+- A **Friend Request** is directional until accepted, at which point it becomes a symmetric **Friend** relationship; a Declined request can be re-sent after 30 days
+- A **Trip Invitation** and a **Friend Request** can be sent together when inviting a non-Friend to a trip, but are resolved independently
 - A **Trip** has one or more **Trip Members** (requires a registered account)
 - A **Trip** contains many **Packing List Items**, each of which is either a **Group Item** or a **Personal Item**
 - A **Packing List Item** can be **Assigned** to one or more **Trip Members**, or **Claimed** by a member themselves
