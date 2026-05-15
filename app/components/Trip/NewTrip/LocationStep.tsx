@@ -1,4 +1,3 @@
-import { MoveRight } from 'lucide-react'
 import { useRef, useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { z } from 'zod'
@@ -18,11 +17,15 @@ const LocationStep = ({ form }: LocationStepProps) => {
   const [predictions, setPredictions] = useState<PlacePrediction[]>([])
   const { isPlacesReady, fetchAutocompleteSuggestions, fetchPlaceDetails, getLatLngFromPlace } =
     useGooglePlaces()
+  const { errors } = form.formState
 
   // Debounced predictions
   const debouncedFetch = useRef<number | null>(null)
   const handleNameChange = (value: string) => {
-    form.setValue('startingPoint', value, { shouldDirty: true })
+    form.setValue('startingPoint', value, {
+      shouldDirty: true,
+      shouldValidate: !!errors.startingPoint,
+    })
 
     if (!isPlacesReady) {
       setPredictions([])
@@ -40,7 +43,11 @@ const LocationStep = ({ form }: LocationStepProps) => {
     // Fill startingPoint immediately
     form.setValue('startingPoint', prediction.description, { shouldDirty: true })
     if (!form.getValues('name')) {
-      form.setValue('name', `Trip to ${prediction.description}`, { shouldDirty: true })
+      form.setValue('name', `Trip to ${prediction.description}`, {
+        shouldDirty: true,
+        shouldValidate: true,
+        shouldTouch: true,
+      })
     }
 
     // Fetch place details to get lat/lng
@@ -56,9 +63,6 @@ const LocationStep = ({ form }: LocationStepProps) => {
 
   return (
     <AnimatedContainer key="location" animation="scaleAndFadeIn">
-      <span className="text-muted-foreground flex items-center gap-2 text-sm tracking-wider">
-        <MoveRight className="size-4" /> About your trip
-      </span>
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Where are you headed?</h1>
         <FormField
@@ -86,7 +90,7 @@ const LocationStep = ({ form }: LocationStepProps) => {
         />
         <div className="mb-2">
           {predictions.length > 0 && (
-            <ul className="max-h-[200px] divide-y overflow-y-auto rounded border">
+            <ul className="max-h-50 divide-y overflow-y-auto rounded border">
               {predictions.map((p) => (
                 <li
                   key={p.place_id}

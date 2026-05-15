@@ -36,6 +36,10 @@ _Avoid_: Buy list, purchase list, pre-trip list
 A personal inventory of gear a user owns, seeded from a default list and fully customizable. Scoped to a single user, not a trip.
 _Avoid_: Gear library, gear templates, inventory
 
+**Frequent Tags**:
+The tags a registered user has selected most often across their past trips, derived from a count stored on the User record (`tagCounts`). Surfaced at the top of the tag selection step during trip creation — unchecked by default — to speed up selection. The section is hidden entirely when no counts exist. Capped at a configurable maximum (default 5–6) to keep the signal useful. Predefined tags (activities, accommodations, camp kitchen, other considerations) and custom tags from the user's Gear Closet are both eligible; custom tags that have since been deleted from the Gear Closet are filtered out at display time. Counts are incremented at trip creation only.
+_Avoid_: Frequently used tags, recent favorites, popular tags
+
 ### Users & Identity
 
 **Anonymous User**:

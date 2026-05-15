@@ -1,4 +1,4 @@
-import { ImageIcon, MapIcon, MoveRight } from 'lucide-react'
+import { ImageIcon, MapIcon } from 'lucide-react'
 import { useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { z } from 'zod'
@@ -55,7 +55,7 @@ const predefinedChoices = [
 const HeaderImageStep = ({ form }: HeaderImageStepProps) => {
   const [imageType, setImageType] = useState<'map' | 'library' | undefined>(
     form.getValues('headerImage') === undefined
-      ? undefined
+      ? 'map'
       : form.getValues('headerImage') === ''
         ? 'map'
         : 'library'
@@ -68,9 +68,6 @@ const HeaderImageStep = ({ form }: HeaderImageStepProps) => {
 
   return (
     <AnimatedContainer key="location" animation="scaleAndFadeIn">
-      <span className="text-muted-foreground flex items-center gap-2 text-sm tracking-wider">
-        <MoveRight className="size-4" /> About your trip
-      </span>
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">What image do you want to use for your trip?</h1>
         <div className="grid grid-cols-2 gap-2">
@@ -142,7 +139,7 @@ const HeaderImageStep = ({ form }: HeaderImageStepProps) => {
             ) : (
               <>
                 <Label>Select an image</Label>
-                <div className="mb-1 h-[200px] w-full space-y-4 overflow-y-auto rounded-md border p-4">
+                <div className="mb-1 h-50 w-full space-y-4 overflow-y-auto rounded-md border p-4">
                   {predefinedChoices.map((img, index) => (
                     <div
                       key={img}

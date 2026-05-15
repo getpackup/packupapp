@@ -1,4 +1,3 @@
-import { MoveRight } from 'lucide-react'
 import type { UseFormReturn } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -14,9 +13,6 @@ type NameStepProps = {
 const NameStep = ({ form }: NameStepProps) => {
   return (
     <AnimatedContainer key="location" animation="scaleAndFadeIn">
-      <span className="text-muted-foreground flex items-center gap-2 text-sm tracking-wider">
-        <MoveRight className="size-4" /> About your trip
-      </span>
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">What do you want to call this adventure?</h1>
         <FormField

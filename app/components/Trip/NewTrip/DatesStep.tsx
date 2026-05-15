@@ -1,4 +1,3 @@
-import { MoveRight } from 'lucide-react'
 import { useState } from 'react'
 import { type DateRange } from 'react-day-picker'
 import type { UseFormReturn } from 'react-hook-form'
@@ -18,20 +17,21 @@ const DatesStep = ({ form }: DatesStepProps) => {
     from: form.getValues('startDate'),
     to: form.getValues('endDate'),
   })
+  const { errors } = form.formState
 
   const onSelect = (dateRange: DateRange | undefined) => {
     const from = dateRange?.from
     const to = dateRange?.to
     setDateRange({ from, to })
-    form.setValue('startDate', from)
-    form.setValue('endDate', to)
+    if (typeof from === 'undefined' || typeof to === 'undefined') {
+      return
+    }
+    form.setValue('startDate', from, { shouldValidate: !!errors.startDate })
+    form.setValue('endDate', to, { shouldValidate: !!errors.endDate })
   }
 
   return (
     <AnimatedContainer key="location" animation="scaleAndFadeIn">
-      <span className="text-muted-foreground flex items-center gap-2 text-sm tracking-wider">
-        <MoveRight className="size-4" /> About your trip
-      </span>
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">When are you going?</h1>
 
@@ -43,7 +43,13 @@ const DatesStep = ({ form }: DatesStepProps) => {
           captionLayout="label"
           numberOfMonths={2}
           disabled={{ before: new Date() }}
+          className="w-full"
         />
+        {(form.formState.errors.startDate || form.formState.errors.endDate) && (
+          <p className="text-destructive text-sm">
+            {form.formState.errors.startDate?.message ?? form.formState.errors.endDate?.message}
+          </p>
+        )}
       </div>
     </AnimatedContainer>
   )

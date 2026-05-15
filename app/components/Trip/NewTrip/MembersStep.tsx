@@ -1,11 +1,10 @@
 import type { SearchResponse } from 'algoliasearch'
 import { Timestamp } from 'firebase/firestore'
-import { Check, Loader2, MoveRight, Plus, UserIcon, Users, X } from 'lucide-react'
+import { Check, Loader2, Plus, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { z } from 'zod'
 
-import { AspectRatio } from '~/components/ui/aspect-ratio'
 import { Button } from '~/components/ui/button'
 import UserMediaObject from '~/components/UserMediaObject'
 import useAuth from '~/contexts/auth/useAuth'
@@ -28,12 +27,11 @@ import { newTripFormSchema } from '.'
 
 type MembersStepProps = {
   form: UseFormReturn<z.infer<typeof newTripFormSchema>>
-  setStep: (step: number) => void
   tripMembers: User[]
   setTripMembers: (members: User[]) => void
 }
 
-const MembersStep = ({ form, setStep, tripMembers, setTripMembers }: MembersStepProps) => {
+const MembersStep = ({ form, tripMembers, setTripMembers }: MembersStepProps) => {
   const { user } = useAuth()
 
   const [searchValueTimeout, setSearchValueTimeout] = useState<NodeJS.Timeout | null>(null)
@@ -146,32 +144,8 @@ const MembersStep = ({ form, setStep, tripMembers, setTripMembers }: MembersStep
 
   return (
     <AnimatedContainer key="location" animation="scaleAndFadeIn">
-      <span className="text-muted-foreground flex items-center gap-2 text-sm tracking-wider">
-        <MoveRight className="size-4" /> About your trip
-      </span>
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Anyone else coming along?</h1>
-
-        {tripMembers.length === 0 && (
-          <div className="grid grid-cols-2 gap-2">
-            <AspectRatio
-              ratio={3 / 2}
-              className="hover:bg-muted flex cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border p-4"
-              onClick={() => setStep(3)}
-            >
-              <UserIcon className="size-8" />
-              Nope, just me
-            </AspectRatio>
-            <AspectRatio
-              ratio={3 / 2}
-              className="hover:bg-muted flex cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border p-4"
-              onClick={() => setTripMembers([user!])}
-            >
-              <Users className="size-8" />
-              Add trip party members
-            </AspectRatio>
-          </div>
-        )}
 
         {tripMembers.length > 0 &&
           tripMembers.map((member) => {
@@ -255,7 +229,7 @@ const MembersStep = ({ form, setStep, tripMembers, setTripMembers }: MembersStep
               )}
             />
 
-            <div className="max-h-[200px] space-y-2 overflow-y-auto">
+            <div className="max-h-50 space-y-2 overflow-y-auto">
               {hits.length > 0 &&
                 hits
                   .filter((hit) => hit.uid !== user?.uid)

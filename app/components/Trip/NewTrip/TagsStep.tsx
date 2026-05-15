@@ -1,4 +1,3 @@
-import { MoveRight } from 'lucide-react'
 import type { UseFormReturn } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -20,7 +19,7 @@ type TagsStepProps = {
   form: UseFormReturn<z.infer<typeof newTripFormSchema>>
 }
 
-const activityGroups = [
+const tagGroups = [
   { label: 'Activities', items: gearListActivities },
   { label: 'Accommodations', items: gearListAccommodations },
   { label: 'Camp Kitchen', items: gearListCampKitchen },
@@ -42,17 +41,14 @@ const TagsStep = ({ form }: TagsStepProps) => {
 
   return (
     <AnimatedContainer key="tags" animation="scaleAndFadeIn">
-      <span className="text-muted-foreground flex items-center gap-2 text-sm tracking-wider">
-        <MoveRight className="size-4" /> About your trip
-      </span>
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">What are you doing on this trip?</h1>
         <p className="text-muted-foreground text-sm">
-          Select activities to auto-generate a packing list from your gear closet.
+          Select tags to auto-generate a packing list from your gear closet.
         </p>
         <ScrollArea className="max-h-[350px] overflow-y-auto pr-3">
           <div className="space-y-6">
-            {activityGroups.map((group) => (
+            {tagGroups.map((group) => (
               <div key={group.label}>
                 <h4 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
                   {group.label}

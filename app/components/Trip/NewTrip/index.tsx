@@ -3,7 +3,7 @@ import { differenceInCalendarDays, endOfDay, startOfDay } from 'date-fns'
 import { Timestamp } from 'firebase/firestore'
 import { Loader2 } from 'lucide-react'
 import { AnimatePresence } from 'motion/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
@@ -29,7 +29,7 @@ import TagsStep from './TagsStep'
 type NewTripFormProps = {}
 
 export const newTripFormSchema = z.object({
-  startingPoint: z.string(),
+  startingPoint: z.string().min(3, { message: 'Location must be at least 3 characters' }),
   lat: z
     .number()
     .min(-90, { message: 'Latitude must be between -90 and 90' })
@@ -38,28 +38,42 @@ export const newTripFormSchema = z.object({
     .number()
     .min(-180, { message: 'Longitude must be between -180 and 180' })
     .max(180, { message: 'Longitude must be between -180 and 180' }),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
+  startDate: z.date({ error: 'Start date is required' }),
+  endDate: z.date({ error: 'End date is required' }),
   memberSearchValue: z.string().optional(),
   name: z
     .string()
     .min(3, { message: 'Name must be at least 3 characters' })
-    .max(50, { message: 'Name must be less than 50 characters' }),
+    .max(100, { message: 'Name must be less than 100 characters' }),
   headerImage: z.string().optional(),
   tags: z.array(z.string()).optional(),
 })
 
 const TOTAL_STEPS = 6
 
+const STEPS_WITH_REQUIRED_FIELDS: Partial<
+  Record<number, (keyof z.infer<typeof newTripFormSchema>)[]>
+> = {
+  0: ['startingPoint'],
+  1: ['startDate', 'endDate'],
+  3: ['name'],
+}
+
 const NewTripForm = ({}: NewTripFormProps) => {
+  const { user } = useAuth()
   const [step, setStep] = useState<number>(0)
   const [tripMembers, setTripMembers] = useState<User[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const { user } = useAuth()
   const navigate = useNavigate()
   const { mutateAsync: createTrip } = useCreateTrip()
   const { mutateAsync: generatePackingList } = useGeneratePackingList()
+
+  useEffect(() => {
+    if (user) {
+      setTripMembers([user])
+    }
+  }, [user])
 
   const form = useForm<z.infer<typeof newTripFormSchema>>({
     resolver: zodResolver(newTripFormSchema),
@@ -164,9 +178,15 @@ const NewTripForm = ({}: NewTripFormProps) => {
 
   const isLastStep = step === TOTAL_STEPS - 1
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    const fields = STEPS_WITH_REQUIRED_FIELDS[step]
+    if (fields) {
+      const valid = await form.trigger(fields)
+      if (!valid) return
+    }
     if (isLastStep) {
-      form.handleSubmit(onSubmit)()
+      console.log(form.getValues())
+      // form.handleSubmit(onSubmit)()
     } else {
       setStep(step + 1)
     }
@@ -183,7 +203,6 @@ const NewTripForm = ({}: NewTripFormProps) => {
               <MembersStep
                 key="members"
                 form={form}
-                setStep={setStep}
                 tripMembers={tripMembers}
                 setTripMembers={setTripMembers}
               />
