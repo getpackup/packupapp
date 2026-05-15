@@ -14,6 +14,7 @@ import useAuth from '~/contexts/auth/useAuth'
 import { activityKeyToLabel } from '~/lib/gearFilterUtils'
 import { allGearListItems } from '~/lib/gearListItemEnum'
 import { useCreateTrip, useGeneratePackingList } from '~/services/trips'
+import { useIncrementTagCounts } from '~/services/users'
 import type { ActivityTypes } from '~/types/GearItem'
 import { TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
@@ -68,6 +69,7 @@ const NewTripForm = ({}: NewTripFormProps) => {
   const navigate = useNavigate()
   const { mutateAsync: createTrip } = useCreateTrip()
   const { mutateAsync: generatePackingList } = useGeneratePackingList()
+  const { mutate: incrementTagCounts } = useIncrementTagCounts(user?.uid ?? '')
 
   useEffect(() => {
     if (user) {
@@ -145,6 +147,10 @@ const NewTripForm = ({}: NewTripFormProps) => {
         },
         tripMembers: tripMembersMap,
       })
+
+      if (allTags.length > 0) {
+        incrementTagCounts({ tags: allTags })
+      }
 
       if (activityKeys.length > 0 || customTagValues.length > 0) {
         try {
