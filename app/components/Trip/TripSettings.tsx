@@ -110,6 +110,7 @@ export function TripSettings({ trip }: { trip: Trip }) {
             </div>
             <div className="shrink-0">
               <Switch
+                aria-label="Safety Itinerary Email"
                 checked={!isOptedOut && !globalOptOut}
                 disabled={globalOptOut}
                 onCheckedChange={handleToggleSafetyItinerary}

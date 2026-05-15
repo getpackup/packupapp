@@ -202,14 +202,14 @@ describe('TripSettings', () => {
       const user = userEvent.setup()
       renderAsOwner()
       await user.click(screen.getByRole('button', { name: /trip settings/i }))
-      expect(screen.getByRole('checkbox', { name: /safety itinerary/i })).toBeInTheDocument()
+      expect(screen.getByRole('switch', { name: /safety itinerary/i })).toBeInTheDocument()
     })
 
     it('shows the safety itinerary toggle for non-owner', async () => {
       const user = userEvent.setup()
       renderAsMember()
       await user.click(screen.getByRole('button', { name: /trip settings/i }))
-      expect(screen.getByRole('checkbox', { name: /safety itinerary/i })).toBeInTheDocument()
+      expect(screen.getByRole('switch', { name: /safety itinerary/i })).toBeInTheDocument()
     })
 
     it('toggle reflects current safetyItineraryOptedOut value', async () => {
@@ -226,7 +226,7 @@ describe('TripSettings', () => {
         },
       })
       await user.click(screen.getByRole('button', { name: /trip settings/i }))
-      const checkbox = screen.getByRole('checkbox', { name: /safety itinerary/i })
+      const checkbox = screen.getByRole('switch', { name: /safety itinerary/i })
       expect(checkbox).not.toBeChecked()
     })
 
@@ -238,7 +238,7 @@ describe('TripSettings', () => {
       const user = userEvent.setup()
       renderAsMember()
       await user.click(screen.getByRole('button', { name: /trip settings/i }))
-      await user.click(screen.getByRole('checkbox', { name: /safety itinerary/i }))
+      await user.click(screen.getByRole('switch', { name: /safety itinerary/i }))
       expect(mockUpdateAsync).toHaveBeenCalledWith({
         data: {
           [`tripMembers.member-uid`]: expect.objectContaining({
@@ -252,7 +252,7 @@ describe('TripSettings', () => {
       const user = userEvent.setup()
       renderAsMember({}, { preferences: { safetyItineraryEnabled: false } })
       await user.click(screen.getByRole('button', { name: /trip settings/i }))
-      const checkbox = screen.getByRole('checkbox', { name: /safety itinerary/i })
+      const checkbox = screen.getByRole('switch', { name: /safety itinerary/i })
       expect(checkbox).toBeDisabled()
     })
 

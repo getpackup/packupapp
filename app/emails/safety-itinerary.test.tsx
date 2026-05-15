@@ -77,9 +77,9 @@ describe('SafetyItineraryEmail', () => {
 
   it('renders SAR and emergency number placeholder lines', async () => {
     const html = await render(<SafetyItineraryEmail {...baseProps} />)
-    expect(html).toContain('Local SAR')
-    expect(html).toContain('Area Emergency Number')
-    expect(html).toContain('___________')
+    expect(html).toContain('Search')
+    expect(html).toContain('Non-Emergency Line')
+    expect(html).toContain('Ranger District')
   })
 
   it('renders without errors with minimal props (no contacts, no description)', async () => {
