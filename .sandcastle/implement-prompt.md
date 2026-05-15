@@ -22,7 +22,7 @@ Here are the last 10 commits:
 
 Explore the repo and fill your context window with relevant information that will allow you to complete the task.
 
-Pay extra attention to test files that touch the relevant parts of the code.
+Before writing any test, read at least two existing `.test.tsx` files in the same or a sibling directory. Copy their import style (relative paths only — never `~` aliases) and their `vi.mock` patterns verbatim. This avoids wasting iterations on path resolution and Firebase/jsdom compatibility issues that are already solved in the existing tests.
 
 # EXECUTION
 

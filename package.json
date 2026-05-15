@@ -125,6 +125,10 @@
       "protobufjs",
       "sharp",
       "@firebase/util"
-    ]
+    ],
+    "supportedArchitectures": {
+      "os": ["darwin", "linux"],
+      "cpu": ["x64", "arm64"]
+    }
   }
 }

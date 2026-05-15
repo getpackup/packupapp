@@ -81,3 +81,68 @@ This is a **React Router v7** application with server-side rendering using a ful
 
 ### Comments
 DO NOT add comments to code explaining what the code is doing unless it is overly complex. Only add comments to help a developer understand why the code is doing what it is doing.
+
+## Testing
+
+**Runner:** `pnpm test` (vitest, jsdom environment, globals enabled)
+
+### Before writing any test
+
+Read at least two existing test files in the same directory or a sibling directory. The mocking patterns differ by context and copying them directly is faster than reasoning from scratch.
+
+### Path aliases
+
+**Never use `~` aliases in test files.** Use relative imports only. `vite-tsconfig-paths` handles `~` in app code but it is unreliable in the vitest/jsdom environment.
+
+```ts
+// Wrong
+import { useAuth } from '~/contexts/auth/useAuth'
+
+// Correct
+import { useAuth } from '../../contexts/auth/useAuth'
+```
+
+### Firebase in tests
+
+Firebase does not work under jsdom. Any file that imports Firebase directly or transitively will crash the test runner. **Mock at the service layer, not at the Firebase level.**
+
+```ts
+// Correct — mock the service hook, not firebase/firestore
+vi.mock('../../services/trips', () => ({
+  useUpdateTrip: vi.fn(() => ({ mutateAsync: vi.fn() })),
+}))
+```
+
+Never try to mock `firebase/firestore`, `firebase/auth`, or `app/firebase/config` directly.
+
+### Required mocks for most component tests
+
+These are almost always needed. Check the existing test files for the exact relative path from the test location:
+
+```ts
+vi.mock('../lib/useIsAnonymous', () => ({
+  useIsAnonymous: vi.fn(),
+}))
+
+vi.mock('../contexts/auth/useAuth', () => ({
+  useAuth: vi.fn(() => ({ user: { uid: 'u1', username: 'testuser', email: 'test@test.com' } })),
+}))
+
+// When the component uses router hooks:
+vi.mock('react-router', async () => {
+  const actual = await vi.importActual<typeof import('react-router')>('react-router')
+  return { ...actual, useParams: vi.fn(() => ({ id: 'trip1' })) }
+})
+```
+
+### `vi.mock` hoisting
+
+`vi.mock()` calls are hoisted to the top of the file at compile time. Always declare them before any imports that depend on the mocked module.
+
+### Wrap renders in MemoryRouter
+
+Components that use any React Router hook (`useParams`, `useNavigate`, `Link`, etc.) must be wrapped:
+
+```ts
+render(<MemoryRouter><MyComponent /></MemoryRouter>)
+```
