@@ -100,9 +100,6 @@ describe('TagsStep', () => {
 
       await user.click(screen.getByText(/see all/i))
 
-      const allActivitiesHeadings = screen.getAllByText('Activities')
-      const fullListActivities = allActivitiesHeadings[allActivitiesHeadings.length - 1]
-      const fullListSection = fullListActivities.closest('div')!
       const fishingCheckbox = screen.getByRole('checkbox', { name: /fishing/i })
       await user.click(fishingCheckbox)
 

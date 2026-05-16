@@ -12,7 +12,7 @@ import {
   gearListCampKitchen,
   gearListOtherConsiderations,
 } from '~/lib/gearListItemEnum'
-import { FREQUENT_TAGS_CAP,getFrequentTags } from '~/lib/getFrequentTags'
+import { FREQUENT_TAGS_CAP, getFrequentTags } from '~/lib/getFrequentTags'
 import { useGearClosetQuery } from '~/services/gear'
 import { useUserByIdQuery } from '~/services/users'
 
@@ -31,6 +31,23 @@ const tagGroups = [
 ]
 
 const predefinedLabelMap = new Map<string, string>(allGearListItems.map((i) => [i.name, i.label]))
+
+const TagCheckbox = ({
+  tagKey,
+  label,
+  checked,
+  onToggle,
+}: {
+  tagKey: string
+  label: string
+  checked: boolean
+  onToggle: (key: string) => void
+}) => (
+  <label className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm">
+    <Checkbox checked={checked} onCheckedChange={() => onToggle(tagKey)} />
+    {label}
+  </label>
+)
 
 const TagsStep = ({ form }: TagsStepProps) => {
   const { user } = useAuth()
@@ -67,16 +84,13 @@ const TagsStep = ({ form }: TagsStepProps) => {
           </h4>
           <div className="grid grid-cols-2 gap-2">
             {group.items.map((item) => (
-              <label
+              <TagCheckbox
                 key={item.name}
-                className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
-              >
-                <Checkbox
-                  checked={tags.includes(item.name)}
-                  onCheckedChange={() => toggleTag(item.name)}
-                />
-                {item.label}
-              </label>
+                tagKey={item.name}
+                label={item.label}
+                checked={tags.includes(item.name)}
+                onToggle={toggleTag}
+              />
             ))}
           </div>
         </div>
@@ -88,16 +102,13 @@ const TagsStep = ({ form }: TagsStepProps) => {
           </h4>
           <div className="grid grid-cols-2 gap-2">
             {customTags.map((ct) => (
-              <label
+              <TagCheckbox
                 key={ct.name}
-                className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
-              >
-                <Checkbox
-                  checked={tags.includes(ct.name)}
-                  onCheckedChange={() => toggleTag(ct.name)}
-                />
-                {ct.name}
-              </label>
+                tagKey={ct.name}
+                label={ct.name}
+                checked={tags.includes(ct.name)}
+                onToggle={toggleTag}
+              />
             ))}
           </div>
         </div>
@@ -123,21 +134,15 @@ const TagsStep = ({ form }: TagsStepProps) => {
                   Based on your previous trips
                 </p>
                 <div className="grid grid-cols-2 gap-2">
-                  {frequentTagKeys.map((key) => {
-                    const label = predefinedLabelMap.get(key) ?? key
-                    return (
-                      <label
-                        key={key}
-                        className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
-                      >
-                        <Checkbox
-                          checked={tags.includes(key)}
-                          onCheckedChange={() => toggleTag(key)}
-                        />
-                        {label}
-                      </label>
-                    )
-                  })}
+                  {frequentTagKeys.map((key) => (
+                    <TagCheckbox
+                      key={key}
+                      tagKey={key}
+                      label={predefinedLabelMap.get(key) ?? key}
+                      checked={tags.includes(key)}
+                      onToggle={toggleTag}
+                    />
+                  ))}
                 </div>
               </div>
               <button
