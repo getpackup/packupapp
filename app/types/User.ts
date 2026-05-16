@@ -24,6 +24,7 @@ export type User = {
     hasSeenPackingListTour?: boolean
     hasDismissedFernwoodAd?: Timestamp
     safetyItineraryEnabled?: boolean
+    friendRequestEmailEnabled?: boolean
     temperatureUnit?: 'celsius' | 'fahrenheit'
   }
 }

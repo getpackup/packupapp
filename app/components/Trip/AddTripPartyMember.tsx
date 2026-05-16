@@ -23,12 +23,15 @@ import { createSystemMessage } from '~/lib/chat'
 import { formattedDateRange } from '~/lib/date'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { algoliaSearch } from '~/services/algoliaSearch'
+import { useFriendsQuery, useSendFriendRequest } from '~/services/friends'
 import { useCreateChatMessage, useUpdateTrip } from '~/services/trips'
+import { useUserByIdQuery } from '~/services/users'
 import type { Trip } from '~/types/Trip'
 import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
 
 import { Button } from '../ui/button'
+import { Checkbox } from '../ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -40,6 +43,47 @@ import {
 } from '../ui/dialog'
 import UserMediaObject from '../UserMediaObject'
 import TripPartyMemberBadge from './TripPartyMemberBadge'
+
+function FriendInviteRow({
+  friendUid,
+  tripMembers,
+  isAddingMember,
+  onAdd,
+}: {
+  friendUid: string
+  tripMembers: TripMember[]
+  isAddingMember: string | null
+  onAdd: (uid: string, email: string, name: string) => void
+}) {
+  const { data: friendUser } = useUserByIdQuery({ userId: friendUid })
+  const matchingMember = tripMembers.find((m) => m.uid === friendUid)
+
+  if (!friendUser) return null
+
+  return (
+    <div className="text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent flex items-center justify-between gap-2 rounded-lg px-3 py-2 transition-colors">
+      <UserMediaObject user={friendUser} />
+      {matchingMember ? (
+        <TripPartyMemberBadge member={matchingMember} />
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={() => onAdd(friendUser.uid, friendUser.email, friendUser.username)}
+          disabled={isAddingMember === friendUser.uid}
+        >
+          {isAddingMember === friendUser.uid ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Plus />
+          )}
+          <span className="sr-only">Add {friendUser.username} to trip</span>
+        </Button>
+      )}
+    </div>
+  )
+}
 
 export function AddTripPartyMember({
   trip,
@@ -55,12 +99,22 @@ export function AddTripPartyMember({
   const { id } = useParams()
   const fetcher = useFetcher()
 
+  const { data: friendships = [] } = useFriendsQuery(user?.uid ?? '')
+  const { mutateAsync: sendFriendReq } = useSendFriendRequest()
+  const [sendFriendRequestFor, setSendFriendRequestFor] = useState<Record<string, boolean>>({})
+
   const [searchValueTimeout, setSearchValueTimeout] = useState<NodeJS.Timeout | null>(null)
   const [isLoadingSearchResults, setIsLoadingSearchResults] = useState(false)
   const [isHydrated, setIsHydrated] = useState(false)
   const [algoliaService, setAlgoliaService] = useState<typeof algoliaSearch | null>(null)
   const [hits, setHits] = useState<SearchResponse<User>['hits']>([])
   const [isAddingMember, setIsAddingMember] = useState<string | null>(null)
+
+  const friendUids = friendships.map((f) =>
+    f.uids.find((uid) => uid !== user?.uid) ?? ''
+  ).filter(Boolean)
+
+  const isFriend = (uid: string) => friendUids.includes(uid)
 
   // Prevent hydration mismatch by only allowing username checking after hydration
   useEffect(() => {
@@ -218,12 +272,15 @@ export function AddTripPartyMember({
                 action: '/resource/send-trip-invitation',
               }
             )
-            .then(() => {
+            .then(async () => {
               toast.success(`${hitName} has been invited to the trip`)
-              // trackEvent('Trip Party Search User Added', {
-              //   tripId: id,
-              //   ...payload,
-              // })
+              if (sendFriendRequestFor[hitUserId] && user.uid) {
+                try {
+                  await sendFriendReq({ senderUid: user.uid, recipientUid: hitUserId })
+                } catch {
+                  // Friend request is independent — don't block the trip invite
+                }
+              }
             })
             .catch((err) => {
               toast.error(err.message)
@@ -288,87 +345,125 @@ export function AddTripPartyMember({
         </>
       </PopoverTrigger>
       <PopoverContent className="w-80">
-        <Form {...form}>
-          <form className="space-y-8">
+        <div className="space-y-4">
+          {friendUids.length > 0 && (
             <div className="space-y-2">
-              <FormField
-                control={form.control}
-                name="searchValue"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Add trip party member</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Search by username, email, or name..."
-                        {...field}
-                        onChange={(e) => {
-                          field.onChange(e)
-                          handleSearchValueChange(e)
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                    <FormDescription className="text-center">
-                      {isLoadingSearchResults && hits.length === 0 && (
-                        <span>
-                          <Loader2 className="mr-2 inline size-4 animate-spin" />
-                          Searching...
-                        </span>
-                      )}
-                      {!isLoadingSearchResults &&
-                        form.getValues('searchValue') !== '' &&
-                        form.getValues('searchValue').length >= 2 &&
-                        hits &&
-                        hits.length === 0 && (
-                          <span>
-                            No results found.{' '}
-                            <span
-                              className="text-primary cursor-pointer"
-                              onClick={() => form.reset()}
-                            >
-                              Clear search
-                            </span>
-                          </span>
-                        )}
-                    </FormDescription>
-                  </FormItem>
-                )}
-              />
-              <div className="max-h-[200px] space-y-2 overflow-y-auto">
-                {hits.length > 0 &&
-                  hits.map((hit) => {
-                    const matchingUser = tripMembers.find((member) => member.uid === hit.uid)
-                    return (
-                      <div
-                        key={hit.objectID}
-                        className="text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent flex items-center justify-between gap-2 rounded-lg px-3 py-2 transition-colors"
-                      >
-                        <UserMediaObject user={hit} />
-                        {matchingUser ? (
-                          <TripPartyMemberBadge member={matchingUser} />
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={() => addMemberToTrip(hit.uid, hit.email, hit.username)}
-                            disabled={isAddingMember === hit.uid}
-                          >
-                            {isAddingMember === hit.uid ? (
-                              <Loader2 className="size-4 animate-spin" />
-                            ) : (
-                              <Plus />
-                            )}
-                            <span className="sr-only">Add {hit.username} to trip</span>
-                          </Button>
-                        )}
-                      </div>
-                    )
-                  })}
+              <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                Friends
+              </p>
+              <div className="max-h-[150px] space-y-1 overflow-y-auto">
+                {friendUids.map((fuid) => (
+                  <FriendInviteRow
+                    key={fuid}
+                    friendUid={fuid}
+                    tripMembers={tripMembers}
+                    isAddingMember={isAddingMember}
+                    onAdd={addMemberToTrip}
+                  />
+                ))}
               </div>
             </div>
-          </form>
-        </Form>
+          )}
+          <Form {...form}>
+            <form className="space-y-8">
+              <div className="space-y-2">
+                <FormField
+                  control={form.control}
+                  name="searchValue"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {friendUids.length > 0 ? 'Search all users' : 'Add trip party member'}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Search by username, email, or name..."
+                          {...field}
+                          onChange={(e) => {
+                            field.onChange(e)
+                            handleSearchValueChange(e)
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <FormDescription className="text-center">
+                        {isLoadingSearchResults && hits.length === 0 && (
+                          <span>
+                            <Loader2 className="mr-2 inline size-4 animate-spin" />
+                            Searching...
+                          </span>
+                        )}
+                        {!isLoadingSearchResults &&
+                          form.getValues('searchValue') !== '' &&
+                          form.getValues('searchValue').length >= 2 &&
+                          hits &&
+                          hits.length === 0 && (
+                            <span>
+                              No results found.{' '}
+                              <span
+                                className="text-primary cursor-pointer"
+                                onClick={() => form.reset()}
+                              >
+                                Clear search
+                              </span>
+                            </span>
+                          )}
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+                <div className="max-h-[200px] space-y-2 overflow-y-auto">
+                  {hits.length > 0 &&
+                    hits.map((hit) => {
+                      const matchingUser = tripMembers.find((member) => member.uid === hit.uid)
+                      const hitIsFriend = isFriend(hit.uid)
+                      return (
+                        <div key={hit.objectID}>
+                          <div className="text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent flex items-center justify-between gap-2 rounded-lg px-3 py-2 transition-colors">
+                            <UserMediaObject user={hit} />
+                            {matchingUser ? (
+                              <TripPartyMemberBadge member={matchingUser} />
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() =>
+                                  addMemberToTrip(hit.uid, hit.email, hit.username)
+                                }
+                                disabled={isAddingMember === hit.uid}
+                              >
+                                {isAddingMember === hit.uid ? (
+                                  <Loader2 className="size-4 animate-spin" />
+                                ) : (
+                                  <Plus />
+                                )}
+                                <span className="sr-only">Add {hit.username} to trip</span>
+                              </Button>
+                            )}
+                          </div>
+                          {!matchingUser && !hitIsFriend && (
+                            <label className="text-muted-foreground flex items-center gap-2 px-3 py-1 text-xs">
+                              <Checkbox
+                                checked={sendFriendRequestFor[hit.uid] ?? false}
+                                onCheckedChange={(checked) =>
+                                  setSendFriendRequestFor((prev) => ({
+                                    ...prev,
+                                    [hit.uid]: !!checked,
+                                  }))
+                                }
+                              />
+                              Also send {hit.username} a Friend Request
+                            </label>
+                          )}
+                        </div>
+                      )
+                    })}
+                </div>
+              </div>
+            </form>
+          </Form>
+        </div>
       </PopoverContent>
     </Popover>
   )

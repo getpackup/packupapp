@@ -23,6 +23,7 @@ import { useAuth } from '~/contexts/auth/useAuth'
 import { firebaseAuth } from '~/firebase/config'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
+import { usePendingFriendRequestsQuery } from '~/services/friends'
 
 import {
   Drawer,
@@ -60,6 +61,7 @@ export function BottomNav({ className }: BottomNavProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const { data: pendingRequests } = usePendingFriendRequestsQuery(user?.uid ?? '')
 
   const isActive = (href: string) => {
     const basePath = href.split('/')[1]
@@ -210,6 +212,13 @@ export function BottomNav({ className }: BottomNavProps) {
                     >
                       <item.icon className="size-5" />
                       {item.label}
+                      {item.label === 'Friends' &&
+                        pendingRequests &&
+                        pendingRequests.length > 0 && (
+                          <span className="bg-destructive text-destructive-foreground ml-auto flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold">
+                            {pendingRequests.length}
+                          </span>
+                        )}
                     </Link>
                   </DrawerClose>
                 ))}
