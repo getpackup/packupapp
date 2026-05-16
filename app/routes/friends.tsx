@@ -132,14 +132,9 @@ function FindFriends({ currentUid, friendships }: { currentUid: string; friendsh
   const [hits, setHits] = useState<SearchResponse<User>['hits']>([])
   const [isSearching, setIsSearching] = useState(false)
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
-  const [isHydrated, setIsHydrated] = useState(false)
   const [algoliaService, setAlgoliaService] = useState<typeof import('~/services/algoliaSearch').algoliaSearch | null>(null)
   const { mutateAsync: sendRequest } = useSendFriendRequest()
   const [sendingTo, setSendingTo] = useState<string | null>(null)
-
-  useEffect(() => {
-    setIsHydrated(true)
-  }, [])
 
   useEffect(() => {
     const loadAlgolia = async () => {
@@ -150,8 +145,8 @@ function FindFriends({ currentUid, friendships }: { currentUid: string; friendsh
         console.error('Failed to load Algolia:', error)
       }
     }
-    if (isHydrated) loadAlgolia()
-  }, [isHydrated])
+    loadAlgolia()
+  }, [])
 
   useEffect(() => {
     return () => {

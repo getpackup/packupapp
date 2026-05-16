@@ -100,8 +100,6 @@ export async function fetchPendingRequests(uid: string): Promise<Friendship[]> {
     .filter((f) => f.requesterUid !== uid)
 }
 
-// React Query hooks
-
 export function useFriendsQuery(uid: string) {
   return useQuery<Friendship[], Error>({
     queryKey: friendKeys.byUid(uid),
@@ -126,15 +124,13 @@ export function useSendFriendRequest() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       senderUid,
       recipientUid,
     }: {
       senderUid: string
       recipientUid: string
-    }) => {
-      await sendFriendRequest(senderUid, recipientUid)
-    },
+    }) => sendFriendRequest(senderUid, recipientUid),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: friendKeys.byUid(variables.senderUid) })
       queryClient.invalidateQueries({ queryKey: friendKeys.requestsForUid(variables.senderUid) })
@@ -150,9 +146,8 @@ export function useAcceptFriendRequest(currentUid: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ friendshipId }: { friendshipId: string }) => {
-      await acceptFriendRequest(friendshipId)
-    },
+    mutationFn: ({ friendshipId }: { friendshipId: string }) =>
+      acceptFriendRequest(friendshipId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.byUid(currentUid) })
       queryClient.invalidateQueries({ queryKey: friendKeys.requestsForUid(currentUid) })
@@ -168,9 +163,8 @@ export function useDeclineFriendRequest(currentUid: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ friendshipId }: { friendshipId: string }) => {
-      await declineFriendRequest(friendshipId)
-    },
+    mutationFn: ({ friendshipId }: { friendshipId: string }) =>
+      declineFriendRequest(friendshipId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.requestsForUid(currentUid) })
     },
@@ -181,9 +175,7 @@ export function useUnfriend(currentUid: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ friendshipId }: { friendshipId: string }) => {
-      await unfriend(friendshipId)
-    },
+    mutationFn: ({ friendshipId }: { friendshipId: string }) => unfriend(friendshipId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.byUid(currentUid) })
       toast.success('Friend removed')
