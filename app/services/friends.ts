@@ -16,7 +16,7 @@ import { toast } from 'sonner'
 import { firestoreDb } from '~/firebase/config'
 import { buildFriendshipId, type Friendship } from '~/types/Friendship'
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
+export const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
 
 const friendsRootKey = ['friendships'] as const
 
@@ -24,6 +24,7 @@ export const friendKeys = {
   root: friendsRootKey,
   byUid: (uid: string) => [...friendsRootKey, 'byUid', uid] as const,
   requestsForUid: (uid: string) => [...friendsRootKey, 'requests', uid] as const,
+  declinedForUid: (uid: string) => [...friendsRootKey, 'declined', uid] as const,
 }
 
 export async function sendFriendRequest(senderUid: string, recipientUid: string): Promise<void> {
@@ -104,6 +105,26 @@ export function useFriendsQuery(uid: string) {
   return useQuery<Friendship[], Error>({
     queryKey: friendKeys.byUid(uid),
     queryFn: () => fetchFriendships(uid),
+    enabled: !!uid,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+  })
+}
+
+export async function fetchDeclinedFriendships(uid: string): Promise<Friendship[]> {
+  const q = query(
+    collection(firestoreDb, 'friendships'),
+    where('uids', 'array-contains', uid),
+    where('status', '==', 'declined')
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Friendship)
+}
+
+export function useDeclinedFriendshipsQuery(uid: string) {
+  return useQuery<Friendship[], Error>({
+    queryKey: friendKeys.declinedForUid(uid),
+    queryFn: () => fetchDeclinedFriendships(uid),
     enabled: !!uid,
     refetchOnWindowFocus: false,
     refetchOnMount: true,

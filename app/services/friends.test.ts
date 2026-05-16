@@ -33,6 +33,7 @@ vi.mock('../firebase/config', () => ({
 
 import { buildFriendshipId } from '../types/Friendship'
 import {
+  fetchDeclinedFriendships,
   fetchFriendships,
   fetchPendingRequests,
   sendFriendRequest,
@@ -213,6 +214,29 @@ describe('friends service', () => {
 
       expect(result).toHaveLength(1)
       expect(result[0].requesterUid).not.toBe('uid1')
+    })
+  })
+
+  describe('fetchDeclinedFriendships', () => {
+    it('returns declined friendships for a user', async () => {
+      const friendship = {
+        id: 'uid1_uid2',
+        uids: ['uid1', 'uid2'],
+        requesterUid: 'uid1',
+        status: 'declined',
+        requestedAt: Timestamp.fromDate(new Date()),
+        declinedAt: Timestamp.fromDate(new Date()),
+      }
+      mockGetDocs.mockResolvedValue({
+        docs: [{ id: 'uid1_uid2', data: () => friendship }],
+      })
+
+      const result = await fetchDeclinedFriendships('uid1')
+
+      expect(mockWhere).toHaveBeenCalledWith('uids', 'array-contains', 'uid1')
+      expect(mockWhere).toHaveBeenCalledWith('status', '==', 'declined')
+      expect(result).toHaveLength(1)
+      expect(result[0].status).toBe('declined')
     })
   })
 })

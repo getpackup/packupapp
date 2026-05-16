@@ -22,7 +22,9 @@ import UserMediaObject from '~/components/UserMediaObject'
 import { useAuth } from '~/contexts/auth/useAuth'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import {
+  THIRTY_DAYS_MS,
   useAcceptFriendRequest,
+  useDeclinedFriendshipsQuery,
   useDeclineFriendRequest,
   useFriendsQuery,
   usePendingFriendRequestsQuery,
@@ -192,13 +194,14 @@ function FindFriends({ currentUid, friendships }: { currentUid: string; friendsh
     setSearchTimeout(timeout)
   }
 
-  const getConnectionStatus = (hitUid: string): 'friend' | 'pending' | 'none' => {
-    const friendship = friendships.find(
-      (f) => f.uids.includes(hitUid)
-    )
+  const getConnectionStatus = (hitUid: string): 'friend' | 'pending' | 'declined-cooldown' | 'none' => {
+    const friendship = friendships.find((f) => f.uids.includes(hitUid))
     if (!friendship) return 'none'
     if (friendship.status === 'accepted') return 'friend'
     if (friendship.status === 'pending') return 'pending'
+    if (friendship.status === 'declined' && friendship.declinedAt) {
+      if (Date.now() - friendship.declinedAt.toMillis() < THIRTY_DAYS_MS) return 'declined-cooldown'
+    }
     return 'none'
   }
 
@@ -243,6 +246,12 @@ function FindFriends({ currentUid, friendships }: { currentUid: string; friendsh
               <UserMediaObject user={hit} />
               {status === 'friend' && <Badge variant="success">Friends</Badge>}
               {status === 'pending' && <Badge variant="secondary">Pending</Badge>}
+              {status === 'declined-cooldown' && (
+                <Button variant="outline" size="sm" disabled>
+                  <UserPlus className="size-4" />
+                  Request Declined
+                </Button>
+              )}
               {status === 'none' && (
                 <Button
                   variant="outline"
@@ -274,8 +283,9 @@ export default function Friends() {
   const { data: friends = [], isLoading: friendsLoading } = useFriendsQuery(uid)
   const { data: pendingRequests = [], isLoading: requestsLoading } =
     usePendingFriendRequestsQuery(uid)
+  const { data: declinedFriendships = [] } = useDeclinedFriendshipsQuery(uid)
 
-  const allFriendships = [...friends, ...pendingRequests]
+  const allFriendships = [...friends, ...pendingRequests, ...declinedFriendships]
 
   return (
     <>
