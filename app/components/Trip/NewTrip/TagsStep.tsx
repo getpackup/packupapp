@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronUp } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -62,12 +62,6 @@ const TagsStep = ({ form }: TagsStepProps) => {
 
   const frequentTagKeys = getFrequentTags(userData?.tagCounts, customTags, FREQUENT_TAGS_CAP)
   const hasFrequentTags = frequentTagKeys.length > 0
-
-  useEffect(() => {
-    if (frequentTagKeys.length < FREQUENT_TAGS_CAP) {
-      setShowAll(true)
-    }
-  }, [])
 
   const toggleTag = (key: string) => {
     const current = form.getValues('tags') ?? []

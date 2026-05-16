@@ -86,6 +86,7 @@ const NewTripForm = ({}: NewTripFormProps) => {
       startDate: undefined,
       endDate: undefined,
       headerImage: undefined,
+      name: '',
       tags: [],
     },
   })

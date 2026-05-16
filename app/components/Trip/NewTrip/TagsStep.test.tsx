@@ -98,14 +98,14 @@ describe('TagsStep', () => {
       const user = userEvent.setup()
       render(<Wrapper />)
 
-      await user.click(screen.getByText(/see all/i))
+      await user.click(screen.getByText(/see all tags/i))
 
       const fishingCheckbox = screen.getByRole('checkbox', { name: /fishing/i })
       await user.click(fishingCheckbox)
 
       await user.click(screen.getByText(/see less/i))
 
-      expect(screen.getByText(/see all.*1 selected/i)).toBeInTheDocument()
+      expect(screen.getByText(/see all tags.*1 selected/i)).toBeInTheDocument()
     })
   })
 
