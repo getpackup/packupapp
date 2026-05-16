@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { z } from 'zod'
 
+import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import useAuth from '~/contexts/auth/useAuth'
@@ -61,6 +63,12 @@ const TagsStep = ({ form }: TagsStepProps) => {
   const frequentTagKeys = getFrequentTags(userData?.tagCounts, customTags, FREQUENT_TAGS_CAP)
   const hasFrequentTags = frequentTagKeys.length > 0
 
+  useEffect(() => {
+    if (frequentTagKeys.length < FREQUENT_TAGS_CAP) {
+      setShowAll(true)
+    }
+  }, [])
+
   const toggleTag = (key: string) => {
     const current = form.getValues('tags') ?? []
     const next = current.includes(key) ? current.filter((t) => t !== key) : [...current, key]
@@ -79,9 +87,7 @@ const TagsStep = ({ form }: TagsStepProps) => {
     <div className="space-y-6">
       {tagGroups.map((group) => (
         <div key={group.label}>
-          <h4 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
-            {group.label}
-          </h4>
+          <h4 className="mb-1 text-sm font-bold tracking-wider uppercase">{group.label}</h4>
           <div className="grid grid-cols-2 gap-2">
             {group.items.map((item) => (
               <TagCheckbox
@@ -97,9 +103,7 @@ const TagsStep = ({ form }: TagsStepProps) => {
       ))}
       {customTags.length > 0 && (
         <div>
-          <h4 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
-            My Custom Tags
-          </h4>
+          <h4 className="mb-1 text-sm font-bold tracking-wider uppercase">My Custom Tags</h4>
           <div className="grid grid-cols-2 gap-2">
             {customTags.map((ct) => (
               <TagCheckbox
@@ -127,12 +131,8 @@ const TagsStep = ({ form }: TagsStepProps) => {
           {hasFrequentTags ? (
             <div className="space-y-4">
               <div>
-                <h4 className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
-                  Frequently Used
-                </h4>
-                <p className="text-muted-foreground mb-2 text-xs">
-                  Based on your previous trips
-                </p>
+                <h4 className="mb-1 text-sm font-bold tracking-wider uppercase">Frequently Used</h4>
+                <p className="text-muted-foreground mb-2 text-xs">Based on your previous trips</p>
                 <div className="grid grid-cols-2 gap-2">
                   {frequentTagKeys.map((key) => (
                     <TagCheckbox
@@ -145,17 +145,20 @@ const TagsStep = ({ form }: TagsStepProps) => {
                   ))}
                 </div>
               </div>
-              <button
+              <Button
+                variant="outline"
                 type="button"
-                className="text-muted-foreground hover:text-foreground text-sm font-medium"
+                className="w-full"
+                // className="text-muted-foreground hover:text-foreground text-sm font-medium"
                 onClick={() => setShowAll(!showAll)}
               >
                 {showAll
                   ? 'See Less'
                   : selectedInFullList > 0
-                    ? `See All (${selectedInFullList} selected)`
-                    : 'See All'}
-              </button>
+                    ? `See All Tags (${selectedInFullList} selected)`
+                    : 'See All Tags'}
+                {showAll ? <ChevronUp /> : <ChevronDown />}
+              </Button>
               {showAll && fullList}
             </div>
           ) : (
