@@ -283,7 +283,8 @@ export default function Friends() {
   const { data: friends = [], isLoading: friendsLoading } = useFriendsQuery(uid)
   const { data: pendingRequests = [], isLoading: requestsLoading } =
     usePendingFriendRequestsQuery(uid)
-  const { data: declinedFriendships = [] } = useDeclinedFriendshipsQuery(uid)
+  const { data: declinedFriendships = [], isLoading: declinedLoading } =
+    useDeclinedFriendshipsQuery(uid)
 
   const allFriendships = [...friends, ...pendingRequests, ...declinedFriendships]
 
@@ -297,7 +298,7 @@ export default function Friends() {
           </UpgradeAccountGate>
         ) : (
           <div className="mx-auto max-w-2xl space-y-8">
-            {requestsLoading || friendsLoading ? (
+            {requestsLoading || friendsLoading || declinedLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="text-muted-foreground size-6 animate-spin" />
               </div>

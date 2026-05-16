@@ -23,8 +23,6 @@ const friendsRootKey = ['friendships'] as const
 export const friendKeys = {
   root: friendsRootKey,
   byUid: (uid: string) => [...friendsRootKey, 'byUid', uid] as const,
-  requestsForUid: (uid: string) => [...friendsRootKey, 'requests', uid] as const,
-  declinedForUid: (uid: string) => [...friendsRootKey, 'declined', uid] as const,
 }
 
 export async function sendFriendRequest(senderUid: string, recipientUid: string): Promise<void> {
@@ -79,52 +77,28 @@ export async function unfriend(friendshipId: string): Promise<void> {
   await deleteDoc(docRef)
 }
 
-export async function fetchFriendships(uid: string): Promise<Friendship[]> {
-  const q = query(
-    collection(firestoreDb, 'friendships'),
-    where('uids', 'array-contains', uid),
-    where('status', '==', 'accepted')
-  )
+export async function fetchAllFriendships(uid: string): Promise<Friendship[]> {
+  const q = query(collection(firestoreDb, 'friendships'), where('uids', 'array-contains', uid))
   const snap = await getDocs(q)
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Friendship)
 }
 
-export async function fetchPendingRequests(uid: string): Promise<Friendship[]> {
-  const q = query(
-    collection(firestoreDb, 'friendships'),
-    where('uids', 'array-contains', uid),
-    where('status', '==', 'pending')
-  )
-  const snap = await getDocs(q)
-  return snap.docs
-    .map((d) => ({ id: d.id, ...d.data() }) as Friendship)
-    .filter((f) => f.requesterUid !== uid)
-}
-
 export function useFriendsQuery(uid: string) {
-  return useQuery<Friendship[], Error>({
+  return useQuery<Friendship[], Error, Friendship[]>({
     queryKey: friendKeys.byUid(uid),
-    queryFn: () => fetchFriendships(uid),
+    queryFn: () => fetchAllFriendships(uid),
+    select: (data) => data.filter((f) => f.status === 'accepted'),
     enabled: !!uid,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
   })
 }
 
-export async function fetchDeclinedFriendships(uid: string): Promise<Friendship[]> {
-  const q = query(
-    collection(firestoreDb, 'friendships'),
-    where('uids', 'array-contains', uid),
-    where('status', '==', 'declined')
-  )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Friendship)
-}
-
 export function useDeclinedFriendshipsQuery(uid: string) {
-  return useQuery<Friendship[], Error>({
-    queryKey: friendKeys.declinedForUid(uid),
-    queryFn: () => fetchDeclinedFriendships(uid),
+  return useQuery<Friendship[], Error, Friendship[]>({
+    queryKey: friendKeys.byUid(uid),
+    queryFn: () => fetchAllFriendships(uid),
+    select: (data) => data.filter((f) => f.status === 'declined'),
     enabled: !!uid,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
@@ -132,9 +106,10 @@ export function useDeclinedFriendshipsQuery(uid: string) {
 }
 
 export function usePendingFriendRequestsQuery(uid: string) {
-  return useQuery<Friendship[], Error>({
-    queryKey: friendKeys.requestsForUid(uid),
-    queryFn: () => fetchPendingRequests(uid),
+  return useQuery<Friendship[], Error, Friendship[]>({
+    queryKey: friendKeys.byUid(uid),
+    queryFn: () => fetchAllFriendships(uid),
+    select: (data) => data.filter((f) => f.status === 'pending' && f.requesterUid !== uid),
     enabled: !!uid,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
@@ -154,7 +129,6 @@ export function useSendFriendRequest() {
     }) => sendFriendRequest(senderUid, recipientUid),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: friendKeys.byUid(variables.senderUid) })
-      queryClient.invalidateQueries({ queryKey: friendKeys.requestsForUid(variables.senderUid) })
       toast.success('Friend request sent')
     },
     onError: (err: Error) => {
@@ -167,11 +141,9 @@ export function useAcceptFriendRequest(currentUid: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ friendshipId }: { friendshipId: string }) =>
-      acceptFriendRequest(friendshipId),
+    mutationFn: ({ friendshipId }: { friendshipId: string }) => acceptFriendRequest(friendshipId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.byUid(currentUid) })
-      queryClient.invalidateQueries({ queryKey: friendKeys.requestsForUid(currentUid) })
       toast.success('Friend request accepted')
     },
     onError: (err: Error) => {
@@ -187,7 +159,7 @@ export function useDeclineFriendRequest(currentUid: string) {
     mutationFn: ({ friendshipId }: { friendshipId: string }) =>
       declineFriendRequest(friendshipId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: friendKeys.requestsForUid(currentUid) })
+      queryClient.invalidateQueries({ queryKey: friendKeys.byUid(currentUid) })
     },
   })
 }
