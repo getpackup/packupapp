@@ -8,7 +8,7 @@ describe('getFrequentTags', () => {
   })
 
   it('returns empty array when tagCounts is undefined', () => {
-    expect(getFrequentTags(undefined as any, [], FREQUENT_TAGS_CAP)).toEqual([])
+    expect(getFrequentTags(undefined, [], FREQUENT_TAGS_CAP)).toEqual([])
   })
 
   it('returns a single tag with count 1', () => {

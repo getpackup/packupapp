@@ -152,7 +152,9 @@ const TagsStep = ({ form }: TagsStepProps) => {
               >
                 {showAll
                   ? 'See Less'
-                  : `See All${selectedInFullList > 0 ? ` (${selectedInFullList} selected)` : ''}`}
+                  : selectedInFullList > 0
+                    ? `See All (${selectedInFullList} selected)`
+                    : 'See All'}
               </button>
               {showAll && fullList}
             </div>
