@@ -121,7 +121,7 @@ const TagsStep = ({ form }: TagsStepProps) => {
         <p className="text-muted-foreground text-sm">
           Select tags to auto-generate a packing list from your gear closet.
         </p>
-        <ScrollArea className="max-h-[350px] overflow-y-auto pr-3">
+        <ScrollArea className="max-h-87.5 overflow-y-auto pr-3">
           {hasFrequentTags ? (
             <div className="space-y-4">
               <div>

@@ -110,9 +110,9 @@ export function AddTripPartyMember({
   const [hits, setHits] = useState<SearchResponse<User>['hits']>([])
   const [isAddingMember, setIsAddingMember] = useState<string | null>(null)
 
-  const friendUids = friendships.map((f) =>
-    f.uids.find((uid) => uid !== user?.uid) ?? ''
-  ).filter(Boolean)
+  const friendUids = friendships
+    .map((f) => f.uids.find((uid) => uid !== user?.uid) ?? '')
+    .filter(Boolean)
 
   const isFriend = (uid: string) => friendUids.includes(uid)
 
@@ -348,10 +348,10 @@ export function AddTripPartyMember({
         <div className="space-y-4">
           {friendUids.length > 0 && (
             <div className="space-y-2">
-              <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+              <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 Friends
               </p>
-              <div className="max-h-[150px] space-y-1 overflow-y-auto">
+              <div className="max-h-37.5 space-y-1 overflow-y-auto">
                 {friendUids.map((fuid) => (
                   <FriendInviteRow
                     key={fuid}
@@ -412,7 +412,7 @@ export function AddTripPartyMember({
                     </FormItem>
                   )}
                 />
-                <div className="max-h-[200px] space-y-2 overflow-y-auto">
+                <div className="max-h-50 space-y-2 overflow-y-auto">
                   {hits.length > 0 &&
                     hits.map((hit) => {
                       const matchingUser = tripMembers.find((member) => member.uid === hit.uid)
@@ -428,9 +428,7 @@ export function AddTripPartyMember({
                                 type="button"
                                 variant="outline"
                                 size="icon"
-                                onClick={() =>
-                                  addMemberToTrip(hit.uid, hit.email, hit.username)
-                                }
+                                onClick={() => addMemberToTrip(hit.uid, hit.email, hit.username)}
                                 disabled={isAddingMember === hit.uid}
                               >
                                 {isAddingMember === hit.uid ? (

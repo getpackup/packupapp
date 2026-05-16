@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { useForm, FormProvider } from 'react-hook-form'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 vi.mock('../../../contexts/auth/useAuth', () => ({
   default: vi.fn(() => ({ user: { uid: 'u1' } })),

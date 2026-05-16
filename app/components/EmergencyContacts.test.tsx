@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 vi.mock('../lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
@@ -41,7 +41,9 @@ describe('EmergencyContacts', () => {
       expect(
         screen.getByText('Create an account to manage your emergency contacts.')
       ).toBeInTheDocument()
-      expect(screen.queryByRole('button', { name: /add emergency contact/i })).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('button', { name: /add emergency contact/i })
+      ).not.toBeInTheDocument()
     })
 
     it('shows "Create account" CTA linking to /signup', () => {
@@ -164,7 +166,9 @@ describe('EmergencyContacts', () => {
         setUser: vi.fn(),
       } as any)
       renderComponent()
-      expect(screen.queryByRole('button', { name: /add emergency contact/i })).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('button', { name: /add emergency contact/i })
+      ).not.toBeInTheDocument()
     })
 
     it('can delete an existing contact', async () => {
@@ -182,7 +186,9 @@ describe('EmergencyContacts', () => {
         setUser: vi.fn(),
       } as any)
       renderComponent()
-      const aliceRow = screen.getByText('Alice').closest('[data-testid="emergency-contact"]')!
+      const aliceRow: HTMLElement = screen
+        .getByText('Alice')
+        .closest('[data-testid="emergency-contact"]')!
       await user.click(within(aliceRow).getByRole('button', { name: /delete/i }))
       expect(mockUpdateUserAsync).toHaveBeenCalledWith({
         data: {
@@ -203,7 +209,9 @@ describe('EmergencyContacts', () => {
         setUser: vi.fn(),
       } as any)
       renderComponent()
-      const aliceRow = screen.getByText('Alice').closest('[data-testid="emergency-contact"]')!
+      const aliceRow: HTMLElement = screen
+        .getByText('Alice')
+        .closest('[data-testid="emergency-contact"]')!
       await user.click(within(aliceRow).getByRole('button', { name: /edit/i }))
       const nameInput = screen.getByLabelText(/^name$/i)
       await user.clear(nameInput)

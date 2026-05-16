@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
+import type { Trip } from '../../types/Trip'
 
 vi.mock('../../lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
@@ -43,7 +44,7 @@ const GATE_MESSAGE = 'Create an account to invite friends and assign gear to you
 function renderComponent() {
   return render(
     <MemoryRouter>
-      <AddTripPartyMember trip={{ tripId: 'trip1' } as any} tripMembers={[]} />
+      <AddTripPartyMember trip={{ tripId: 'trip1' } as Trip} tripMembers={[]} />
     </MemoryRouter>
   )
 }

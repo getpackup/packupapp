@@ -44,7 +44,7 @@ export const MagicLinkSigninEmail = ({
         You requested a sign-in link for your Packup account. This one-time link expires in 1 hour
         for your security.
       </Text>
-      <CallToAction text="🪄 Sign in with magic link" url={signinUrl} />
+      <CallToAction text="Sign in with magic link" url={signinUrl} />
 
       <Text className="text-primary m-0 mb-10 text-left font-sans text-sm leading-relaxed break-all dark:text-gray-300">
         Can't click the button? Copy this link:

@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { toast } from 'sonner'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 vi.mock('../lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
@@ -142,9 +142,7 @@ describe('FriendRequestEmailToggle', () => {
       } as any)
       renderComponent()
       await user.click(screen.getByRole('switch'))
-      expect(toast.success).toHaveBeenCalledWith(
-        'You will no longer receive friend request emails'
-      )
+      expect(toast.success).toHaveBeenCalledWith('You will no longer receive friend request emails')
     })
 
     it('shows success toast when toggling on', async () => {
@@ -160,9 +158,7 @@ describe('FriendRequestEmailToggle', () => {
       } as any)
       renderComponent()
       await user.click(screen.getByRole('switch'))
-      expect(toast.success).toHaveBeenCalledWith(
-        'You will now receive friend request emails'
-      )
+      expect(toast.success).toHaveBeenCalledWith('You will now receive friend request emails')
     })
   })
 })
