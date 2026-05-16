@@ -19,8 +19,7 @@ interface UpgradeAccountGateProps {
   children: ReactNode
 }
 
-const DEFAULT_MESSAGE =
-  'Plan on your computer, pack from your phone — and bring your whole crew.'
+const DEFAULT_MESSAGE = 'Plan on your computer, pack from your phone — and bring your whole crew.'
 
 export function UpgradeAccountGate({
   message = DEFAULT_MESSAGE,

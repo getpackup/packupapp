@@ -1,9 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { SearchResponse } from 'algoliasearch'
-import { Loader2, Plus, UserPlus } from 'lucide-react'
+import { Loader2, Plus } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link, useFetcher, useParams } from 'react-router'
+import { useFetcher, useParams } from 'react-router'
 import { toast } from 'sonner'
 import z from 'zod'
 
@@ -32,15 +32,8 @@ import type { User } from '~/types/User'
 
 import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../ui/dialog'
+import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog'
+import { UpgradeAccountGate } from '../UpgradeAccountGate'
 import UserMediaObject from '../UserMediaObject'
 import TripPartyMemberBadge from './TripPartyMemberBadge'
 
@@ -315,22 +308,9 @@ export function AddTripPartyMember({
           </button>
         </DialogTrigger>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              Create an account to invite friends and assign gear to your crew.
-            </DialogTitle>
-            <DialogDescription>
-              Keep your trips, invite friends, and access your data from any device.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="accent" size="lg" asChild>
-              <Link to="/signup">
-                <UserPlus className="size-4" />
-                Create account
-              </Link>
-            </Button>
-          </DialogFooter>
+          <UpgradeAccountGate message="Create an account to invite friends and assign gear to your crew.">
+            <div />
+          </UpgradeAccountGate>
         </DialogContent>
       </Dialog>
     )
