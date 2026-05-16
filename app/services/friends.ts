@@ -169,12 +169,25 @@ export function useUnfriend(currentUid: string) {
 
   return useMutation({
     mutationFn: ({ friendshipId }: { friendshipId: string }) => unfriend(friendshipId),
+    onMutate: async ({ friendshipId }) => {
+      await queryClient.cancelQueries({ queryKey: friendKeys.byUid(currentUid) })
+      const previous = queryClient.getQueryData<Friendship[]>(friendKeys.byUid(currentUid))
+      queryClient.setQueryData<Friendship[]>(friendKeys.byUid(currentUid), (old) =>
+        old ? old.filter((f) => f.id !== friendshipId) : []
+      )
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(friendKeys.byUid(currentUid), context.previous)
+      }
+      toast.error('Failed to remove friend')
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: friendKeys.byUid(currentUid) })
       toast.success('Friend removed')
     },
-    onError: (err: Error) => {
-      toast.error(err.message)
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: friendKeys.byUid(currentUid) })
     },
   })
 }

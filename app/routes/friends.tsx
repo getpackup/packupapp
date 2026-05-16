@@ -1,5 +1,5 @@
 import type { SearchResponse } from 'algoliasearch'
-import { Check, Loader2, Search, UserMinus, UserPlus, UsersIcon, X } from 'lucide-react'
+import { Check, Loader2, Search, Send, UserMinus, UserPlus, UsersIcon, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 
 import PageContent from '~/components/PageContent'
@@ -92,7 +92,12 @@ function FriendCard({ friendship, currentUid }: { friendship: Friendship; curren
   return (
     <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
       <UserMediaObject user={friend} />
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={() => {}}>
+          <Send className="size-4" />
+          Invite to trip
+        </Button>
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogTrigger asChild>
           <Button variant="outline" size="sm">
             <UserMinus className="size-4" />
@@ -124,7 +129,8 @@ function FriendCard({ friendship, currentUid }: { friendship: Friendship; curren
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+        </Dialog>
+      </div>
     </div>
   )
 }
