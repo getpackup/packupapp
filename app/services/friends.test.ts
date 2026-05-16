@@ -33,8 +33,7 @@ vi.mock('../firebase/config', () => ({
 
 import { buildFriendshipId } from '../types/Friendship'
 import {
-  fetchFriendships,
-  fetchPendingRequests,
+  fetchAllFriendships,
   sendFriendRequest,
   acceptFriendRequest,
   declineFriendRequest,
@@ -174,45 +173,41 @@ describe('friends service', () => {
     })
   })
 
-  describe('fetchFriendships', () => {
-    it('returns accepted friendships for a user', async () => {
-      const friendship = {
-        id: 'uid1_uid2',
-        uids: ['uid1', 'uid2'],
-        requesterUid: 'uid1',
-        status: 'accepted',
-        requestedAt: Timestamp.fromDate(new Date()),
-      }
+  describe('fetchAllFriendships', () => {
+    it('returns all friendships for a user without status filtering', async () => {
+      const friendships = [
+        {
+          id: 'uid1_uid2',
+          uids: ['uid1', 'uid2'],
+          requesterUid: 'uid1',
+          status: 'accepted',
+          requestedAt: Timestamp.fromDate(new Date()),
+        },
+        {
+          id: 'uid1_uid3',
+          uids: ['uid1', 'uid3'],
+          requesterUid: 'uid3',
+          status: 'pending',
+          requestedAt: Timestamp.fromDate(new Date()),
+        },
+        {
+          id: 'uid1_uid4',
+          uids: ['uid1', 'uid4'],
+          requesterUid: 'uid4',
+          status: 'declined',
+          requestedAt: Timestamp.fromDate(new Date()),
+          declinedAt: Timestamp.fromDate(new Date()),
+        },
+      ]
       mockGetDocs.mockResolvedValue({
-        docs: [{ id: 'uid1_uid2', data: () => friendship }],
+        docs: friendships.map((f) => ({ id: f.id, data: () => f })),
       })
 
-      const result = await fetchFriendships('uid1')
+      const result = await fetchAllFriendships('uid1')
 
       expect(mockWhere).toHaveBeenCalledWith('uids', 'array-contains', 'uid1')
-      expect(mockWhere).toHaveBeenCalledWith('status', '==', 'accepted')
-      expect(result).toHaveLength(1)
-      expect(result[0].status).toBe('accepted')
-    })
-  })
-
-  describe('fetchPendingRequests', () => {
-    it('returns pending requests where user is the recipient', async () => {
-      const request = {
-        id: 'sender_uid1',
-        uids: ['sender', 'uid1'],
-        requesterUid: 'sender',
-        status: 'pending',
-        requestedAt: Timestamp.fromDate(new Date()),
-      }
-      mockGetDocs.mockResolvedValue({
-        docs: [{ id: 'sender_uid1', data: () => request }],
-      })
-
-      const result = await fetchPendingRequests('uid1')
-
-      expect(result).toHaveLength(1)
-      expect(result[0].requesterUid).not.toBe('uid1')
+      expect(mockWhere).toHaveBeenCalledTimes(1)
+      expect(result).toHaveLength(3)
     })
   })
 })

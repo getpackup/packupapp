@@ -19,6 +19,7 @@ vi.mock('../services/friends', () => ({
   useAcceptFriendRequest: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
   useDeclineFriendRequest: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
   useUnfriend: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
+  useDeclinedFriendshipsQuery: vi.fn(() => ({ data: [], isLoading: false })),
 }))
 
 vi.mock('../services/users', () => ({
@@ -26,7 +27,11 @@ vi.mock('../services/users', () => ({
 }))
 
 import { useIsAnonymous } from '../lib/useIsAnonymous'
-import { useFriendsQuery, usePendingFriendRequestsQuery } from '../services/friends'
+import {
+  useFriendsQuery,
+  usePendingFriendRequestsQuery,
+  useDeclinedFriendshipsQuery,
+} from '../services/friends'
 import Friends from './friends'
 
 function renderComponent() {
@@ -101,6 +106,7 @@ describe('Friends page', () => {
   it('shows loading state', () => {
     vi.mocked(useIsAnonymous).mockReturnValue(false)
     vi.mocked(useFriendsQuery).mockReturnValue({ data: [], isLoading: true } as any)
+    vi.mocked(useDeclinedFriendshipsQuery).mockReturnValue({ data: [], isLoading: true } as any)
     renderComponent()
     expect(screen.queryByText('No friends yet')).not.toBeInTheDocument()
   })
