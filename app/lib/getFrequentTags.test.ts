@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { getFrequentTags, FREQUENT_TAGS_CAP } from './getFrequentTags'
+import { FREQUENT_TAGS_CAP, getFrequentTags } from './getFrequentTags'
 
 describe('getFrequentTags', () => {
   it('returns empty array when tagCounts is empty', () => {
@@ -11,46 +11,44 @@ describe('getFrequentTags', () => {
     expect(getFrequentTags(undefined, [], FREQUENT_TAGS_CAP)).toEqual([])
   })
 
-  it('returns a single tag with count 1', () => {
+  it('returns a single predefined tag with count 1', () => {
     expect(getFrequentTags({ hiking: 1 }, [], FREQUENT_TAGS_CAP)).toEqual(['hiking'])
   })
 
   it('sorts tags by count descending', () => {
-    const counts = { hiking: 3, paddling: 5, fishing: 1 }
-    const result = getFrequentTags(counts, [], FREQUENT_TAGS_CAP)
+    const tagCounts = { hiking: 3, paddling: 5, tent: 1 }
+    const result = getFrequentTags(tagCounts, [], FREQUENT_TAGS_CAP)
     expect(result[0]).toBe('paddling')
-    expect(result[1]).toBe('hiking')
-    expect(result[2]).toBe('fishing')
+    expect(result).toEqual(['paddling', 'hiking', 'tent'])
   })
 
   it('caps results at the provided cap value', () => {
-    const counts = { hiking: 5, paddling: 4, fishing: 3, surfing: 2, tent: 1, carCamp: 1, hotel: 1 }
-    const result = getFrequentTags(counts, [], 3)
+    const tagCounts = { hiking: 5, paddling: 4, tent: 3, surfing: 2, fishing: 1 }
+    const result = getFrequentTags(tagCounts, [], 3)
     expect(result).toHaveLength(3)
-    expect(result).toEqual(['hiking', 'paddling', 'fishing'])
+    expect(result).toEqual(['hiking', 'paddling', 'tent'])
   })
 
-  it('filters out custom tag keys not present in customTags', () => {
-    const counts = { hiking: 3, 'my-custom-tag': 5 }
-    const customTags = [{ name: 'other-tag' }]
-    const result = getFrequentTags(counts, customTags, FREQUENT_TAGS_CAP)
+  it('filters out a custom tag key absent from customTags', () => {
+    const tagCounts = { hiking: 3, 'my-deleted-tag': 5 }
+    const result = getFrequentTags(tagCounts, [], FREQUENT_TAGS_CAP)
     expect(result).toEqual(['hiking'])
-    expect(result).not.toContain('my-custom-tag')
+    expect(result).not.toContain('my-deleted-tag')
   })
 
-  it('does NOT filter out predefined tag keys even if absent from customTags', () => {
-    const counts = { hiking: 3, tent: 2 }
-    const result = getFrequentTags(counts, [], FREQUENT_TAGS_CAP)
+  it('keeps a custom tag key present in customTags', () => {
+    const tagCounts = { hiking: 1, 'my-custom-tag': 5 }
+    const customTags = [{ name: 'my-custom-tag' }]
+    const result = getFrequentTags(tagCounts, customTags, FREQUENT_TAGS_CAP)
+    expect(result).toEqual(['my-custom-tag', 'hiking'])
+  })
+
+  it('never filters out a predefined tag regardless of customTags', () => {
+    const tagCounts = { hiking: 3, tent: 2, carCamping: 1 }
+    const result = getFrequentTags(tagCounts, [], FREQUENT_TAGS_CAP)
     expect(result).toContain('hiking')
     expect(result).toContain('tent')
-  })
-
-  it('keeps custom tag keys that exist in customTags', () => {
-    const counts = { hiking: 2, 'my-tag': 5 }
-    const customTags = [{ name: 'my-tag' }]
-    const result = getFrequentTags(counts, customTags, FREQUENT_TAGS_CAP)
-    expect(result[0]).toBe('my-tag')
-    expect(result).toContain('hiking')
+    expect(result).toContain('carCamping')
   })
 
   it('exports FREQUENT_TAGS_CAP as 6', () => {

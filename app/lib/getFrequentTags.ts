@@ -1,15 +1,15 @@
-import { allGearListItems } from './gearListItemEnum'
+import { gearListKeys } from './gearListItemEnum'
 
 export const FREQUENT_TAGS_CAP = 6
 
-const predefinedKeySet = new Set<string>(allGearListItems.map((i) => i.name))
+const predefinedKeySet: Set<string> = new Set(gearListKeys)
 
 export function getFrequentTags(
   tagCounts: Record<string, number> | undefined,
   customTags: { name: string }[],
   cap: number
 ): string[] {
-  if (!tagCounts || Object.keys(tagCounts).length === 0) return []
+  if (!tagCounts) return []
 
   const customTagNames = new Set(customTags.map((t) => t.name))
 
