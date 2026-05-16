@@ -17,6 +17,15 @@ vi.mock('../../services/trips', () => ({
   useCreateChatMessage: vi.fn(() => ({ mutateAsync: vi.fn() })),
 }))
 
+vi.mock('../../services/friends', () => ({
+  useFriendsQuery: vi.fn(() => ({ data: [], isLoading: false })),
+  useSendFriendRequest: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
+}))
+
+vi.mock('../../services/users', () => ({
+  useUserByIdQuery: vi.fn(() => ({ data: null })),
+}))
+
 vi.mock('react-router', async () => {
   const actual = await vi.importActual<typeof import('react-router')>('react-router')
   return {

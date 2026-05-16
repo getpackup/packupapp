@@ -27,6 +27,7 @@ import { firebaseAuth } from '~/firebase/config'
 import useBoop from '~/lib/useBoop'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
+import { usePendingFriendRequestsQuery } from '~/services/friends'
 
 import { Logo } from './Logo'
 import {
@@ -49,6 +50,7 @@ export function Sidebar({ className }: SidebarProps) {
   const { isSidebarCollapsed, setIsSidebarCollapsed } = useSidebarState()
   const [nextStyle, triggerNext] = useBoop({ x: 2 }) as [any, () => void]
   const [animatingItem, setAnimatingItem] = useState<string | null>(null)
+  const { data: pendingRequests } = usePendingFriendRequestsQuery(user?.uid ?? '')
 
   const navigate = useNavigate()
   const location = useLocation()
@@ -158,6 +160,13 @@ export function Sidebar({ className }: SidebarProps) {
 
                   {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
                 </animated.span>
+                {item.label === 'Friends' &&
+                  pendingRequests &&
+                  pendingRequests.length > 0 && (
+                    <span className="bg-destructive text-destructive-foreground ml-auto flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold">
+                      {pendingRequests.length}
+                    </span>
+                  )}
               </Link>
             </li>
           ))}

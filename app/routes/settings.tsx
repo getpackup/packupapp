@@ -1,4 +1,5 @@
 import { EmergencyContacts } from '~/components/EmergencyContacts'
+import { FriendRequestEmailToggle } from '~/components/FriendRequestEmailToggle'
 import PageContent from '~/components/PageContent'
 import PageHeader from '~/components/PageHeader'
 import { SafetyItineraryToggle } from '~/components/SafetyItineraryToggle'
@@ -50,6 +51,12 @@ export default function Settings() {
               description="Receive an email the day before your trip with details, members, and emergency contacts. You can disable this on a per-trip basis in Trip Settings as well."
             >
               <SafetyItineraryToggle />
+            </PreferenceRow>
+            <PreferenceRow
+              label="Friend Request Email"
+              description="Receive an email when someone sends you a friend request."
+            >
+              <FriendRequestEmailToggle />
             </PreferenceRow>
           </div>
         </section>

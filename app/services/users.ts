@@ -1,5 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { doc, getDoc, type QueryConstraint, setDoc, Timestamp, updateDoc } from 'firebase/firestore'
+import {
+  doc,
+  getDoc,
+  increment,
+  type QueryConstraint,
+  setDoc,
+  Timestamp,
+  updateDoc,
+} from 'firebase/firestore'
 import { toast } from 'sonner'
 
 import { firestoreDb } from '~/firebase/config'
@@ -80,6 +88,20 @@ export function useUpdateUser(userId: string) {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: userQueryKey })
+    },
+  })
+}
+
+export function useIncrementTagCounts(userId: string) {
+  return useMutation({
+    mutationFn: async ({ tags }: { tags: string[] }) => {
+      if (tags.length === 0) return
+      const docRef = doc(firestoreDb, 'users', userId)
+      const payload: Record<string, ReturnType<typeof increment>> = {}
+      for (const tag of tags) {
+        payload[`tagCounts.${tag}`] = increment(1)
+      }
+      await updateDoc(docRef, payload)
     },
   })
 }
