@@ -1,18 +1,25 @@
-# Welcome to React Router!
+[![Lint, Test, & Typecheck](https://github.com/getpackup/packupapp/actions/workflows/ci.yml/badge.svg)](https://github.com/getpackup/packupapp/actions/workflows/ci.yml)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/82ebae32-db80-41c9-86b6-7c2e80c97ec9/deploy-status)](https://app.netlify.com/projects/newpackupapp/deploys)
 
-A modern, production-ready template for building full-stack React applications using React Router.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+
+# Packup
+
+A collaborative trip packing app where users plan gear lists together, assign items to people, and track what needs to be bought before a trip.
 
 ## Features
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+- Create trips and invite friends to collaborate on packing lists
+- Assign packing list items to specific people
+- Track item status (packed, needs to be bought, etc.)
+- Real-time updates across devices
+- Responsive design for mobile and desktop
+- Shopping List view for items that need to be purchased
+- Email notifications for trip updates and reminders
+- User authentication with magic link sign-in
+- Trip Chat for discussing trip details and coordinating plans
+- Emergency contact management for added safety
+- Firebase Functions for backend logic and email handling
 
 ## Getting Started
 
@@ -34,6 +41,13 @@ pnpm dev
 
 Your application will be available at `http://localhost:5173`.
 
+Emails can be previewed using the command:
+
+```bash
+pnpm email:dev
+```
+
+
 ## Building for Production
 
 Create a production build:
@@ -43,45 +57,12 @@ pnpm build
 ```
 
 ## Deployment
-
-### Docker Deployment
-
-To build and run using Docker:
-
-```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
-```
-
-The containerized application can be deployed to any platform that supports Docker, including:
-
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `pnpm build`
-
-```
-├── package.json
-├── pnpm-lock.yaml
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+Deployed to Netlify via pushes to the `main` branch at [https://new.packupapp.com/](https://new.packupapp.com/).
 
 ---
 
-Built with ❤️ using React Router.
+Happy packing, and stay safe out there!
+
+— The Packup team
+
+✌️🧡🏕️
