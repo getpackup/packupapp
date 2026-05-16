@@ -19,6 +19,7 @@ export type User = {
   website?: string
   lastUpdated?: Timestamp
   createdAt?: Timestamp
+  tagCounts?: Record<string, number>
   preferences?: {
     theme?: 'light' | 'dark'
     hasSeenPackingListTour?: boolean
