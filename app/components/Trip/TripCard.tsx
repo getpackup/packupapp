@@ -117,7 +117,7 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
   return (
     <div
       className={cn(
-        'focus:ring-ring flex gap-6 rounded-lg border p-4 transition-colors duration-300',
+        'focus:ring-ring flex flex-col gap-6 rounded-lg border p-4 transition-colors duration-300 md:flex-row',
         {
           'cursor-initial': isPending,
           'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer': !isPending,
@@ -126,7 +126,7 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
       tabIndex={0}
       onClick={() => (isPending ? null : navigate(`/trips/${trip.tripId}`))}
     >
-      <div className="relative w-2/5">
+      <div className="relative w-full md:w-2/5">
         {showRemaining && (
           <div className="absolute top-2 left-2 z-10 text-xs">
             <Badge variant="default">
@@ -158,7 +158,7 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
           )}
         </AspectRatio>
       </div>
-      <div className="flex w-3/5 flex-col">
+      <div className="flex w-full flex-col md:w-3/5">
         <div>
           <div className="flex items-start justify-between gap-4">
             {isPending ? (
@@ -189,7 +189,7 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
           )}
         </div>
         <div>
-          <Separator className="my-4" />
+          {trip.tags && trip.tags.length > 0 && <Separator className="my-4" />}
 
           <div className="flex flex-wrap gap-2">
             {trip.tags.map((tag: string) => (
