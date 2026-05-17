@@ -12,7 +12,7 @@ The list above has already been filtered to issues ready for work.
 
 # TASK
 
-Analyze the open issues and build a dependency graph. For each issue, determine whether it **blocks** or **is blocked by** any other open issue.
+Analyze the open issues and build a dependency graph. For each issue, determine whether it **blocks** or **is blocked by** any other open issue. If an issue has a parent issue linked, treat the child issue as blocking the parent issue, since the parent cannot be completed until the child is completed.
 
 An issue B is **blocked by** issue A if:
 
