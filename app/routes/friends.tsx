@@ -1,6 +1,6 @@
 import type { SearchResponse } from 'algoliasearch'
 import { format } from 'date-fns'
-import { Check, Clock, Loader2, Search, UserMinus, UserPlus, Users, UserX, X } from 'lucide-react'
+import { Check, Clock, Loader2, Search, UserPlus, Users, UserX, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 
 import PageContent from '~/components/PageContent'
@@ -104,7 +104,7 @@ function FriendCard({ friendship, currentUid }: { friendship: Friendship; curren
         <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm">
-              <UserMinus className="size-4" />
+              <UserX className="size-4" />
               Unfriend
             </Button>
           </DialogTrigger>
