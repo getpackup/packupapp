@@ -8,6 +8,8 @@ Only work on the issue specified.
 
 Work on branch {{BRANCH}}. Make commits and run tests.
 
+If there is a comment on the issue saying it has been completed, and there is a commit that is not yet on the `main` branch, output <promise>COMPLETE</promise>.
+
 # CONTEXT
 
 Here are the last 10 commits:
@@ -54,8 +56,6 @@ Keep it concise.
 If the task is not complete, leave a comment on the issue with what was done.
 
 Do not close the issue - this will be done later.
-
-If there is a comment on the issue saying it has been completed, and there is a commit that is not yet on the `main` branch, output <promise>COMPLETE</promise>.
 
 Once complete, output <promise>COMPLETE</promise>.
 
