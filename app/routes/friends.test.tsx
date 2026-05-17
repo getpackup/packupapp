@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -28,11 +29,23 @@ vi.mock('../services/users', () => ({
 
 import { useIsAnonymous } from '../lib/useIsAnonymous'
 import {
+  useAcceptFriendRequest,
+  useDeclineFriendRequest,
   useFriendsQuery,
   usePendingFriendRequestsQuery,
   useDeclinedFriendshipsQuery,
 } from '../services/friends'
+import { useUserByIdQuery } from '../services/users'
 import Friends from './friends'
+
+function resetQueryMocks() {
+  vi.mocked(useFriendsQuery).mockReturnValue({ data: [], isLoading: false } as any)
+  vi.mocked(usePendingFriendRequestsQuery).mockReturnValue({ data: [], isLoading: false } as any)
+  vi.mocked(useDeclinedFriendshipsQuery).mockReturnValue({ data: [], isLoading: false } as any)
+  vi.mocked(useUserByIdQuery).mockReturnValue({ data: null } as any)
+  vi.mocked(useAcceptFriendRequest).mockReturnValue({ mutateAsync: vi.fn(), isPending: false } as any)
+  vi.mocked(useDeclineFriendRequest).mockReturnValue({ mutateAsync: vi.fn(), isPending: false } as any)
+}
 
 function renderComponent() {
   return render(
@@ -109,5 +122,100 @@ describe('Friends page', () => {
     vi.mocked(useDeclinedFriendshipsQuery).mockReturnValue({ data: [], isLoading: true } as any)
     renderComponent()
     expect(screen.queryByText('No friends yet')).not.toBeInTheDocument()
+  })
+
+  it('shows badge with correct pending request count', () => {
+    resetQueryMocks()
+    vi.mocked(useIsAnonymous).mockReturnValue(false)
+    vi.mocked(usePendingFriendRequestsQuery).mockReturnValue({
+      data: [
+        {
+          id: 'req1',
+          uids: ['sender1', 'u1'],
+          requesterUid: 'sender1',
+          status: 'pending',
+          requestedAt: { toDate: () => new Date() },
+        },
+        {
+          id: 'req2',
+          uids: ['sender2', 'u1'],
+          requesterUid: 'sender2',
+          status: 'pending',
+          requestedAt: { toDate: () => new Date() },
+        },
+        {
+          id: 'req3',
+          uids: ['sender3', 'u1'],
+          requesterUid: 'sender3',
+          status: 'pending',
+          requestedAt: { toDate: () => new Date() },
+        },
+      ],
+      isLoading: false,
+    } as any)
+    renderComponent()
+    expect(screen.getByText('3')).toBeInTheDocument()
+  })
+
+  it('calls accept mutation when Accept button is clicked', async () => {
+    resetQueryMocks()
+    const mockAccept = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(useIsAnonymous).mockReturnValue(false)
+    vi.mocked(useAcceptFriendRequest).mockReturnValue({
+      mutateAsync: mockAccept,
+      isPending: false,
+    } as any)
+    vi.mocked(useUserByIdQuery).mockReturnValue({
+      data: { uid: 'sender', displayName: 'Sender User', username: 'sender', email: 'sender@test.com', photoURL: '' },
+    } as any)
+    vi.mocked(usePendingFriendRequestsQuery).mockReturnValue({
+      data: [
+        {
+          id: 'sender_u1',
+          uids: ['sender', 'u1'],
+          requesterUid: 'sender',
+          status: 'pending',
+          requestedAt: { toDate: () => new Date() },
+        },
+      ],
+      isLoading: false,
+    } as any)
+
+    const user = userEvent.setup()
+    renderComponent()
+
+    await user.click(screen.getByRole('button', { name: /accept/i }))
+    expect(mockAccept).toHaveBeenCalledWith({ friendshipId: 'sender_u1' })
+  })
+
+  it('calls decline mutation when Decline button is clicked', async () => {
+    resetQueryMocks()
+    const mockDecline = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(useIsAnonymous).mockReturnValue(false)
+    vi.mocked(useDeclineFriendRequest).mockReturnValue({
+      mutateAsync: mockDecline,
+      isPending: false,
+    } as any)
+    vi.mocked(useUserByIdQuery).mockReturnValue({
+      data: { uid: 'sender', displayName: 'Sender User', username: 'sender', email: 'sender@test.com', photoURL: '' },
+    } as any)
+    vi.mocked(usePendingFriendRequestsQuery).mockReturnValue({
+      data: [
+        {
+          id: 'sender_u1',
+          uids: ['sender', 'u1'],
+          requesterUid: 'sender',
+          status: 'pending',
+          requestedAt: { toDate: () => new Date() },
+        },
+      ],
+      isLoading: false,
+    } as any)
+
+    const user = userEvent.setup()
+    renderComponent()
+
+    await user.click(screen.getByRole('button', { name: /decline/i }))
+    expect(mockDecline).toHaveBeenCalledWith({ friendshipId: 'sender_u1' })
   })
 })
