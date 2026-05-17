@@ -113,8 +113,7 @@ export default function Trips() {
     <>
       <PageHeader crumbs={[{ label: 'Trips', href: '/trips' }]} />
       <PageContent>
-        <div className="">
-          <div className="mx-auto w-full max-w-4xl">
+        <div className="mx-auto w-full max-w-4xl">
             {isAnonymous && (
               <AnonymousUserBanner
                 primary="Pack together — assign gear, chat in-trip, and shop for what you need."
@@ -180,25 +179,8 @@ export default function Trips() {
                   </Button>
                 </EmptyContent>
               </Empty>
-
-              // <div className="mx-auto flex max-w-md flex-col items-center space-y-8 text-center">
-              //   <Logo className="size-16" fill="var(--muted-foreground)" />
-              //   <h2 className="text-2xl font-bold">Welcome, adventurer!</h2>
-              //   <p>
-              //     No trips found yet. Create your first trip and start packing for your next
-              //     adventure.
-              //   </p>
-              //   <Button asChild variant="accent" className="group">
-              //     <Link to="/trips/new">
-              //       <PlusCircle className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:rotate-90" />
-
-              //       <span className="truncate">Create a new trip</span>
-              //     </Link>
-              //   </Button>
-              // </div>
             )}
           </div>
-        </div>
       </PageContent>
     </>
   )

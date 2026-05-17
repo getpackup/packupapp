@@ -135,7 +135,9 @@ function FindFriends({ currentUid, friendships }: { currentUid: string; friendsh
   const [hits, setHits] = useState<SearchResponse<User>['hits']>([])
   const [isSearching, setIsSearching] = useState(false)
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
-  const [algoliaService, setAlgoliaService] = useState<typeof import('~/services/algoliaSearch').algoliaSearch | null>(null)
+  const [algoliaService, setAlgoliaService] = useState<
+    typeof import('~/services/algoliaSearch').algoliaSearch | null
+  >(null)
   const { mutateAsync: sendRequest } = useSendFriendRequest()
   const [sendingTo, setSendingTo] = useState<string | null>(null)
 

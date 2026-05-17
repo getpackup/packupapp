@@ -191,8 +191,7 @@ const NewTripForm = ({}: NewTripFormProps) => {
       if (!valid) return
     }
     if (isLastStep) {
-      console.log(form.getValues())
-      // form.handleSubmit(onSubmit)()
+      form.handleSubmit(onSubmit)()
     } else {
       setStep(step + 1)
     }

@@ -110,9 +110,9 @@ export function AddTripPartyMember({
   const [hits, setHits] = useState<SearchResponse<User>['hits']>([])
   const [isAddingMember, setIsAddingMember] = useState<string | null>(null)
 
-  const friendUids = friendships.map((f) =>
-    f.uids.find((uid) => uid !== user?.uid) ?? ''
-  ).filter(Boolean)
+  const friendUids = friendships
+    .map((f) => f.uids.find((uid) => uid !== user?.uid) ?? '')
+    .filter(Boolean)
 
   const isFriend = (uid: string) => friendUids.includes(uid)
 

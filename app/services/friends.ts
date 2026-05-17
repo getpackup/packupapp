@@ -120,13 +120,8 @@ export function useSendFriendRequest() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({
-      senderUid,
-      recipientUid,
-    }: {
-      senderUid: string
-      recipientUid: string
-    }) => sendFriendRequest(senderUid, recipientUid),
+    mutationFn: ({ senderUid, recipientUid }: { senderUid: string; recipientUid: string }) =>
+      sendFriendRequest(senderUid, recipientUid),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: friendKeys.byUid(variables.senderUid) })
       toast.success('Friend request sent')

@@ -49,26 +49,17 @@ export default function GearCloset() {
   const isAnonymous = useIsAnonymous()
   const userId = user?.uid ?? ''
 
-  const {
-    data: closet,
-    isLoading: closetLoading,
-  } = useGearClosetQuery({
+  const { data: closet, isLoading: closetLoading } = useGearClosetQuery({
     userId,
     queryOptions: { enabled: !!userId },
   })
 
-  const {
-    data: allGear,
-    isLoading: gearLoading,
-  } = useGearQuery({
+  const { data: allGear, isLoading: gearLoading } = useGearQuery({
     constraints: [],
     queryOptions: { enabled: !!userId },
   })
 
-  const {
-    data: additions,
-    isLoading: additionsLoading,
-  } = useGearClosetAdditionsQuery({
+  const { data: additions, isLoading: additionsLoading } = useGearClosetAdditionsQuery({
     userId,
     queryOptions: { enabled: !!userId },
   })
