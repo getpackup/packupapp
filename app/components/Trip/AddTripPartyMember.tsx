@@ -423,50 +423,50 @@ export function AddTripPartyMember({
                     hits
                       .filter((hit) => !isPending(hit.uid))
                       .map((hit) => {
-                      const matchingUser = tripMembers.find((member) => member.uid === hit.uid)
-                      const hitIsFriend = isFriend(hit.uid)
-                      return (
-                        <div key={hit.objectID}>
-                          <div className="text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent flex items-center justify-between gap-2 rounded-lg px-3 py-2 transition-colors">
-                            <UserMediaObject user={hit} />
-                            {matchingUser ? (
-                              <TripPartyMemberBadge member={matchingUser} />
-                            ) : (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="icon"
-                                onClick={() =>
-                                  addMemberToTrip(hit.uid, hit.email, hit.username)
-                                }
-                                disabled={isAddingMember === hit.uid}
-                              >
-                                {isAddingMember === hit.uid ? (
-                                  <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                  <Plus />
-                                )}
-                                <span className="sr-only">Add {hit.username} to trip</span>
-                              </Button>
+                        const matchingUser = tripMembers.find((member) => member.uid === hit.uid)
+                        const hitIsFriend = isFriend(hit.uid)
+                        return (
+                          <div key={hit.objectID}>
+                            <div className="text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent flex items-center justify-between gap-2 rounded-lg px-3 py-2 transition-colors">
+                              <UserMediaObject user={hit} />
+                              {matchingUser ? (
+                                <TripPartyMemberBadge member={matchingUser} />
+                              ) : (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() =>
+                                    addMemberToTrip(hit.uid, hit.email, hit.username)
+                                  }
+                                  disabled={isAddingMember === hit.uid}
+                                >
+                                  {isAddingMember === hit.uid ? (
+                                    <Loader2 className="size-4 animate-spin" />
+                                  ) : (
+                                    <Plus />
+                                  )}
+                                  <span className="sr-only">Add {hit.username} to trip</span>
+                                </Button>
+                              )}
+                            </div>
+                            {!matchingUser && !hitIsFriend && (
+                              <label className="text-muted-foreground flex items-center gap-2 px-3 py-1 text-xs">
+                                <Checkbox
+                                  checked={sendFriendRequestFor[hit.uid] ?? false}
+                                  onCheckedChange={(checked) =>
+                                    setSendFriendRequestFor((prev) => ({
+                                      ...prev,
+                                      [hit.uid]: !!checked,
+                                    }))
+                                  }
+                                />
+                                Also send {hit.username} a Friend Request
+                              </label>
                             )}
                           </div>
-                          {!matchingUser && !hitIsFriend && (
-                            <label className="text-muted-foreground flex items-center gap-2 px-3 py-1 text-xs">
-                              <Checkbox
-                                checked={sendFriendRequestFor[hit.uid] ?? false}
-                                onCheckedChange={(checked) =>
-                                  setSendFriendRequestFor((prev) => ({
-                                    ...prev,
-                                    [hit.uid]: !!checked,
-                                  }))
-                                }
-                              />
-                              Also send {hit.username} a Friend Request
-                            </label>
-                          )}
-                        </div>
-                      )
-                    })}
+                        )
+                      })}
                 </div>
               </div>
             </form>
