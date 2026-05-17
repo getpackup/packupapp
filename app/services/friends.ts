@@ -116,17 +116,23 @@ export function usePendingFriendRequestsQuery(uid: string) {
   })
 }
 
+export function useSentFriendRequestsQuery(uid: string) {
+  return useQuery<Friendship[], Error, Friendship[]>({
+    queryKey: friendKeys.byUid(uid),
+    queryFn: () => fetchAllFriendships(uid),
+    select: (data) => data.filter((f) => f.status === 'pending' && f.requesterUid === uid),
+    enabled: !!uid,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+  })
+}
+
 export function useSendFriendRequest() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({
-      senderUid,
-      recipientUid,
-    }: {
-      senderUid: string
-      recipientUid: string
-    }) => sendFriendRequest(senderUid, recipientUid),
+    mutationFn: ({ senderUid, recipientUid }: { senderUid: string; recipientUid: string }) =>
+      sendFriendRequest(senderUid, recipientUid),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: friendKeys.byUid(variables.senderUid) })
       toast.success('Friend request sent')
@@ -156,8 +162,7 @@ export function useDeclineFriendRequest(currentUid: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ friendshipId }: { friendshipId: string }) =>
-      declineFriendRequest(friendshipId),
+    mutationFn: ({ friendshipId }: { friendshipId: string }) => declineFriendRequest(friendshipId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.byUid(currentUid) })
     },
