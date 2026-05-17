@@ -131,7 +131,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
         })
 
         // Only review if the implementer produced commits
-        if (implement.commits.length > 0) {
+        if (implement.completionSignal || implement.commits.length > 0) {
           const review = await sandbox.run({
             name: 'reviewer',
             maxIterations: 1,
