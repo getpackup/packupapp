@@ -190,7 +190,7 @@ export function BottomNav({ className }: BottomNavProps) {
                 <DrawerClose asChild>
                   <Link
                     to="/signup"
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition-colors text-foreground hover:bg-sidebar-accent"
+                    className="text-destructive-foreground hover:bg-sidebar-accent flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition-colors"
                   >
                     <UserPlus className="size-5" />
                     Create Account
@@ -215,7 +215,7 @@ export function BottomNav({ className }: BottomNavProps) {
                       {item.label === 'Friends' &&
                         pendingRequests &&
                         pendingRequests.length > 0 && (
-                          <span className="bg-destructive text-destructive-foreground ml-auto flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold">
+                          <span className="bg-destructive text-foreground ml-auto flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold">
                             {pendingRequests.length}
                           </span>
                         )}

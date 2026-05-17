@@ -160,13 +160,11 @@ export function Sidebar({ className }: SidebarProps) {
 
                   {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
                 </animated.span>
-                {item.label === 'Friends' &&
-                  pendingRequests &&
-                  pendingRequests.length > 0 && (
-                    <span className="bg-destructive text-destructive-foreground ml-auto flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold">
-                      {pendingRequests.length}
-                    </span>
-                  )}
+                {item.label === 'Friends' && pendingRequests && pendingRequests.length > 0 && (
+                  <span className="bg-destructive text-foreground ml-auto flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold">
+                    {pendingRequests.length}
+                  </span>
+                )}
               </Link>
             </li>
           ))}
@@ -245,14 +243,16 @@ export function Sidebar({ className }: SidebarProps) {
                     <span className="font-bold">
                       {isAnonymous ? 'Anonymous User' : user?.displayName}
                     </span>
-                    
-                    <span className={isAnonymous ? "italic": undefined}>{isAnonymous ? "Pending account creation" : `@${user?.username.toLocaleLowerCase()}`}</span>
-                    
-                    
+
+                    <span className={isAnonymous ? 'italic' : undefined}>
+                      {isAnonymous
+                        ? 'Pending account creation'
+                        : `@${user?.username.toLocaleLowerCase()}`}
+                    </span>
+
                     <span className="text-muted-foreground text-xs">
                       Joined {format(user?.createdAt?.toDate() ?? new Date(), 'MMMM yyyy')}
                     </span>
-                    
                   </div>
                 </div>
               </DropdownMenuLabel>
