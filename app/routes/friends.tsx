@@ -146,6 +146,7 @@ function FindFriends({
   currentUid: string
   friendships: Friendship[]
 }) {
+  const { user } = useAuth()
   const [searchValue, setSearchValue] = useState('')
   const [hits, setHits] = useState<SearchResponse<User>['hits']>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -227,6 +228,15 @@ function FindFriends({
     setSendingTo(recipientUid)
     try {
       await sendRequest({ senderUid: currentUid, recipientUid })
+      const hit = hits.find((h) => h.uid === recipientUid)
+      if (hit?.email && user) {
+        const formData = new FormData()
+        formData.append('recipientEmail', hit.email)
+        formData.append('recipientUid', recipientUid)
+        formData.append('requesterDisplayName', user.displayName ?? '')
+        formData.append('requesterUsername', user.username)
+        fetch('/resource/send-friend-request', { method: 'POST', body: formData }).catch(() => {})
+      }
     } finally {
       setSendingTo(null)
     }

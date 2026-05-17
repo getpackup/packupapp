@@ -270,6 +270,12 @@ export function AddTripPartyMember({
               if (sendFriendRequestFor[hitUserId] && user.uid) {
                 try {
                   await sendFriendReq({ senderUid: user.uid, recipientUid: hitUserId })
+                  const formData = new FormData()
+                  formData.append('recipientEmail', hitEmail)
+                  formData.append('recipientUid', hitUserId)
+                  formData.append('requesterDisplayName', user.displayName ?? '')
+                  formData.append('requesterUsername', user.username)
+                  fetch('/resource/send-friend-request', { method: 'POST', body: formData }).catch(() => {})
                 } catch {
                   // Friend request is independent — don't block the trip invite
                 }
