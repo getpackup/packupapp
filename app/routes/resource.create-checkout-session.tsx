@@ -33,20 +33,14 @@ export const action: ActionFunction = async ({ request }) => {
     })
   }
 
-  console.log({ lookup_key })
-
   const stripe = new Stripe(secretKey)
   const url = new URL(request.url)
   const origin = url.origin
-
-  console.log({ origin })
 
   const prices = await stripe.prices.list({
     lookup_keys: [lookup_key],
     expand: ['data.product'],
   })
-
-  console.log({ prices })
 
   if (!prices.data[0]) {
     return new Response(JSON.stringify({ error: 'Price not found' }), {

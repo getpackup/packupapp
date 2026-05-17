@@ -256,7 +256,7 @@ export const sendInvitationToTripEmail = onRequest(
       typeof when !== 'string' ||
       typeof tags !== 'string'
     ) {
-      console.log({ invitedBy, email, greetingName, tripName, where, why, when, tags })
+      console.error({ invitedBy, email, greetingName, tripName, where, why, when, tags })
       res.status(400).send('Missing required query parameters')
       return
     }

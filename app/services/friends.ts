@@ -83,6 +83,8 @@ export async function fetchAllFriendships(uid: string): Promise<Friendship[]> {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Friendship)
 }
 
+// This is the main query for fetching friendships for a user.
+// The other hooks (declined, pending, sent) filter this data accordingly.
 export function useFriendsQuery(uid: string) {
   return useQuery<Friendship[], Error, Friendship[]>({
     queryKey: friendKeys.byUid(uid),

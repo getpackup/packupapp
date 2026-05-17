@@ -1,17 +1,6 @@
 import type { SearchResponse } from 'algoliasearch'
 import { format } from 'date-fns'
-import {
-  Check,
-  Clock,
-  Loader2,
-  Search,
-  UserMinus,
-  UserPlus,
-  Users,
-  UsersIcon,
-  UserX,
-  X,
-} from 'lucide-react'
+import { Check, Clock, Loader2, Search, UserMinus, UserPlus, Users, UserX, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 
 import PageContent from '~/components/PageContent'
@@ -106,11 +95,12 @@ function FriendCard({ friendship, currentUid }: { friendship: Friendship; curren
     <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
       <UserMediaObject user={friend} />
       <div className="flex items-center gap-2">
-        <div>
+        {friendship?.respondedAt && (
           <span className="text-muted-foreground text-xs font-normal">
-            Friends since {format(friendship?.respondedAt?.toDate() ?? new Date(), 'MMMM dd, yyyy')}
+            Friends since {format(friendship.respondedAt.toDate(), 'MMMM dd, yyyy')}
           </span>
-        </div>
+        )}
+
         <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm">
@@ -156,7 +146,6 @@ function FindFriends({
   currentUid: string
   friendships: Friendship[]
 }) {
-  console.log({ friendships })
   const [searchValue, setSearchValue] = useState('')
   const [hits, setHits] = useState<SearchResponse<User>['hits']>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -366,7 +355,7 @@ export default function Friends() {
                     <Empty>
                       <EmptyHeader>
                         <EmptyMedia variant="icon">
-                          <UsersIcon />
+                          <Users />
                         </EmptyMedia>
                         <EmptyTitle>No friends yet</EmptyTitle>
                         <EmptyDescription>
@@ -383,11 +372,9 @@ export default function Friends() {
                     <>
                       <h2 className="mb-3 text-lg font-bold">
                         Friends{' '}
-                        {friends.length > 0 && (
-                          <span className="text-muted-foreground text-sm font-normal">
-                            ({friends.length})
-                          </span>
-                        )}
+                        <span className="text-muted-foreground text-sm font-normal">
+                          ({friends.length})
+                        </span>
                       </h2>
                       <div className="space-y-2">
                         {friends.map((f) => (
