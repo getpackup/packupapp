@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router'
 import { toast } from 'sonner'
 
 import useAuth from '~/contexts/auth/useAuth'
+import { useScreenSize } from '~/hooks/use-screen-size'
 import { createSystemMessage } from '~/lib/chat'
 import { formattedDate, formattedDateRange } from '~/lib/date'
 import { cn } from '~/lib/utils'
@@ -30,6 +31,7 @@ type TripCardProps = {
 
 const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: TripCardProps) => {
   const navigate = useNavigate()
+  const { isLargeBreakpoint } = useScreenSize()
 
   const { user } = useAuth()
 
@@ -114,10 +116,16 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
     }
   }
 
+  // const getAspectRatio = () => {
+  //   if (is2xlBreakpoint || isXlBreakpoint || isLargeBreakpoint) return 1.25
+  //   if (isMediumBreakpoint || isSmallBreakpoint || isXSmallBreakpoint) return 2.5
+  //   return 2.5
+  // }
+
   return (
     <div
       className={cn(
-        'focus:ring-ring flex flex-col gap-6 rounded-lg border p-4 transition-colors duration-300 md:flex-row',
+        'focus:ring-ring flex w-full flex-col gap-6 rounded-lg border p-4 transition-colors duration-300 lg:flex-row',
         {
           'cursor-initial': isPending,
           'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer': !isPending,
@@ -126,7 +134,7 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
       tabIndex={0}
       onClick={() => (isPending ? null : navigate(`/trips/${trip.tripId}`))}
     >
-      <div className="relative w-full md:w-2/5">
+      <div className="relative w-full flex-1 lg:w-2/5">
         {showRemaining && (
           <div className="absolute top-2 left-2 z-10 text-xs">
             <Badge variant="default">
@@ -142,7 +150,10 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
           </div>
         )}
 
-        <AspectRatio ratio={1.5} className="pointer-events-none overflow-hidden rounded-sm border">
+        <AspectRatio
+          ratio={isLargeBreakpoint ? 1.25 : 2.5}
+          className="pointer-events-none overflow-hidden rounded-sm border"
+        >
           {!trip.headerImage && !!trip.lat && !!trip.lng && (
             <StaticMapImage
               lat={trip.lat}
@@ -158,7 +169,7 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
           )}
         </AspectRatio>
       </div>
-      <div className="flex w-full flex-col md:w-3/5">
+      <div className="flex w-full flex-col lg:w-3/5">
         <div>
           <div className="flex items-start justify-between gap-4">
             {isPending ? (
