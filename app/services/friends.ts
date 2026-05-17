@@ -83,6 +83,8 @@ export async function fetchAllFriendships(uid: string): Promise<Friendship[]> {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Friendship)
 }
 
+// This is the main query for fetching friendships for a user.
+// The other hooks (declined, pending, sent) filter this data accordingly.
 export function useFriendsQuery(uid: string) {
   return useQuery<Friendship[], Error, Friendship[]>({
     queryKey: friendKeys.byUid(uid),
@@ -116,17 +118,23 @@ export function usePendingFriendRequestsQuery(uid: string) {
   })
 }
 
+export function useSentFriendRequestsQuery(uid: string) {
+  return useQuery<Friendship[], Error, Friendship[]>({
+    queryKey: friendKeys.byUid(uid),
+    queryFn: () => fetchAllFriendships(uid),
+    select: (data) => data.filter((f) => f.status === 'pending' && f.requesterUid === uid),
+    enabled: !!uid,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+  })
+}
+
 export function useSendFriendRequest() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({
-      senderUid,
-      recipientUid,
-    }: {
-      senderUid: string
-      recipientUid: string
-    }) => sendFriendRequest(senderUid, recipientUid),
+    mutationFn: ({ senderUid, recipientUid }: { senderUid: string; recipientUid: string }) =>
+      sendFriendRequest(senderUid, recipientUid),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: friendKeys.byUid(variables.senderUid) })
       toast.success('Friend request sent')
@@ -156,8 +164,7 @@ export function useDeclineFriendRequest(currentUid: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ friendshipId }: { friendshipId: string }) =>
-      declineFriendRequest(friendshipId),
+    mutationFn: ({ friendshipId }: { friendshipId: string }) => declineFriendRequest(friendshipId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.byUid(currentUid) })
     },
@@ -169,12 +176,25 @@ export function useUnfriend(currentUid: string) {
 
   return useMutation({
     mutationFn: ({ friendshipId }: { friendshipId: string }) => unfriend(friendshipId),
+    onMutate: async ({ friendshipId }) => {
+      await queryClient.cancelQueries({ queryKey: friendKeys.byUid(currentUid) })
+      const previous = queryClient.getQueryData<Friendship[]>(friendKeys.byUid(currentUid))
+      queryClient.setQueryData<Friendship[]>(friendKeys.byUid(currentUid), (old) =>
+        old ? old.filter((f) => f.id !== friendshipId) : []
+      )
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(friendKeys.byUid(currentUid), context.previous)
+      }
+      toast.error('Failed to remove friend')
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: friendKeys.byUid(currentUid) })
       toast.success('Friend removed')
     },
-    onError: (err: Error) => {
-      toast.error(err.message)
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: friendKeys.byUid(currentUid) })
     },
   })
 }

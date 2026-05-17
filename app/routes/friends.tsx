@@ -1,5 +1,6 @@
 import type { SearchResponse } from 'algoliasearch'
-import { Check, Loader2, Search, UserMinus, UserPlus, UsersIcon, X } from 'lucide-react'
+import { format } from 'date-fns'
+import { Check, Clock, Loader2, Search, UserMinus, UserPlus, Users, UserX, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 
 import PageContent from '~/components/PageContent'
@@ -29,6 +30,7 @@ import {
   useFriendsQuery,
   usePendingFriendRequestsQuery,
   useSendFriendRequest,
+  useSentFriendRequestsQuery,
   useUnfriend,
 } from '~/services/friends'
 import { useUserByIdQuery } from '~/services/users'
@@ -92,49 +94,65 @@ function FriendCard({ friendship, currentUid }: { friendship: Friendship; curren
   return (
     <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
       <UserMediaObject user={friend} />
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
-            <UserMinus className="size-4" />
-            Unfriend
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Unfriend {friend.displayName}?</DialogTitle>
-            <DialogDescription>
-              This will remove {friend.displayName} from your friends list. They will not be
-              notified.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={isPending}
-              onClick={async () => {
-                await removeFriend({ friendshipId: friendship.id })
-                setConfirmOpen(false)
-              }}
-            >
-              {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+      <div className="flex items-center gap-2">
+        {friendship?.respondedAt && (
+          <span className="text-muted-foreground text-xs font-normal">
+            Friends since {format(friendship.respondedAt.toDate(), 'MMMM dd, yyyy')}
+          </span>
+        )}
+
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm">
+              <UserMinus className="size-4" />
               Unfriend
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Unfriend {friend.displayName}?</DialogTitle>
+              <DialogDescription>
+                This will remove {friend.displayName} from your friends list. They will not be
+                notified.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={isPending}
+                onClick={async () => {
+                  await removeFriend({ friendshipId: friendship.id })
+                  setConfirmOpen(false)
+                }}
+              >
+                {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+                Unfriend
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   )
 }
 
-function FindFriends({ currentUid, friendships }: { currentUid: string; friendships: Friendship[] }) {
+function FindFriends({
+  currentUid,
+  friendships,
+}: {
+  currentUid: string
+  friendships: Friendship[]
+}) {
   const [searchValue, setSearchValue] = useState('')
   const [hits, setHits] = useState<SearchResponse<User>['hits']>([])
   const [isSearching, setIsSearching] = useState(false)
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
-  const [algoliaService, setAlgoliaService] = useState<typeof import('~/services/algoliaSearch').algoliaSearch | null>(null)
+  const [algoliaService, setAlgoliaService] = useState<
+    typeof import('~/services/algoliaSearch').algoliaSearch | null
+  >(null)
   const { mutateAsync: sendRequest } = useSendFriendRequest()
   const [sendingTo, setSendingTo] = useState<string | null>(null)
 
@@ -164,9 +182,7 @@ function FindFriends({ currentUid, friendships }: { currentUid: string; friendsh
         return
       }
       try {
-        const response = await algoliaService.search<User>([
-          { indexName: 'Users', query: value },
-        ])
+        const response = await algoliaService.search<User>([{ indexName: 'Users', query: value }])
         const result = response.results[0]
         if ('hits' in result) {
           setHits(result.hits.filter((h) => h.uid !== currentUid))
@@ -194,7 +210,9 @@ function FindFriends({ currentUid, friendships }: { currentUid: string; friendsh
     setSearchTimeout(timeout)
   }
 
-  const getConnectionStatus = (hitUid: string): 'friend' | 'pending' | 'declined-cooldown' | 'none' => {
+  const getConnectionStatus = (
+    hitUid: string
+  ): 'friend' | 'pending' | 'declined-cooldown' | 'none' => {
     const friendship = friendships.find((f) => f.uids.includes(hitUid))
     if (!friendship) return 'none'
     if (friendship.status === 'accepted') return 'friend'
@@ -215,7 +233,7 @@ function FindFriends({ currentUid, friendships }: { currentUid: string; friendsh
   }
 
   return (
-    <section>
+    <section className="mb-8">
       <h2 className="mb-3 text-lg font-bold">Find friends</h2>
       <div className="relative mb-4">
         <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
@@ -238,17 +256,27 @@ function FindFriends({ currentUid, friendships }: { currentUid: string; friendsh
       <div className="space-y-2">
         {hits.map((hit) => {
           const status = getConnectionStatus(hit.uid)
+
           return (
             <div
               key={hit.objectID}
               className="flex items-center justify-between gap-3 rounded-lg border p-3"
             >
               <UserMediaObject user={hit} />
-              {status === 'friend' && <Badge variant="success">Friends</Badge>}
-              {status === 'pending' && <Badge variant="secondary">Pending</Badge>}
+              {status === 'friend' && (
+                <Badge variant="success">
+                  <Users /> Friends
+                </Badge>
+              )}
+              {status === 'pending' && (
+                <Badge variant="secondary">
+                  <Clock />
+                  Pending
+                </Badge>
+              )}
               {status === 'declined-cooldown' && (
                 <Button variant="outline" size="sm" disabled>
-                  <UserPlus className="size-4" />
+                  <UserX className="size-4" />
                   Request Declined
                 </Button>
               )}
@@ -283,10 +311,12 @@ export default function Friends() {
   const { data: friends = [], isLoading: friendsLoading } = useFriendsQuery(uid)
   const { data: pendingRequests = [], isLoading: requestsLoading } =
     usePendingFriendRequestsQuery(uid)
+  const { data: sentRequests = [], isLoading: sentRequestsLoading } =
+    useSentFriendRequestsQuery(uid)
   const { data: declinedFriendships = [], isLoading: declinedLoading } =
     useDeclinedFriendshipsQuery(uid)
 
-  const allFriendships = [...friends, ...pendingRequests, ...declinedFriendships]
+  const allFriendships = [...friends, ...pendingRequests, ...declinedFriendships, ...sentRequests]
 
   return (
     <>
@@ -298,7 +328,7 @@ export default function Friends() {
           </UpgradeAccountGate>
         ) : (
           <div className="mx-auto max-w-2xl space-y-8">
-            {requestsLoading || friendsLoading || declinedLoading ? (
+            {requestsLoading || friendsLoading || declinedLoading || sentRequestsLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="text-muted-foreground size-6 animate-spin" />
               </div>
@@ -321,19 +351,11 @@ export default function Friends() {
                 )}
 
                 <section>
-                  <h2 className="mb-3 text-lg font-bold">
-                    Friends{' '}
-                    {friends.length > 0 && (
-                      <span className="text-muted-foreground text-sm font-normal">
-                        ({friends.length})
-                      </span>
-                    )}
-                  </h2>
-                  {friends.length === 0 ? (
+                  {friends.length === 0 && (
                     <Empty>
                       <EmptyHeader>
                         <EmptyMedia variant="icon">
-                          <UsersIcon />
+                          <Users />
                         </EmptyMedia>
                         <EmptyTitle>No friends yet</EmptyTitle>
                         <EmptyDescription>
@@ -342,16 +364,26 @@ export default function Friends() {
                         </EmptyDescription>
                       </EmptyHeader>
                     </Empty>
-                  ) : (
-                    <div className="space-y-2">
-                      {friends.map((f) => (
-                        <FriendCard key={f.id} friendship={f} currentUid={uid} />
-                      ))}
-                    </div>
+                  )}
+
+                  <FindFriends currentUid={uid} friendships={allFriendships} />
+
+                  {friends.length > 0 && (
+                    <>
+                      <h2 className="mb-3 text-lg font-bold">
+                        Friends{' '}
+                        <span className="text-muted-foreground text-sm font-normal">
+                          ({friends.length})
+                        </span>
+                      </h2>
+                      <div className="space-y-2">
+                        {friends.map((f) => (
+                          <FriendCard key={f.id} friendship={f} currentUid={uid} />
+                        ))}
+                      </div>
+                    </>
                   )}
                 </section>
-
-                <FindFriends currentUid={uid} friendships={allFriendships} />
               </>
             )}
           </div>
