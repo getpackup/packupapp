@@ -32,6 +32,7 @@ export const gearListActivities: GearListEnumType = [
   { name: 'fishing', label: 'Fishing', icon: 'FaFish' },
   { name: 'mountainBiking', label: 'Mountain Biking', icon: 'FaBicycle' },
   { name: 'bikepacking', label: 'Bikepacking', icon: 'FaBiking' },
+  { name: 'backpacking', label: 'Backpacking', icon: 'FaBackpack' },
   { name: 'trailRunning', label: 'Trail Running', icon: 'FaRunning' },
   { name: 'bouldering', label: 'Bouldering', icon: 'FaRegHandRock' },
   { name: 'sportClimbing', label: 'Sport Climbing', icon: 'FaMountain' },
@@ -85,7 +86,4 @@ export const gearListKeys = [...allGearListItems].map((item) => item.name)
 
 export const allActivityTags = allGearListItems.map((i) => i.label)
 
-export const allPredefinedTags = [
-  ...gearListCategories.map((c) => c.value),
-  ...allActivityTags,
-]
+export const allPredefinedTags = [...gearListCategories.map((c) => c.value), ...allActivityTags]

@@ -98,7 +98,7 @@ function AddGearClosetItemDialog({ userId, children }: AddGearClosetItemDialogPr
   return (
     <Dialog onOpenChange={() => form.reset()}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>

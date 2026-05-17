@@ -249,10 +249,11 @@ export function Sidebar({ className }: SidebarProps) {
                         ? 'Pending account creation'
                         : `@${user?.username.toLocaleLowerCase()}`}
                     </span>
-
-                    <span className="text-muted-foreground text-xs">
-                      Joined {format(user?.createdAt?.toDate() ?? new Date(), 'MMMM yyyy')}
-                    </span>
+                    {user?.createdAt && (
+                      <span className="text-muted-foreground text-xs">
+                        Joined {format(user.createdAt.toDate(), 'MMMM yyyy')}
+                      </span>
+                    )}
                   </div>
                 </div>
               </DropdownMenuLabel>

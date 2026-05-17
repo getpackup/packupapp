@@ -32,7 +32,7 @@ import type { User } from '~/types/User'
 
 import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
-import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog'
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '../ui/dialog'
 import { UpgradeAccountGate } from '../UpgradeAccountGate'
 import UserMediaObject from '../UserMediaObject'
 import TripPartyMemberBadge from './TripPartyMemberBadge'
@@ -275,7 +275,9 @@ export function AddTripPartyMember({
                   formData.append('recipientUid', hitUserId)
                   formData.append('requesterDisplayName', user.displayName ?? '')
                   formData.append('requesterUsername', user.username)
-                  fetch('/resource/send-friend-request', { method: 'POST', body: formData }).catch(() => {})
+                  fetch('/resource/send-friend-request', { method: 'POST', body: formData }).catch(
+                    () => {}
+                  )
                 } catch {
                   // Friend request is independent — don't block the trip invite
                 }
@@ -313,7 +315,9 @@ export function AddTripPartyMember({
             <span className="sr-only">Add member</span>
           </button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
+          <DialogTitle>Create an account</DialogTitle>
+
           <UpgradeAccountGate message="Create an account to invite friends and assign gear to your crew.">
             <div />
           </UpgradeAccountGate>
