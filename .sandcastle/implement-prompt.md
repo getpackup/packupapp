@@ -8,7 +8,7 @@ Only work on the issue specified.
 
 Work on branch {{BRANCH}}. Make commits and run tests.
 
-If there is a comment on the issue saying it has been completed, and there is a commit that is not yet on the `main` branch, output <promise>COMPLETE</promise>.
+If there is a comment on the issue saying it has been completed, and if there is a commit on the branch but not on `main` branch yet, or it has already been merged to `main`, output <promise>COMPLETE</promise>.
 
 # CONTEXT
 
