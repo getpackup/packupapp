@@ -147,26 +147,58 @@ export function useSendFriendRequest() {
 
 export function useAcceptFriendRequest(currentUid: string) {
   const queryClient = useQueryClient()
+  const queryKey = friendKeys.byUid(currentUid)
 
   return useMutation({
     mutationFn: ({ friendshipId }: { friendshipId: string }) => acceptFriendRequest(friendshipId),
+    onMutate: async ({ friendshipId }) => {
+      await queryClient.cancelQueries({ queryKey })
+      const previous = queryClient.getQueryData<Friendship[]>(queryKey)
+      queryClient.setQueryData<Friendship[]>(queryKey, (old) =>
+        old?.map((f) =>
+          f.id === friendshipId ? { ...f, status: 'accepted' as const, respondedAt: Timestamp.now() } : f
+        )
+      )
+      return { previous }
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: friendKeys.byUid(currentUid) })
       toast.success('Friend request accepted')
     },
-    onError: (err: Error) => {
+    onError: (err: Error, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(queryKey, context.previous)
       toast.error(err.message)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey })
     },
   })
 }
 
 export function useDeclineFriendRequest(currentUid: string) {
   const queryClient = useQueryClient()
+  const queryKey = friendKeys.byUid(currentUid)
 
   return useMutation({
-    mutationFn: ({ friendshipId }: { friendshipId: string }) => declineFriendRequest(friendshipId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: friendKeys.byUid(currentUid) })
+    mutationFn: ({ friendshipId }: { friendshipId: string }) =>
+      declineFriendRequest(friendshipId),
+    onMutate: async ({ friendshipId }) => {
+      await queryClient.cancelQueries({ queryKey })
+      const previous = queryClient.getQueryData<Friendship[]>(queryKey)
+      const now = Timestamp.now()
+      queryClient.setQueryData<Friendship[]>(queryKey, (old) =>
+        old?.map((f) =>
+          f.id === friendshipId
+            ? { ...f, status: 'declined' as const, declinedAt: now, respondedAt: now }
+            : f
+        )
+      )
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(queryKey, context.previous)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey })
     },
   })
 }
