@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { User } from '../types/User'
 
+type AlgoliaSearch = typeof import('./algoliaSearch').algoliaSearch
+
 type UseFriendSearchParams = {
   query: string
   friends: User[]
@@ -28,7 +30,7 @@ export function useFriendSearch({
   friends,
   currentUserUid,
 }: UseFriendSearchParams): UseFriendSearchResult {
-  const [algoliaService, setAlgoliaService] = useState<typeof import('./algoliaSearch').algoliaSearch | null>(null)
+  const [algoliaService, setAlgoliaService] = useState<AlgoliaSearch | null>(null)
   const [allUserHits, setAllUserHits] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
