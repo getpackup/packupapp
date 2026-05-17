@@ -23,7 +23,7 @@ import { createSystemMessage } from '~/lib/chat'
 import { formattedDateRange } from '~/lib/date'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { algoliaSearch } from '~/services/algoliaSearch'
-import { useFriendsQuery, useSendFriendRequest } from '~/services/friends'
+import { useFriendsQuery, usePendingFriendshipsQuery, useSendFriendRequest } from '~/services/friends'
 import { useCreateChatMessage, useUpdateTrip } from '~/services/trips'
 import { useUserByIdQuery } from '~/services/users'
 import type { Trip } from '~/types/Trip'
@@ -100,6 +100,7 @@ export function AddTripPartyMember({
   const fetcher = useFetcher()
 
   const { data: friendships = [] } = useFriendsQuery(user?.uid ?? '')
+  const { data: pendingFriendships = [] } = usePendingFriendshipsQuery(user?.uid ?? '')
   const { mutateAsync: sendFriendReq } = useSendFriendRequest()
   const [sendFriendRequestFor, setSendFriendRequestFor] = useState<Record<string, boolean>>({})
 
@@ -114,7 +115,12 @@ export function AddTripPartyMember({
     f.uids.find((uid) => uid !== user?.uid) ?? ''
   ).filter(Boolean)
 
+  const pendingUids = pendingFriendships.map((f) =>
+    f.uids.find((uid) => uid !== user?.uid) ?? ''
+  ).filter(Boolean)
+
   const isFriend = (uid: string) => friendUids.includes(uid)
+  const isPending = (uid: string) => pendingUids.includes(uid)
 
   // Prevent hydration mismatch by only allowing username checking after hydration
   useEffect(() => {
@@ -414,7 +420,9 @@ export function AddTripPartyMember({
                 />
                 <div className="max-h-[200px] space-y-2 overflow-y-auto">
                   {hits.length > 0 &&
-                    hits.map((hit) => {
+                    hits
+                      .filter((hit) => !isPending(hit.uid))
+                      .map((hit) => {
                       const matchingUser = tripMembers.find((member) => member.uid === hit.uid)
                       const hitIsFriend = isFriend(hit.uid)
                       return (

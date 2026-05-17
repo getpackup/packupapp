@@ -116,6 +116,17 @@ export function usePendingFriendRequestsQuery(uid: string) {
   })
 }
 
+export function usePendingFriendshipsQuery(uid: string) {
+  return useQuery<Friendship[], Error, Friendship[]>({
+    queryKey: friendKeys.byUid(uid),
+    queryFn: () => fetchAllFriendships(uid),
+    select: (data) => data.filter((f) => f.status === 'pending'),
+    enabled: !!uid,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+  })
+}
+
 export function useSendFriendRequest() {
   const queryClient = useQueryClient()
 
