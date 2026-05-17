@@ -541,7 +541,7 @@ const TripPackingListCategory = ({
       <div
         ref={bottomRef}
         className={cn('', {
-          'h-[40px]': newlyAddedItem,
+          'h-10': newlyAddedItem,
           'h-0': !newlyAddedItem,
         })}
       />

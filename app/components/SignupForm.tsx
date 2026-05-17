@@ -96,6 +96,22 @@ export function SignupForm() {
         return
       }
 
+      if (!/^[A-Za-z0-9]*$/.test(username)) {
+        setUsernameStatus('idle')
+        form.setError('username', {
+          message: 'Sorry, no special characters or spaces allowed',
+        })
+        return
+      }
+
+      if (username.length > 30) {
+        setUsernameStatus('idle')
+        form.setError('username', {
+          message: 'Username must be less than 30 characters long',
+        })
+        return
+      }
+
       setUsernameStatus('checking')
 
       try {
@@ -121,7 +137,7 @@ export function SignupForm() {
           form.clearErrors('username')
         }
       } catch (error) {
-        console.error('Error checking username:', error)
+        console.error('Error checking username availability:', error)
         setUsernameStatus('idle')
       }
     },

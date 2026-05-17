@@ -2,6 +2,8 @@ import type { Timestamp } from 'firebase/firestore'
 
 import type { EmergencyContact } from './EmergencyContact'
 
+export type WeightUnitPreferenceType = 'g' | 'kg' | 'oz' | 'lb'
+
 export type User = {
   bio?: string
   displayName: string
@@ -27,5 +29,6 @@ export type User = {
     safetyItineraryEnabled?: boolean
     friendRequestEmailEnabled?: boolean
     temperatureUnit?: 'celsius' | 'fahrenheit'
+    weightUnit?: WeightUnitPreferenceType
   }
 }

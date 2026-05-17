@@ -1,9 +1,8 @@
 import { onAuthStateChanged } from 'firebase/auth'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 
-import FullPageSpinner from '~/components/FullPageSpinner'
 import { LoginForm } from '~/components/LoginForm'
 import { Logo } from '~/components/Logo'
 import { Button } from '~/components/ui/button'
@@ -55,7 +54,11 @@ export default function Home() {
 
         <div className="w-full rounded border bg-gray-100/50 p-8 dark:bg-gray-800">
           {isLoading ? (
-            <FullPageSpinner />
+            <div className="grid h-24 place-items-center">
+              <div className="flex items-center gap-2">
+                <Loader2 className="size-8 animate-spin" /> Loading...
+              </div>
+            </div>
           ) : (
             <>
               <LoginForm />

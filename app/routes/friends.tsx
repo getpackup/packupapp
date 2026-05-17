@@ -103,7 +103,7 @@ function FriendCard({ friendship, currentUid }: { friendship: Friendship; curren
 
         <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button variant="destructive" size="sm">
               <UserX className="size-4" />
               Unfriend
             </Button>

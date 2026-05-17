@@ -7,6 +7,10 @@ vi.mock('../lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
 }))
 
+vi.mock('../hooks/use-screen-size', () => ({
+  useScreenSize: vi.fn(() => ({ isMediumBreakpoint: true })),
+}))
+
 const mockUpdateUserAsync = vi.fn()
 
 vi.mock('../contexts/auth/useAuth', () => ({
@@ -151,7 +155,7 @@ describe('EmergencyContacts', () => {
       expect(screen.getByText('222-2222')).toBeInTheDocument()
     })
 
-    it('hides add button when 3 contacts exist', () => {
+    it('hides add button when the maximum number of contacts exist', () => {
       vi.mocked(useAuth).mockReturnValue({
         user: {
           uid: 'u1',
@@ -161,6 +165,8 @@ describe('EmergencyContacts', () => {
             { name: 'A', phoneNumber: '1', email: '' },
             { name: 'B', phoneNumber: '2', email: '' },
             { name: 'C', phoneNumber: '3', email: '' },
+            { name: 'D', phoneNumber: '4', email: '' },
+            { name: 'E', phoneNumber: '5', email: '' },
           ],
         },
         setUser: vi.fn(),
@@ -171,7 +177,28 @@ describe('EmergencyContacts', () => {
       ).not.toBeInTheDocument()
     })
 
-    it('can delete an existing contact', async () => {
+    it('shows delete confirmation dialog without deleting when trash icon is clicked', async () => {
+      const user = userEvent.setup()
+      vi.mocked(useAuth).mockReturnValue({
+        user: {
+          uid: 'u1',
+          username: 'testuser',
+          email: 'test@test.com',
+          emergencyContacts: [{ name: 'Alice', phoneNumber: '111-1111', email: '' }],
+        },
+        setUser: vi.fn(),
+      } as any)
+      renderComponent()
+      const aliceRow: HTMLElement = screen
+        .getByText('Alice')
+        .closest('[data-testid="emergency-contact"]')!
+      await user.click(within(aliceRow).getByRole('button', { name: /delete/i }))
+      expect(mockUpdateUserAsync).not.toHaveBeenCalled()
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+      expect(screen.getByText(/delete contact/i)).toBeInTheDocument()
+    })
+
+    it('can delete an existing contact after confirming', async () => {
       const user = userEvent.setup()
       vi.mocked(useAuth).mockReturnValue({
         user: {
@@ -190,6 +217,7 @@ describe('EmergencyContacts', () => {
         .getByText('Alice')
         .closest('[data-testid="emergency-contact"]')!
       await user.click(within(aliceRow).getByRole('button', { name: /delete/i }))
+      await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: /^delete$/i }))
       expect(mockUpdateUserAsync).toHaveBeenCalledWith({
         data: {
           emergencyContacts: [{ name: 'Bob', phoneNumber: '222-2222', email: '' }],

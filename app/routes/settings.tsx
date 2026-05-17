@@ -5,6 +5,7 @@ import PageHeader from '~/components/PageHeader'
 import { SafetyItineraryToggle } from '~/components/SafetyItineraryToggle'
 import { SoundsToggle } from '~/components/SoundsToggle'
 import { ThemeToggle } from '~/components/ThemeToggle'
+import WeightUnitPreference from '~/components/WeightUnitPreference'
 
 import type { Route } from './+types/home'
 
@@ -47,6 +48,17 @@ export default function Settings() {
               <SoundsToggle />
             </PreferenceRow>
             <PreferenceRow
+              label="Preferred Weight Unit"
+              description="Choose your preferred unit for weight measurements when displaying item weights in your packing lists."
+            >
+              <WeightUnitPreference />
+            </PreferenceRow>
+          </div>
+        </section>
+        <section className="mb-16">
+          <h2 className="mb-2 text-lg font-bold">Emails</h2>
+          <div className="divide-border divide-y">
+            <PreferenceRow
               label="Safety Itinerary Email"
               description="Receive an email the day before your trip with details, members, and emergency contacts. You can disable this on a per-trip basis in Trip Settings as well."
             >
@@ -60,6 +72,7 @@ export default function Settings() {
             </PreferenceRow>
           </div>
         </section>
+
         <EmergencyContacts />
       </PageContent>
     </>

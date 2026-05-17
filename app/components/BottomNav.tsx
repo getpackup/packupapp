@@ -1,6 +1,5 @@
 import { format } from 'date-fns'
 import {
-  Files,
   HelpCircleIcon,
   Loader2,
   LogOut,
@@ -43,7 +42,7 @@ const mainTabs = [
 ]
 
 const moreItems = [
-  { icon: Files, label: 'Templates', href: '/templates' },
+  // { icon: Files, label: 'Templates', href: '/templates' },
   { icon: UsersIcon, label: 'Friends', href: '/friends' },
   { icon: User, label: 'Profile', href: '/profile' },
   { icon: Settings, label: 'Settings', href: '/settings' },
