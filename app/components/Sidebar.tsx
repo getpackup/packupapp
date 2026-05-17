@@ -161,7 +161,7 @@ export function Sidebar({ className }: SidebarProps) {
                   {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
                 </animated.span>
                 {item.label === 'Friends' && pendingRequests && pendingRequests.length > 0 && (
-                  <span className="bg-destructive text-destructive-foreground ml-auto flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold">
+                  <span className="bg-destructive ml-auto flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-(--destructive-foreground)">
                     {pendingRequests.length}
                   </span>
                 )}

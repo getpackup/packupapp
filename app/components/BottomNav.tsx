@@ -215,7 +215,7 @@ export function BottomNav({ className }: BottomNavProps) {
                       {item.label === 'Friends' &&
                         pendingRequests &&
                         pendingRequests.length > 0 && (
-                          <span className="bg-destructive text-destructive-foreground ml-auto flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold">
+                          <span className="bg-destructive text-(var(--destructive-foreground)) ml-auto flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold">
                             {pendingRequests.length}
                           </span>
                         )}
