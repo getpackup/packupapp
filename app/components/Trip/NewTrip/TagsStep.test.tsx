@@ -4,27 +4,27 @@ import { MemoryRouter } from 'react-router'
 import { useForm, FormProvider } from 'react-hook-form'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-vi.mock('../../../contexts/auth/useAuth', () => ({
+vi.mock('~/contexts/auth/useAuth', () => ({
   default: vi.fn(() => ({ user: { uid: 'u1' } })),
   useAuth: vi.fn(() => ({ user: { uid: 'u1' } })),
 }))
 
-vi.mock('../../../services/gear', () => ({
+vi.mock('~/services/gear', () => ({
   useGearClosetQuery: vi.fn(() => ({ data: { customTags: [] } })),
 }))
 
-vi.mock('../../../services/users', () => ({
+vi.mock('~/services/users', () => ({
   useUserByIdQuery: vi.fn(() => ({ data: undefined })),
 }))
 
-vi.mock('../../../services/trips', () => ({
+vi.mock('~/services/trips', () => ({
   useCreateTrip: vi.fn(() => ({ mutateAsync: vi.fn() })),
   useGeneratePackingList: vi.fn(() => ({ mutateAsync: vi.fn() })),
 }))
 
-import useAuth from '../../../contexts/auth/useAuth'
-import { useGearClosetQuery } from '../../../services/gear'
-import { useUserByIdQuery } from '../../../services/users'
+import useAuth from '~/contexts/auth/useAuth'
+import { useGearClosetQuery } from '~/services/gear'
+import { useUserByIdQuery } from '~/services/users'
 import TagsStep from './TagsStep'
 
 function Wrapper({ defaultTags = [] }: { defaultTags?: string[] }) {
