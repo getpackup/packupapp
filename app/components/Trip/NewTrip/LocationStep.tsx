@@ -7,7 +7,7 @@ import { type PlacePrediction, useGooglePlaces } from '~/lib/useGooglePlaces'
 import AnimatedContainer from '../../AnimatedContainer'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '../../ui/form'
 import { Input } from '../../ui/input'
-import { newTripFormSchema } from '.'
+import { newTripFormSchema } from './schema'
 
 type LocationStepProps = {
   form: UseFormReturn<z.infer<typeof newTripFormSchema>>

@@ -142,6 +142,7 @@ describe('resource.send-friend-request', () => {
     })
 
     it('returns 500 when SendGrid fails', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockSend.mockRejectedValue(new Error('SendGrid error'))
       const fd = buildFormData({
         recipientEmail: 'friend@example.com',
@@ -156,6 +157,7 @@ describe('resource.send-friend-request', () => {
         context: {},
       } as any)) as Response
       expect(response.status).toBe(500)
+      consoleSpy.mockRestore()
     })
   })
 

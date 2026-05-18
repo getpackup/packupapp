@@ -58,6 +58,8 @@ describe('useFriendSearch', () => {
       useFriendSearch({ query: '', friends, currentUserUid: 'me' })
     )
 
+    await flushEffects()
+
     expect(result.current.friendHits).toEqual(friends)
     expect(result.current.allUserHits).toEqual([])
     expect(result.current.isLoading).toBe(false)
@@ -73,6 +75,8 @@ describe('useFriendSearch', () => {
     const { result } = renderHook(() =>
       useFriendSearch({ query: 'a', friends, currentUserUid: 'me' })
     )
+
+    await flushEffects()
 
     expect(result.current.friendHits).toEqual([friends[0]])
     expect(result.current.allUserHits).toEqual([])
@@ -136,7 +140,7 @@ describe('useFriendSearch', () => {
     expect(result.current.allUserHits[0].uid).toBe('u1')
   })
 
-  it('excludes current user UID from friendHits', () => {
+  it('excludes current user UID from friendHits', async () => {
     const friends = [
       makeUser({ uid: 'me', id: 'me', displayName: 'Me' }),
       makeUser({ uid: 'f1', id: 'f1', displayName: 'Alice' }),
@@ -145,6 +149,8 @@ describe('useFriendSearch', () => {
     const { result } = renderHook(() =>
       useFriendSearch({ query: '', friends, currentUserUid: 'me' })
     )
+
+    await flushEffects()
 
     expect(result.current.friendHits).toHaveLength(1)
     expect(result.current.friendHits[0].uid).toBe('f1')
@@ -198,6 +204,8 @@ describe('useFriendSearch', () => {
     const { result } = renderHook(() =>
       useFriendSearch({ query: 'x', friends, currentUserUid: 'me' })
     )
+
+    await flushEffects()
 
     expect(result.current.isLoading).toBe(false)
     expect(mockSearch).not.toHaveBeenCalled()

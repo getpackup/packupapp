@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { Calendar } from '~/components/ui/calendar'
 
 import AnimatedContainer from '../../AnimatedContainer'
-import { newTripFormSchema } from '.'
+import { newTripFormSchema } from './schema'
 
 type DatesStepProps = {
   form: UseFormReturn<z.infer<typeof newTripFormSchema>>

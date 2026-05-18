@@ -10,7 +10,7 @@ import { Label } from '~/components/ui/label'
 import { cn } from '~/lib/utils'
 
 import AnimatedContainer from '../../AnimatedContainer'
-import { newTripFormSchema } from '.'
+import { newTripFormSchema } from './schema'
 
 type HeaderImageStepProps = {
   form: UseFormReturn<z.infer<typeof newTripFormSchema>>

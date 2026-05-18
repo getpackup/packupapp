@@ -19,7 +19,7 @@ import { useGearClosetQuery } from '~/services/gear'
 import { useUserByIdQuery } from '~/services/users'
 
 import AnimatedContainer from '../../AnimatedContainer'
-import { newTripFormSchema } from '.'
+import { newTripFormSchema } from './schema'
 
 type TagsStepProps = {
   form: UseFormReturn<z.infer<typeof newTripFormSchema>>

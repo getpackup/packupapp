@@ -4,7 +4,7 @@ import { z } from 'zod'
 import AnimatedContainer from '../../AnimatedContainer'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '../../ui/form'
 import { Input } from '../../ui/input'
-import { newTripFormSchema } from '.'
+import { newTripFormSchema } from './schema'
 
 type NameStepProps = {
   form: UseFormReturn<z.infer<typeof newTripFormSchema>>

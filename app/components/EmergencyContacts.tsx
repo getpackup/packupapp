@@ -11,8 +11,22 @@ import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { useUpdateUser } from '~/services/users'
 
 import { Button } from './ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog'
-import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from './ui/drawer'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from './ui/drawer'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { UpgradeAccountGate } from './UpgradeAccountGate'
@@ -178,6 +192,7 @@ export function EmergencyContacts() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{formTitle}</DialogTitle>
+              <DialogDescription></DialogDescription>
             </DialogHeader>
             <form id="ec-form" noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-3">
               <ContactFormFields register={register} errors={errors} />
@@ -197,6 +212,7 @@ export function EmergencyContacts() {
           <DrawerContent>
             <DrawerHeader>
               <DrawerTitle>{formTitle}</DrawerTitle>
+              <DrawerDescription></DrawerDescription>
             </DrawerHeader>
             <form
               id="ec-form"
@@ -223,7 +239,7 @@ export function EmergencyContacts() {
           open={deletingIndex !== null}
           onOpenChange={(open) => !open && setDeletingIndex(null)}
         >
-          <DialogContent>
+          <DialogContent aria-describedby={undefined}>
             <DialogHeader>
               <DialogTitle>Delete contact</DialogTitle>
             </DialogHeader>
