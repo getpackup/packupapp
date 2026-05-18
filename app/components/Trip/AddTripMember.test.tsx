@@ -4,8 +4,23 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import type { Trip } from '../../types/Trip'
 
+vi.mock('firebase/firestore', () => ({
+  doc: vi.fn(),
+  getDoc: vi.fn(),
+  getFirestore: vi.fn(),
+}))
+
+vi.mock('../../firebase/config', () => ({
+  firebaseAuth: {},
+  firestoreDb: {},
+}))
+
 vi.mock('../../lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
+}))
+
+vi.mock('../../lib/useIsMobile', () => ({
+  useIsMobile: vi.fn(() => false),
 }))
 
 vi.mock('../../contexts/auth/useAuth', () => ({
@@ -25,7 +40,18 @@ vi.mock('../../services/friends', () => ({
 
 vi.mock('../../services/users', () => ({
   useUserByIdQuery: vi.fn(() => ({ data: null })),
+  userKeys: { byId: (id: string) => ['users', id] },
 }))
+
+vi.mock('@tanstack/react-query', async () => {
+  const actual = await vi.importActual<typeof import('@tanstack/react-query')>(
+    '@tanstack/react-query'
+  )
+  return {
+    ...actual,
+    useQueries: vi.fn(() => []),
+  }
+})
 
 vi.mock('react-router', async () => {
   const actual = await vi.importActual<typeof import('react-router')>('react-router')
@@ -37,19 +63,20 @@ vi.mock('react-router', async () => {
 })
 
 import { useIsAnonymous } from '../../lib/useIsAnonymous'
-import { AddTripPartyMember } from './AddTripPartyMember'
+import { useIsMobile } from '../../lib/useIsMobile'
+import { AddTripMember } from './AddTripMember'
 
 const GATE_MESSAGE = 'Create an account to invite friends and assign gear to your crew.'
 
 function renderComponent() {
   return render(
     <MemoryRouter>
-      <AddTripPartyMember trip={{ tripId: 'trip1' } as Trip} tripMembers={[]} />
+      <AddTripMember trip={{ tripId: 'trip1' } as Trip} tripMembers={[]} />
     </MemoryRouter>
   )
 }
 
-describe('AddTripPartyMember', () => {
+describe('AddTripMember', () => {
   it('shows a visible add-member button for anonymous users', () => {
     vi.mocked(useIsAnonymous).mockReturnValue(true)
     renderComponent()
@@ -70,9 +97,41 @@ describe('AddTripPartyMember', () => {
     expect(screen.getByRole('link', { name: /create account/i })).toHaveAttribute('href', '/signup')
   })
 
-  it('renders the popover trigger for registered users', () => {
+  it('renders a dialog trigger for registered users on desktop', () => {
     vi.mocked(useIsAnonymous).mockReturnValue(false)
+    vi.mocked(useIsMobile).mockReturnValue(false)
     renderComponent()
     expect(screen.getByRole('button', { name: /add member/i })).toBeInTheDocument()
+  })
+
+  it('opens a dialog with "Add Trip Member" title on desktop', async () => {
+    vi.mocked(useIsAnonymous).mockReturnValue(false)
+    vi.mocked(useIsMobile).mockReturnValue(false)
+    renderComponent()
+    await userEvent.click(screen.getByRole('button', { name: /add member/i }))
+    expect(screen.getByText('Add Trip Member')).toBeInTheDocument()
+  })
+
+  it('renders a sheet trigger for registered users on mobile', () => {
+    vi.mocked(useIsAnonymous).mockReturnValue(false)
+    vi.mocked(useIsMobile).mockReturnValue(true)
+    renderComponent()
+    expect(screen.getByRole('button', { name: /add member/i })).toBeInTheDocument()
+  })
+
+  it('opens a sheet with "Add Trip Member" title on mobile', async () => {
+    vi.mocked(useIsAnonymous).mockReturnValue(false)
+    vi.mocked(useIsMobile).mockReturnValue(true)
+    renderComponent()
+    await userEvent.click(screen.getByRole('button', { name: /add member/i }))
+    expect(screen.getByText('Add Trip Member')).toBeInTheDocument()
+  })
+
+  it('mounts UserSearchCombobox inside the container on desktop', async () => {
+    vi.mocked(useIsAnonymous).mockReturnValue(false)
+    vi.mocked(useIsMobile).mockReturnValue(false)
+    renderComponent()
+    await userEvent.click(screen.getByRole('button', { name: /add member/i }))
+    expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument()
   })
 })

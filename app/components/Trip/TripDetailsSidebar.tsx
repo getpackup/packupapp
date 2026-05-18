@@ -29,7 +29,7 @@ import {
 } from '../ui/dropdown-menu'
 import { Separator } from '../ui/separator'
 import UserMediaObject from '../UserMediaObject'
-import { AddTripPartyMember } from './AddTripPartyMember'
+import { AddTripMember } from './AddTripMember'
 import { EditTripDates } from './EditTripDates'
 import { EditTripDescription } from './EditTripDescription'
 import { EditTripLocation } from './EditTripLocation'
@@ -126,7 +126,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           <SubHeading>
             <span>Trip Members</span>
             <div className="flex items-center gap-2">
-              <AddTripPartyMember tripMembers={Object.values(trip.tripMembers)} trip={trip} />
+              <AddTripMember tripMembers={Object.values(trip.tripMembers)} trip={trip} />
               {Object.values(trip.tripMembers)?.some(
                 (member) =>
                   member.status === TripMemberStatus.Declined ||
