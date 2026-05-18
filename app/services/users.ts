@@ -21,18 +21,20 @@ export const userKeys = {
   byId: (userId: string) => [...userRootKey, userId] as const,
 }
 
+export async function fetchUserById(userId: string): Promise<User | null> {
+  const docRef = doc(firestoreDb, 'users', userId)
+  const docSnap = await getDoc(docRef)
+  if (!docSnap.exists()) return null
+  return { uid: docSnap.id, ...docSnap.data() } as User
+}
+
 export function useUserByIdQuery({ userId }: { userId: string }) {
   return useQuery<User, Error>({
     queryKey: userKeys.byId(userId),
     queryFn: async () => {
-      const docRef = doc(firestoreDb, 'users', userId)
-      const docSnap = await getDoc(docRef)
-
-      if (!docSnap.exists()) {
-        throw new Error('Trip does not exist')
-      }
-
-      return { uid: docSnap.id, ...docSnap.data() } as User
+      const user = await fetchUserById(userId)
+      if (!user) throw new Error('User does not exist')
+      return user
     },
     refetchOnWindowFocus: false,
     refetchOnMount: true,

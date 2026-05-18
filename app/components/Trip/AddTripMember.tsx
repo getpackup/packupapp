@@ -1,18 +1,16 @@
 import { useQueries } from '@tanstack/react-query'
-import { doc, getDoc } from 'firebase/firestore'
 import { Plus } from 'lucide-react'
 import { useFetcher, useParams } from 'react-router'
 import { toast } from 'sonner'
 
 import { useAuth } from '~/contexts/auth/useAuth'
-import { firestoreDb } from '~/firebase/config'
 import { createSystemMessage } from '~/lib/chat'
 import { formattedDateRange } from '~/lib/date'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { useIsMobile } from '~/lib/useIsMobile'
 import { useFriendsQuery, useSendFriendRequest } from '~/services/friends'
 import { useCreateChatMessage, useUpdateTrip } from '~/services/trips'
-import { userKeys } from '~/services/users'
+import { fetchUserById, userKeys } from '~/services/users'
 import type { Trip } from '~/types/Trip'
 import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
@@ -47,12 +45,7 @@ export function AddTripMember({
   const friendUserQueries = useQueries({
     queries: friendUids.map((uid) => ({
       queryKey: userKeys.byId(uid),
-      queryFn: async () => {
-        const docRef = doc(firestoreDb, 'users', uid)
-        const docSnap = await getDoc(docRef)
-        if (!docSnap.exists()) return null
-        return { uid: docSnap.id, ...docSnap.data() } as User
-      },
+      queryFn: () => fetchUserById(uid),
       staleTime: 5 * 60 * 1000,
     })),
   })
@@ -118,15 +111,17 @@ export function AddTripMember({
     }
   }
 
+  const trigger = (
+    <button type="button" className="p-1 opacity-80 hover:opacity-100">
+      <Plus className="size-4" />
+      <span className="sr-only">Add member</span>
+    </button>
+  )
+
   if (isAnonymous) {
     return (
       <Dialog>
-        <DialogTrigger asChild>
-          <button type="button" className="p-1 opacity-80 hover:opacity-100">
-            <Plus className="size-4" />
-            <span className="sr-only">Add member</span>
-          </button>
-        </DialogTrigger>
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
         <DialogContent aria-describedby={undefined}>
           <DialogTitle>Create an account</DialogTitle>
           <UpgradeAccountGate message="Create an account to invite friends and assign gear to your crew.">
@@ -136,13 +131,6 @@ export function AddTripMember({
       </Dialog>
     )
   }
-
-  const trigger = (
-    <button type="button" className="p-1 opacity-80 hover:opacity-100">
-      <Plus className="size-4" />
-      <span className="sr-only">Add member</span>
-    </button>
-  )
 
   const content = (
     <UserSearchCombobox

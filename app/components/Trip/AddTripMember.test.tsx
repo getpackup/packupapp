@@ -4,17 +4,6 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import type { Trip } from '../../types/Trip'
 
-vi.mock('firebase/firestore', () => ({
-  doc: vi.fn(),
-  getDoc: vi.fn(),
-  getFirestore: vi.fn(),
-}))
-
-vi.mock('../../firebase/config', () => ({
-  firebaseAuth: {},
-  firestoreDb: {},
-}))
-
 vi.mock('../../lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
 }))
@@ -41,6 +30,7 @@ vi.mock('../../services/friends', () => ({
 vi.mock('../../services/users', () => ({
   useUserByIdQuery: vi.fn(() => ({ data: null })),
   userKeys: { byId: (id: string) => ['users', id] },
+  fetchUserById: vi.fn(() => Promise.resolve(null)),
 }))
 
 vi.mock('@tanstack/react-query', async () => {
