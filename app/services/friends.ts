@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   collection,
   deleteDoc,
@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 
 import { firestoreDb } from '~/firebase/config'
 import { buildFriendshipId, type Friendship } from '~/types/Friendship'
+import type { User } from '~/types/User'
 
 export const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
 
@@ -94,6 +95,31 @@ export function useFriendsQuery(uid: string) {
     refetchOnWindowFocus: false,
     refetchOnMount: true,
   })
+}
+
+export function useFriendUsersQuery(uid: string) {
+  const { data: friendships, isLoading: isFriendshipsLoading } = useFriendsQuery(uid)
+
+  const friendUids = (friendships ?? [])
+    .map((f) => f.uids.find((u) => u !== uid))
+    .filter((u): u is string => !!u)
+
+  const userQueries = useQueries({
+    queries: friendUids.map((friendUid) => ({
+      queryKey: ['users', friendUid] as const,
+      queryFn: async () => {
+        const docRef = doc(firestoreDb, 'users', friendUid)
+        const snap = await getDoc(docRef)
+        if (!snap.exists()) return null
+        return { uid: snap.id, ...snap.data() } as User
+      },
+    })),
+  })
+
+  return {
+    data: userQueries.map((q) => q.data).filter((u): u is User => u != null),
+    isLoading: isFriendshipsLoading || userQueries.some((q) => q.isLoading),
+  }
 }
 
 export function useDeclinedFriendshipsQuery(uid: string) {

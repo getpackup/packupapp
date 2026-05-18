@@ -41,7 +41,6 @@ export const newTripFormSchema = z.object({
     .max(180, { message: 'Longitude must be between -180 and 180' }),
   startDate: z.date({ error: 'Start date is required' }),
   endDate: z.date({ error: 'End date is required' }),
-  memberSearchValue: z.string().optional(),
   name: z
     .string()
     .min(3, { message: 'Name must be at least 3 characters' })
@@ -208,7 +207,6 @@ const NewTripForm = ({}: NewTripFormProps) => {
             {step === 2 && (
               <MembersStep
                 key="members"
-                form={form}
                 tripMembers={tripMembers}
                 setTripMembers={setTripMembers}
               />
