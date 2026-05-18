@@ -36,7 +36,7 @@ const MembersStep = ({ tripMembers, setTripMembers }: MembersStepProps) => {
   }
 
   return (
-    <AnimatedContainer key="location" animation="scaleAndFadeIn">
+    <AnimatedContainer key="members" animation="scaleAndFadeIn">
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Anyone else coming along?</h1>
 
@@ -74,7 +74,7 @@ const MembersStep = ({ tripMembers, setTripMembers }: MembersStepProps) => {
         ))}
 
         <UserSearchCombobox
-          onSelect={(selectedUser) => handleSelect(selectedUser)}
+          onSelect={handleSelect}
           excludeUids={user?.uid ? [user.uid] : []}
           alreadyAddedMembers={alreadyAddedMembers}
           friends={friends}
