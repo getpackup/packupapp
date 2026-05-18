@@ -83,10 +83,11 @@ const baseItem: PackingListItem = {
   id: 'item-1',
   name: 'Tent',
   quantity: 1,
+  isEssential: false,
   isPacked: false,
   category: 'Shelter',
-  weight: null,
-  weightUnit: null,
+  weight: undefined,
+  weightUnit: undefined,
   packedBy: [{ uid: 'user-1', quantity: 1, isShared: false }],
   tags: [],
   created: { seconds: 0, nanoseconds: 0 } as any,
@@ -136,9 +137,7 @@ describe('TripPackingListItem — Shopping List gate', () => {
     await userEvent.click(sendItem)
 
     expect(
-      screen.queryByText(
-        'Create an account to build your shopping list across all your trips.'
-      )
+      screen.queryByText('Create an account to build your shopping list across all your trips.')
     ).not.toBeInTheDocument()
 
     expect(mockCreateShoppingListItemAsync).toHaveBeenCalled()

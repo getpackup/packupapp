@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Timestamp } from 'firebase/firestore'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockNavigate = vi.fn()
 vi.mock('react-router', async () => {
@@ -64,7 +64,10 @@ function makeTrip(overrides: Partial<Trip> = {}): Trip {
   }
 }
 
-function renderAsOwner(tripOverrides: Partial<Trip> = {}, userOverrides: Record<string, unknown> = {}) {
+function renderAsOwner(
+  tripOverrides: Partial<Trip> = {},
+  userOverrides: Record<string, unknown> = {}
+) {
   vi.mocked(useAuth).mockReturnValue({
     user: {
       uid: 'owner-uid',
@@ -83,7 +86,10 @@ function renderAsOwner(tripOverrides: Partial<Trip> = {}, userOverrides: Record<
   )
 }
 
-function renderAsMember(tripOverrides: Partial<Trip> = {}, userOverrides: Record<string, unknown> = {}) {
+function renderAsMember(
+  tripOverrides: Partial<Trip> = {},
+  userOverrides: Record<string, unknown> = {}
+) {
   vi.mocked(useAuth).mockReturnValue({
     user: {
       uid: 'member-uid',

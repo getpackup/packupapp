@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockUpdateDoc = vi.fn()
 const mockIncrement = vi.fn((n: number) => ({ __increment: n }))
-const mockDoc = vi.fn(() => 'mock-doc-ref')
+const mockDoc = vi.fn((...args: any[]) => 'mock-doc-ref')
 
 vi.mock('firebase/firestore', () => ({
   doc: (...args: any[]) => mockDoc(...args),
