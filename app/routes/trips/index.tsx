@@ -124,7 +124,7 @@ export default function Trips() {
           {!isLoading && tripsWithStatus.length > 0 && (
             <>
               {sortedYears.map((year) => (
-                <div key={year} className="flex w-full flex-col xl:-ml-18 xl:flex-row xl:gap-6">
+                <div key={year} className="flex w-full flex-col xl:-ml-18 xl:w-[calc(100%+4.5rem)] xl:flex-row xl:gap-6">
                   <div className="shrink-0 py-2 md:w-12 md:py-0">
                     <div className="xl:sticky xl:top-0 xl:py-4">
                       <Badge variant="default" className="text-sm">
