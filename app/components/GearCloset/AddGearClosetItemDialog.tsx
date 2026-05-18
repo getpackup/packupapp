@@ -6,16 +6,6 @@ import z from 'zod'
 
 import { Button } from '~/components/ui/button'
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '~/components/ui/dialog'
-import {
   Form,
   FormControl,
   FormField,
@@ -42,6 +32,8 @@ import {
 import { allPredefinedTags, gearListCategories } from '~/lib/gearListItemEnum'
 import { useCreateGearClosetItem, useGearClosetQuery } from '~/services/gear'
 import type { GearClosetItem } from '~/types/GearItem'
+
+import ResponsiveDialogContainer from '../ResponsiveDialogContainer'
 
 type AddGearClosetItemDialogProps = {
   userId: string
@@ -96,135 +88,130 @@ function AddGearClosetItemDialog({ userId, children }: AddGearClosetItemDialogPr
   }
 
   return (
-    <Dialog onOpenChange={() => form.reset()}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <DialogHeader>
-              <DialogTitle>Add gear item</DialogTitle>
-              <DialogDescription>Add a custom item to your gear closet.</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Item name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. Osprey Atmos 65" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="tags"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tags</FormLabel>
-                    <MultiSelect values={field.value} onValuesChange={field.onChange}>
-                      <MultiSelectTrigger className="w-full">
-                        <MultiSelectValue placeholder="Select tags..." />
-                      </MultiSelectTrigger>
-                      <MultiSelectContent
-                        search={{ placeholder: 'Search tags...', emptyMessage: 'No tags found' }}
-                      >
-                        <MultiSelectGroup heading="General">
-                          {gearListCategories.map((cat) => (
-                            <MultiSelectItem key={cat.value} value={cat.value}>
-                              {cat.label}
+    <ResponsiveDialogContainer
+      onOpenChange={() => form.reset()}
+      title="Add gear item"
+      description="Add a custom item to your gear closet."
+      footerAction={
+        <Button type="submit" disabled={isPending} onClick={() => form.handleSubmit(onSubmit)()}>
+          {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+          {isPending ? 'Saving...' : 'Save'}
+        </Button>
+      }
+      trigger={children}
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid gap-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Item name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Osprey Atmos 65" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="tags"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tags</FormLabel>
+                  <MultiSelect values={field.value} onValuesChange={field.onChange}>
+                    <MultiSelectTrigger className="w-full">
+                      <MultiSelectValue placeholder="Select tags..." />
+                    </MultiSelectTrigger>
+                    <MultiSelectContent
+                      search={{ placeholder: 'Search tags...', emptyMessage: 'No tags found' }}
+                    >
+                      <MultiSelectGroup heading="General">
+                        {gearListCategories.map((cat) => (
+                          <MultiSelectItem key={cat.value} value={cat.value}>
+                            {cat.label}
+                          </MultiSelectItem>
+                        ))}
+                      </MultiSelectGroup>
+                      <MultiSelectGroup heading="Activities">
+                        {allPredefinedTags
+                          .filter((t) => !gearListCategories.some((c) => c.value === t))
+                          .map((tag) => (
+                            <MultiSelectItem key={tag} value={tag}>
+                              {tag}
+                            </MultiSelectItem>
+                          ))}
+                      </MultiSelectGroup>
+                      {customTags.length > 0 && (
+                        <MultiSelectGroup heading="Custom">
+                          {customTags.map((tag) => (
+                            <MultiSelectItem key={tag.name} value={tag.name}>
+                              {tag.name}
                             </MultiSelectItem>
                           ))}
                         </MultiSelectGroup>
-                        <MultiSelectGroup heading="Activities">
-                          {allPredefinedTags
-                            .filter((t) => !gearListCategories.some((c) => c.value === t))
-                            .map((tag) => (
-                              <MultiSelectItem key={tag} value={tag}>
-                                {tag}
-                              </MultiSelectItem>
-                            ))}
-                        </MultiSelectGroup>
-                        {customTags.length > 0 && (
-                          <MultiSelectGroup heading="Custom">
-                            {customTags.map((tag) => (
-                              <MultiSelectItem key={tag.name} value={tag.name}>
-                                {tag.name}
-                              </MultiSelectItem>
-                            ))}
-                          </MultiSelectGroup>
-                        )}
-                      </MultiSelectContent>
-                    </MultiSelect>
-                    <FormMessage />
+                      )}
+                    </MultiSelectContent>
+                  </MultiSelect>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex gap-3">
+              <FormField
+                control={form.control}
+                name="weight"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Weight</FormLabel>
+                    <FormControl>
+                      <Input placeholder="0" type="number" {...field} />
+                    </FormControl>
                   </FormItem>
                 )}
               />
-              <div className="flex gap-3">
-                <FormField
-                  control={form.control}
-                  name="weight"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Weight</FormLabel>
-                      <FormControl>
-                        <Input placeholder="0" type="number" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="weightUnit"
-                  render={({ field }) => (
-                    <FormItem className="w-20">
-                      <FormLabel>Unit</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="g">g</SelectItem>
-                          <SelectItem value="kg">kg</SelectItem>
-                          <SelectItem value="oz">oz</SelectItem>
-                          <SelectItem value="lb">lb</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-              </div>
               <FormField
                 control={form.control}
-                name="description"
+                name="weightUnit"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Optional notes..." {...field} />
-                    </FormControl>
+                  <FormItem className="w-20">
+                    <FormLabel>Unit</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="g">g</SelectItem>
+                        <SelectItem value="kg">kg</SelectItem>
+                        <SelectItem value="oz">oz</SelectItem>
+                        <SelectItem value="lb">lb</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FormItem>
                 )}
               />
             </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button type="submit" disabled={isPending}>
-                {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isPending ? 'Saving...' : 'Save'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Optional notes..." {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+        </form>
+      </Form>
+    </ResponsiveDialogContainer>
   )
 }
 

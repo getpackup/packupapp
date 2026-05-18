@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { orderBy } from 'firebase/firestore'
-import { ListIcon, Plus, Wand2, X } from 'lucide-react'
+import { ListIcon, Plus, Tag, Wand2, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import useAuth from '~/contexts/auth/useAuth'
@@ -168,14 +168,14 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
         <div className="mb-0 flex justify-end gap-2">
           <GeneratePackingListDialog tripId={tripId} existingTags={trip?.tags}>
             <Button variant="outline" size="sm" className="h-8 gap-1.5">
-              <Wand2 className="h-3.5 w-3.5" />
-              Generate
+              <Tag className="h-3.5 w-3.5" />
+              Add gear by tag
             </Button>
           </GeneratePackingListDialog>
           <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}}>
             <Button variant="outline" size="sm" className="h-8 gap-1.5">
               <Plus className="h-3.5 w-3.5" />
-              Add
+              Add item
             </Button>
           </AddPackingListDialog>
         </div>

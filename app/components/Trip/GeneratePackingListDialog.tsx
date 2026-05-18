@@ -1,19 +1,9 @@
-import { Loader2, Wand2 } from 'lucide-react'
+import { ListPlus, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '~/components/ui/dialog'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import useAuth from '~/contexts/auth/useAuth'
 import { activityLabelToKey } from '~/lib/gearFilterUtils'
@@ -26,6 +16,8 @@ import {
 import { useGearClosetQuery } from '~/services/gear'
 import { useGeneratePackingList } from '~/services/trips'
 import type { ActivityTypes } from '~/types/GearItem'
+
+import ResponsiveDialogContainer from '../ResponsiveDialogContainer'
 
 type GeneratePackingListDialogProps = {
   tripId: string
@@ -75,9 +67,7 @@ function GeneratePackingListDialog({
         .map((label) => activityLabelToKey(label))
         .filter((key): key is keyof ActivityTypes => !!key)
       setSelectedKeys(new Set(keys))
-      setSelectedCustomTags(
-        new Set(existingTags.filter((label) => !activityLabelToKey(label)))
-      )
+      setSelectedCustomTags(new Set(existingTags.filter((label) => !activityLabelToKey(label))))
     }
   }
 
@@ -124,76 +114,73 @@ function GeneratePackingListDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader>
-          <DialogTitle>Generate packing list</DialogTitle>
-          <DialogDescription>
-            Select activity types to generate a packing list from your gear closet.
-          </DialogDescription>
-        </DialogHeader>
-        <ScrollArea className="max-h-[400px] overflow-y-auto pr-3">
-          <div className="space-y-6">
-            {activityGroups.map((group) => (
-              <div key={group.label}>
-                <h4 className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wider">
-                  {group.label}
-                </h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {group.items.map((item) => (
-                    <label
-                      key={item.name}
-                      className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
-                    >
-                      <Checkbox
-                        checked={selectedKeys.has(item.name)}
-                        onCheckedChange={() => toggleKey(item.name)}
-                      />
-                      {item.label}
-                    </label>
-                  ))}
-                </div>
+    <ResponsiveDialogContainer
+      open={open}
+      onOpenChange={handleOpenChange}
+      title="Add gear by tag"
+      description="Select tags to add packing list items from your gear closet."
+      footerAction={
+        <Button
+          onClick={handleGenerate}
+          disabled={isPending || (selectedKeys.size === 0 && selectedCustomTags.size === 0)}
+        >
+          {isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <ListPlus className="h-4 w-4" />
+          )}
+          {isPending ? 'Adding items...' : 'Add to packing list'}
+        </Button>
+      }
+      trigger={children}
+    >
+      <ScrollArea className="max-h-100 overflow-y-auto pr-3">
+        <div className="space-y-6">
+          {activityGroups.map((group) => (
+            <div key={group.label}>
+              <h4 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
+                {group.label}
+              </h4>
+              <div className="grid grid-cols-2 gap-2">
+                {group.items.map((item) => (
+                  <label
+                    key={item.name}
+                    className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                  >
+                    <Checkbox
+                      checked={selectedKeys.has(item.name)}
+                      onCheckedChange={() => toggleKey(item.name)}
+                    />
+                    {item.label}
+                  </label>
+                ))}
               </div>
-            ))}
-            {customTags.length > 0 && (
-              <div>
-                <h4 className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wider">
-                  Custom Tags
-                </h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {customTags.map((tag) => (
-                    <label
-                      key={tag.name}
-                      className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
-                    >
-                      <Checkbox
-                        checked={selectedCustomTags.has(tag.name)}
-                        onCheckedChange={() => toggleCustomTag(tag.name)}
-                      />
-                      {tag.name}
-                    </label>
-                  ))}
-                </div>
+            </div>
+          ))}
+          {customTags.length > 0 && (
+            <div>
+              <h4 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
+                Custom Tags
+              </h4>
+              <div className="grid grid-cols-2 gap-2">
+                {customTags.map((tag) => (
+                  <label
+                    key={tag.name}
+                    className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+                  >
+                    <Checkbox
+                      checked={selectedCustomTags.has(tag.name)}
+                      onCheckedChange={() => toggleCustomTag(tag.name)}
+                    />
+                    {tag.name}
+                  </label>
+                ))}
               </div>
-            )}
-          </div>
-        </ScrollArea>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
-          <Button onClick={handleGenerate} disabled={isPending || (selectedKeys.size === 0 && selectedCustomTags.size === 0)}>
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Wand2 className="h-4 w-4" />
-            )}
-            {isPending ? 'Generating...' : 'Generate'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+    </ResponsiveDialogContainer>
   )
 }
 

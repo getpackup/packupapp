@@ -3,30 +3,30 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-vi.mock('../lib/useIsAnonymous', () => ({
+vi.mock('~/lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
 }))
 
-vi.mock('../hooks/use-screen-size', () => ({
+vi.mock('~/lib/use-screen-size', () => ({
   useScreenSize: vi.fn(() => ({ isMediumBreakpoint: true })),
 }))
 
 const mockUpdateUserAsync = vi.fn()
 
-vi.mock('../contexts/auth/useAuth', () => ({
+vi.mock('~/contexts/auth/useAuth', () => ({
   useAuth: vi.fn(() => ({
     user: { uid: 'u1', username: 'testuser', email: 'test@test.com', emergencyContacts: [] },
   })),
 }))
 
-vi.mock('../services/users', () => ({
+vi.mock('~/services/users', () => ({
   useUpdateUser: vi.fn(() => ({
     mutateAsync: mockUpdateUserAsync,
   })),
 }))
 
-import { useAuth } from '../contexts/auth/useAuth'
-import { useIsAnonymous } from '../lib/useIsAnonymous'
+import { useAuth } from '~/contexts/auth/useAuth'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { EmergencyContacts } from './EmergencyContacts'
 
 function renderComponent() {
@@ -217,7 +217,9 @@ describe('EmergencyContacts', () => {
         .getByText('Alice')
         .closest('[data-testid="emergency-contact"]')!
       await user.click(within(aliceRow).getByRole('button', { name: /delete/i }))
-      await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: /^delete$/i }))
+      await user.click(
+        within(screen.getByRole('dialog')).getByRole('button', { name: /^delete$/i })
+      )
       expect(mockUpdateUserAsync).toHaveBeenCalledWith({
         data: {
           emergencyContacts: [{ name: 'Bob', phoneNumber: '222-2222', email: '' }],

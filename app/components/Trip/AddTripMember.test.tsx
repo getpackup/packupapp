@@ -8,8 +8,15 @@ vi.mock('../../lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
 }))
 
-vi.mock('../../lib/useIsMobile', () => ({
-  useIsMobile: vi.fn(() => false),
+vi.mock('~/lib/use-screen-size', () => ({
+  useScreenSize: vi.fn(() => ({
+    isXSmallBreakpoint: true,
+    isSmallBreakpoint: true,
+    isMediumBreakpoint: false,
+    isLargeBreakpoint: false,
+    isXlBreakpoint: false,
+    is2xlBreakpoint: false,
+  })),
 }))
 
 vi.mock('../../contexts/auth/useAuth', () => ({
@@ -34,9 +41,8 @@ vi.mock('../../services/users', () => ({
 }))
 
 vi.mock('@tanstack/react-query', async () => {
-  const actual = await vi.importActual<typeof import('@tanstack/react-query')>(
-    '@tanstack/react-query'
-  )
+  const actual =
+    await vi.importActual<typeof import('@tanstack/react-query')>('@tanstack/react-query')
   return {
     ...actual,
     useQueries: vi.fn(() => []),
@@ -52,9 +58,9 @@ vi.mock('react-router', async () => {
   }
 })
 
-import { useIsAnonymous } from '../../lib/useIsAnonymous'
-import { useIsMobile } from '../../lib/useIsMobile'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { AddTripMember } from './AddTripMember'
+import { useScreenSize } from '~/lib/use-screen-size'
 
 const GATE_MESSAGE = 'Create an account to invite friends and assign gear to your crew.'
 
@@ -89,14 +95,28 @@ describe('AddTripMember', () => {
 
   it('renders a dialog trigger for registered users on desktop', () => {
     vi.mocked(useIsAnonymous).mockReturnValue(false)
-    vi.mocked(useIsMobile).mockReturnValue(false)
+    vi.mocked(useScreenSize).mockReturnValue({
+      isXSmallBreakpoint: true,
+      isSmallBreakpoint: true,
+      isMediumBreakpoint: true,
+      isLargeBreakpoint: true,
+      isXlBreakpoint: true,
+      is2xlBreakpoint: true,
+    })
     renderComponent()
     expect(screen.getByRole('button', { name: /add member/i })).toBeInTheDocument()
   })
 
   it('opens a dialog with "Add Trip Member" title on desktop', async () => {
     vi.mocked(useIsAnonymous).mockReturnValue(false)
-    vi.mocked(useIsMobile).mockReturnValue(false)
+    vi.mocked(useScreenSize).mockReturnValue({
+      isXSmallBreakpoint: true,
+      isSmallBreakpoint: true,
+      isMediumBreakpoint: true,
+      isLargeBreakpoint: true,
+      isXlBreakpoint: true,
+      is2xlBreakpoint: true,
+    })
     renderComponent()
     await userEvent.click(screen.getByRole('button', { name: /add member/i }))
     expect(screen.getByText('Add Trip Member')).toBeInTheDocument()
@@ -104,14 +124,28 @@ describe('AddTripMember', () => {
 
   it('renders a sheet trigger for registered users on mobile', () => {
     vi.mocked(useIsAnonymous).mockReturnValue(false)
-    vi.mocked(useIsMobile).mockReturnValue(true)
+    vi.mocked(useScreenSize).mockReturnValue({
+      isXSmallBreakpoint: true,
+      isSmallBreakpoint: true,
+      isMediumBreakpoint: false,
+      isLargeBreakpoint: false,
+      isXlBreakpoint: false,
+      is2xlBreakpoint: false,
+    })
     renderComponent()
     expect(screen.getByRole('button', { name: /add member/i })).toBeInTheDocument()
   })
 
-  it('opens a sheet with "Add Trip Member" title on mobile', async () => {
+  it('opens a drawer with "Add Trip Member" title on mobile', async () => {
     vi.mocked(useIsAnonymous).mockReturnValue(false)
-    vi.mocked(useIsMobile).mockReturnValue(true)
+    vi.mocked(useScreenSize).mockReturnValue({
+      isXSmallBreakpoint: true,
+      isSmallBreakpoint: true,
+      isMediumBreakpoint: false,
+      isLargeBreakpoint: false,
+      isXlBreakpoint: false,
+      is2xlBreakpoint: false,
+    })
     renderComponent()
     await userEvent.click(screen.getByRole('button', { name: /add member/i }))
     expect(screen.getByText('Add Trip Member')).toBeInTheDocument()
@@ -119,7 +153,14 @@ describe('AddTripMember', () => {
 
   it('mounts UserSearchCombobox inside the container on desktop', async () => {
     vi.mocked(useIsAnonymous).mockReturnValue(false)
-    vi.mocked(useIsMobile).mockReturnValue(false)
+    vi.mocked(useScreenSize).mockReturnValue({
+      isXSmallBreakpoint: true,
+      isSmallBreakpoint: true,
+      isMediumBreakpoint: true,
+      isLargeBreakpoint: true,
+      isXlBreakpoint: true,
+      is2xlBreakpoint: true,
+    })
     renderComponent()
     await userEvent.click(screen.getByRole('button', { name: /add member/i }))
     expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument()

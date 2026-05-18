@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { useAuth } from '~/contexts/auth/useAuth'
-import { useScreenSize } from '~/hooks/use-screen-size'
+import { useScreenSize } from '~/lib/use-screen-size'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { useUpdateUser } from '~/services/users'
 

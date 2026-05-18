@@ -14,7 +14,7 @@ vi.mock('../../services/gear', () => ({
   useDeleteCustomTag: vi.fn(() => ({ mutateAsync: vi.fn() })),
 }))
 
-import { useIsAnonymous } from '../../lib/useIsAnonymous'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import ManageCustomTagsDialog from './ManageCustomTagsDialog'
 
 const GATE_MESSAGE = 'Create an account to add custom categories to your gear closet.'

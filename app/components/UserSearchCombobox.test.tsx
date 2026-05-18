@@ -88,10 +88,8 @@ describe('UserSearchCombobox', () => {
     expect(screen.getByText(/no friends yet/i)).toBeInTheDocument()
   })
 
-  it('does not show All Users section when query is fewer than 2 characters', async () => {
-    const friends = [
-      makeUser({ uid: 'f1', id: 'f1', displayName: 'Alice', username: 'alice' }),
-    ]
+  it('shows the All Users section when query is at least 1 character', async () => {
+    const friends = [makeUser({ uid: 'f1', id: 'f1', displayName: 'Alice', username: 'alice' })]
     mockUseFriendSearch.mockReturnValue({
       friendHits: friends,
       allUserHits: [],
@@ -104,16 +102,12 @@ describe('UserSearchCombobox', () => {
     await userEvent.click(input)
     await userEvent.type(input, 'a')
 
-    expect(screen.queryByText('All Users')).not.toBeInTheDocument()
+    expect(screen.queryByText('All Users')).toBeInTheDocument()
   })
 
   it('shows both Friends and All Users sections when query is 2+ characters', async () => {
-    const friends = [
-      makeUser({ uid: 'f1', id: 'f1', displayName: 'Alice', username: 'alice' }),
-    ]
-    const allUsers = [
-      makeUser({ uid: 'u1', id: 'u1', displayName: 'Alicia', username: 'alicia' }),
-    ]
+    const friends = [makeUser({ uid: 'f1', id: 'f1', displayName: 'Alice', username: 'alice' })]
+    const allUsers = [makeUser({ uid: 'u1', id: 'u1', displayName: 'Alicia', username: 'alicia' })]
     mockUseFriendSearch.mockReturnValue({
       friendHits: friends,
       allUserHits: allUsers,
@@ -135,9 +129,7 @@ describe('UserSearchCombobox', () => {
   it('hides Friends section when no friends match the query', async () => {
     mockUseFriendSearch.mockReturnValue({
       friendHits: [],
-      allUserHits: [
-        makeUser({ uid: 'u1', id: 'u1', displayName: 'Zara', username: 'zara' }),
-      ],
+      allUserHits: [makeUser({ uid: 'u1', id: 'u1', displayName: 'Zara', username: 'zara' })],
       isLoading: false,
     })
 
@@ -181,8 +173,13 @@ describe('UserSearchCombobox', () => {
     expect(screen.queryByRole('button', { name: /add member/i })).not.toBeInTheDocument()
   })
 
-  it('shows "Also send a Friend Request" checkbox for non-friend non-member results', async () => {
-    const stranger = makeUser({ uid: 'u1', id: 'u1', displayName: 'Stranger', username: 'stranger' })
+  it('shows "Add as friend" checkbox for non-friend non-member results', async () => {
+    const stranger = makeUser({
+      uid: 'u1',
+      id: 'u1',
+      displayName: 'Stranger',
+      username: 'stranger',
+    })
     mockUseFriendSearch.mockReturnValue({
       friendHits: [],
       allUserHits: [stranger],
@@ -195,7 +192,7 @@ describe('UserSearchCombobox', () => {
     await userEvent.click(input)
     await userEvent.type(input, 'st')
 
-    expect(screen.getByText(/also send.*friend request/i)).toBeInTheDocument()
+    expect(screen.getByText(/Add as friend/i)).toBeInTheDocument()
   })
 
   it('does not show friend request checkbox for friends in All Users section', async () => {
@@ -228,9 +225,9 @@ describe('UserSearchCombobox', () => {
 
     const input = screen.getByPlaceholderText(/search/i)
     await userEvent.click(input)
-    await userEvent.click(screen.getByRole('button', { name: /add alice/i }))
+    await userEvent.click(screen.getByLabelText('Add to trip'))
 
-    expect(onSelect).toHaveBeenCalledWith(friend, { sendFriendRequest: false })
+    expect(onSelect).toHaveBeenCalledWith({ ...friend, sendFriendRequest: false })
   })
 
   it('container stays open after a selection', async () => {
@@ -245,14 +242,19 @@ describe('UserSearchCombobox', () => {
 
     const input = screen.getByPlaceholderText(/search/i)
     await userEvent.click(input)
-    await userEvent.click(screen.getByRole('button', { name: /add alice/i }))
+    await userEvent.click(screen.getByLabelText('Add to trip'))
 
     expect(screen.getByText('Alice')).toBeInTheDocument()
     expect(screen.getByText('Friends')).toBeInTheDocument()
   })
 
   it('clears friend request checkbox state per-UID when toggled', async () => {
-    const stranger = makeUser({ uid: 'u1', id: 'u1', displayName: 'Stranger', username: 'stranger' })
+    const stranger = makeUser({
+      uid: 'u1',
+      id: 'u1',
+      displayName: 'Stranger',
+      username: 'stranger',
+    })
     const onSelect = vi.fn()
     mockUseFriendSearch.mockReturnValue({
       friendHits: [],
@@ -268,9 +270,9 @@ describe('UserSearchCombobox', () => {
 
     const checkbox = screen.getByRole('checkbox')
     await userEvent.click(checkbox)
-    await userEvent.click(screen.getByRole('button', { name: /add stranger/i }))
+    await userEvent.click(screen.getByLabelText('Add to trip'))
 
-    expect(onSelect).toHaveBeenCalledWith(stranger, { sendFriendRequest: true })
+    expect(onSelect).toHaveBeenCalledWith({ ...stranger, sendFriendRequest: true })
   })
 
   it('passes query to useFriendSearch', async () => {
@@ -280,8 +282,6 @@ describe('UserSearchCombobox', () => {
     await userEvent.click(input)
     await userEvent.type(input, 'test')
 
-    expect(mockUseFriendSearch).toHaveBeenCalledWith(
-      expect.objectContaining({ query: 'test' })
-    )
+    expect(mockUseFriendSearch).toHaveBeenCalledWith(expect.objectContaining({ query: 'test' }))
   })
 })

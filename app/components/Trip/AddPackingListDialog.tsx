@@ -16,16 +16,6 @@ import {
   CommandList,
 } from '~/components/ui/command'
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '~/components/ui/dialog'
-import {
   Form,
   FormControl,
   FormField,
@@ -40,6 +30,7 @@ import { useUserGearClosetItems } from '~/services/gear'
 import { useCreatePackingListItem } from '~/services/trips'
 import type { PackingListItem } from '~/types/PackingListItem'
 
+import ResponsiveDialogContainer from '../ResponsiveDialogContainer'
 import { Badge } from '../ui/badge'
 import { Checkbox } from '../ui/checkbox'
 
@@ -142,150 +133,129 @@ function AddPackingListDialog({
   }
 
   return (
-    <Dialog onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent
-        className="sm:max-w-[425px]"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-      >
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <DialogHeader>
-              <DialogTitle>Add item</DialogTitle>
-              <DialogDescription>
-                Create a new item and add it to the packing list for {categoryName}.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4">
-              {selectedGearItem ? (
-                <div className="bg-muted flex items-center justify-between rounded-md px-3 py-2">
-                  <div>
-                    <div className="text-sm font-medium">{selectedGearItem.name}</div>
-                    <div className="text-muted-foreground flex items-center gap-2 text-xs">
-                      {selectedGearItem.category && (
+    <ResponsiveDialogContainer
+      onOpenChange={handleOpenChange}
+      title="Add gear item"
+      description="Add a custom item to your gear closet."
+      footerAction={
+        <Button type="submit" disabled={isPending} onClick={() => form.handleSubmit(onSubmit)()}>
+          {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+          {isPending ? 'Adding...' : 'Add item'}
+        </Button>
+      }
+      trigger={children}
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid gap-4">
+            {selectedGearItem ? (
+              <div className="bg-muted flex items-center justify-between rounded-md px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <div className="text-sm font-medium">{selectedGearItem.name}</div>
+                  <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                    {selectedGearItem.category && (
+                      <Badge variant="outline">
                         <span>{selectedGearItem.category}</span>
-                      )}
-                      {selectedGearItem.weight && (
-                        <span>
-                          {selectedGearItem.weight}
-                          {selectedGearItem.weightUnit ?? 'g'}
-                        </span>
-                      )}
-                      <Badge variant="outline" className="text-[10px]">
-                        {selectedGearItem.source === 'custom' ? 'Custom' : 'Master'}
                       </Badge>
-                    </div>
+                    )}
+                    {selectedGearItem.weight && (
+                      <span>
+                        {selectedGearItem.weight}
+                        {selectedGearItem.weightUnit ?? 'g'}
+                      </span>
+                    )}
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={handleClearSelection}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
                 </div>
-              ) : (
-                <>
-                  {!showClosetSearch ? (
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => setShowClosetSearch(true)}
-                      >
-                        Search gear closet
-                      </Button>
-                    </div>
-                  ) : (
-                    <Command className="border" shouldFilter={true}>
-                      <CommandInput placeholder="Search your gear closet..." />
-                      <CommandList>
-                        <CommandEmpty>No gear found.</CommandEmpty>
-                        <CommandGroup>
-                          {closetItems.map((item) => (
-                            <CommandItem
-                              key={`${item.source}-${item.id}`}
-                              value={item.name}
-                              onSelect={() => handleSelectGearItem(item)}
-                            >
-                              <div className="flex w-full items-center justify-between">
-                                <div>
-                                  <span className="text-sm">{item.name}</span>
-                                  {item.category && (
-                                    <span className="text-muted-foreground ml-2 text-xs">
-                                      {item.category}
-                                    </span>
-                                  )}
-                                </div>
-                                {item.weight && (
-                                  <span className="text-muted-foreground text-xs">
-                                    {item.weight}
-                                    {item.weightUnit ?? 'g'}
+                <Button type="button" variant="ghost" size="icon-sm" onClick={handleClearSelection}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <>
+                {!showClosetSearch ? (
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setShowClosetSearch(true)}
+                    >
+                      Search gear closet
+                    </Button>
+                  </div>
+                ) : (
+                  <Command className="border" shouldFilter={true}>
+                    <CommandInput placeholder="Search your gear closet..." />
+                    <CommandList>
+                      <CommandEmpty>No gear found.</CommandEmpty>
+                      <CommandGroup>
+                        {closetItems.map((item) => (
+                          <CommandItem
+                            key={`${item.source}-${item.id}`}
+                            value={item.name}
+                            onSelect={() => handleSelectGearItem(item)}
+                          >
+                            <div className="flex w-full items-center justify-between">
+                              <div>
+                                <span className="text-sm">{item.name}</span>
+                                {item.category && (
+                                  <span className="text-muted-foreground ml-2 text-xs">
+                                    {item.category}
                                   </span>
                                 )}
                               </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  )}
-                </>
+                              {item.weight && (
+                                <span className="text-muted-foreground text-xs">
+                                  {item.weight}
+                                  {item.weightUnit ?? 'g'}
+                                </span>
+                              )}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                )}
+              </>
+            )}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Item name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Item name" {...field} disabled={!!selectedGearItem} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
+            />
+            {!selectedGearItem && (
               <FormField
                 control={form.control}
-                name="name"
+                name="saveToGearCloset"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Item name</FormLabel>
+                  <FormItem className="flex flex-row items-center gap-2">
                     <FormControl>
-                      <Input
-                        placeholder="Item name"
-                        {...field}
-                        disabled={!!selectedGearItem}
+                      <Checkbox
+                        id="saveToGearCloset"
+                        onCheckedChange={field.onChange}
+                        value={field.value.toString()}
+                        checked={field.value}
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormLabel htmlFor="saveToGearCloset">Save to gear closet</FormLabel>
                   </FormItem>
                 )}
               />
-              {!selectedGearItem && (
-                <FormField
-                  control={form.control}
-                  name="saveToGearCloset"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center gap-2">
-                      <FormControl>
-                        <Checkbox
-                          id="saveToGearCloset"
-                          onCheckedChange={field.onChange}
-                          value={field.value.toString()}
-                          checked={field.value}
-                        />
-                      </FormControl>
-                      <FormLabel htmlFor="saveToGearCloset">Save to gear closet</FormLabel>
-                    </FormItem>
-                  )}
-                />
-              )}
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button type="submit" disabled={isPending}>
-                {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isPending ? 'Saving...' : 'Save'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+            )}
+          </div>
+        </form>
+      </Form>
+    </ResponsiveDialogContainer>
   )
 }
 

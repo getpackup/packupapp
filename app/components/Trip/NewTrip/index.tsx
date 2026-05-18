@@ -13,6 +13,7 @@ import { Button } from '~/components/ui/button'
 import useAuth from '~/contexts/auth/useAuth'
 import { activityKeyToLabel } from '~/lib/gearFilterUtils'
 import { allGearListItems } from '~/lib/gearListItemEnum'
+import { useSendFriendRequest } from '~/services/friends'
 import { useCreateTrip, useGeneratePackingList } from '~/services/trips'
 import { useIncrementTagCounts } from '~/services/users'
 import type { ActivityTypes } from '~/types/GearItem'
@@ -62,16 +63,18 @@ const STEPS_WITH_REQUIRED_FIELDS: Partial<
 const NewTripForm = ({}: NewTripFormProps) => {
   const { user } = useAuth()
   const [step, setStep] = useState<number>(0)
-  const [tripMembers, setTripMembers] = useState<User[]>([])
+  const [tripMembers, setTripMembers] = useState<(User & { sendFriendRequest?: boolean })[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const navigate = useNavigate()
   const { mutateAsync: createTrip } = useCreateTrip()
   const { mutateAsync: generatePackingList } = useGeneratePackingList()
   const { mutate: incrementTagCounts } = useIncrementTagCounts(user?.uid ?? '')
+  const { mutateAsync: sendFriendReq } = useSendFriendRequest()
 
   useEffect(() => {
     if (user) {
+      // initialize with the current user as the first member of the trip
       setTripMembers([user])
     }
   }, [user])
@@ -173,6 +176,30 @@ const NewTripForm = ({}: NewTripFormProps) => {
         }
       } else {
         toast.success('Trip created')
+      }
+
+      if (tripMembers.filter((m) => m.sendFriendRequest).length > 0) {
+        tripMembers
+          .filter((m) => m.sendFriendRequest)
+          .forEach(async (member) => {
+            if (!member.uid) return
+            try {
+              await sendFriendReq({ senderUid: user.uid, recipientUid: member.uid })
+              const formData = new FormData()
+              formData.append('recipientEmail', member.email)
+              formData.append('recipientUid', member.uid)
+              formData.append('requesterDisplayName', user.displayName ?? '')
+              formData.append('requesterUsername', user.username)
+              fetch('/resource/send-friend-request', { method: 'POST', body: formData }).catch(
+                () => {
+                  console.error(`Failed to send friend request email to ${member.email}`)
+                }
+              )
+            } catch {
+              toast.error(`Failed to send friend request to ${member.username}`)
+            }
+            toast.success('Trip created (friend requests will be sent upon trip creation)')
+          })
       }
 
       navigate(`/trips/${trip.tripId}`)

@@ -53,7 +53,7 @@ This is a **React Router v7** application with server-side rendering using a ful
 - Page components in `app/routes/`
 - Feature-specific components in `app/components/Trip/`
 - Design system components in `app/components/ui/`
-- Uses compound component patterns (Trip details + sidebar)
+- Uses `app/components/ResponsiveDialogContainer.tsx` for modals/drawers with breakpoint-based rendering
 
 ### Data Models
 - **Trip:** Main entity with members, packing lists, location data
@@ -66,6 +66,7 @@ This is a **React Router v7** application with server-side rendering using a ful
 - **Radix UI** primitives for accessible components
 - Theme managed via cookies and CSS classes
 - Custom animations using Framer Motion
+- Responsive design with mobile-first breakpoints and conditional rendering, using the `~/lib/use-screen-size` hook for JS-based breakpoint detection to match tailwind breakpoints
 
 ### Environment & Configuration
 - Environment variables prefixed with `VITE_` for client-side
@@ -92,14 +93,10 @@ Read at least two existing test files in the same directory or a sibling directo
 
 ### Path aliases
 
-**Never use `~` aliases in test files.** Use relative imports only. `vite-tsconfig-paths` handles `~` in app code but it is unreliable in the vitest/jsdom environment.
+Use the `~` alias for imports from `app/`:
 
 ```ts
-// Wrong
 import { useAuth } from '~/contexts/auth/useAuth'
-
-// Correct
-import { useAuth } from '../../contexts/auth/useAuth'
 ```
 
 ### Firebase in tests
@@ -117,14 +114,14 @@ Never try to mock `firebase/firestore`, `firebase/auth`, or `app/firebase/config
 
 ### Required mocks for most component tests
 
-These are almost always needed. Check the existing test files for the exact relative path from the test location:
+These are almost always needed.
 
 ```ts
-vi.mock('../lib/useIsAnonymous', () => ({
+vi.mock('~/lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
 }))
 
-vi.mock('../contexts/auth/useAuth', () => ({
+vi.mock('~/contexts/auth/useAuth', () => ({
   useAuth: vi.fn(() => ({ user: { uid: 'u1', username: 'testuser', email: 'test@test.com' } })),
 }))
 

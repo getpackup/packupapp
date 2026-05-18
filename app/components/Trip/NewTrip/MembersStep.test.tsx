@@ -2,41 +2,41 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-import type { User } from '../../../types/User'
+import type { User } from '~/types/User'
 
-vi.mock('../../../firebase/config', () => ({
+vi.mock('~/firebase/config', () => ({
   firebaseAuth: {},
   firestoreDb: {},
 }))
 
-vi.mock('../../../contexts/auth/useAuth', () => ({
+vi.mock('~/contexts/auth/useAuth', () => ({
   default: vi.fn(() => ({
     user: { uid: 'current-user', displayName: 'Me', username: 'me', email: 'me@test.com' },
   })),
 }))
 
-vi.mock('../../../services/friends', () => ({
+vi.mock('~/services/friends', () => ({
   useFriendUsersQuery: vi.fn(() => ({ data: [], isLoading: false })),
 }))
 
-vi.mock('../../../services/trips', () => ({
+vi.mock('~/services/trips', () => ({
   useCreateTrip: vi.fn(() => ({ mutateAsync: vi.fn() })),
   useGeneratePackingList: vi.fn(() => ({ mutateAsync: vi.fn() })),
 }))
 
-vi.mock('../../../services/users', () => ({
+vi.mock('~/services/users', () => ({
   useIncrementTagCounts: vi.fn(() => ({ mutate: vi.fn() })),
 }))
 
 const mockUseFriendSearch = vi.fn()
-vi.mock('../../../services/useFriendSearch', () => ({
+vi.mock('~/services/useFriendSearch', () => ({
   useFriendSearch: (...args: unknown[]) => mockUseFriendSearch(...args),
 }))
 
-import { useFriendUsersQuery } from '../../../services/friends'
+import { useFriendUsersQuery } from '~/services/friends'
 import MembersStep from './MembersStep'
 
-function makeUser(overrides: Partial<User> = {}): User {
+function makeUser(overrides: Partial<User> & { sendFriendRequest?: boolean } = {}): User {
   return {
     uid: 'uid-1',
     id: 'uid-1',
@@ -67,37 +67,27 @@ describe('MembersStep', () => {
   })
 
   it('renders UserSearchCombobox search input', () => {
-    render(
-      <MembersStep
-        tripMembers={[currentUser]}
-        setTripMembers={vi.fn()}
-      />
-    )
+    render(<MembersStep tripMembers={[currentUser]} setTripMembers={vi.fn()} />)
 
     expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument()
   })
 
   it('displays existing trip members with remove buttons', () => {
-    const member = makeUser({ uid: 'member-1', id: 'member-1', displayName: 'Alice', username: 'alice' })
+    const member = makeUser({
+      uid: 'member-1',
+      id: 'member-1',
+      displayName: 'Alice',
+      username: 'alice',
+    })
 
-    render(
-      <MembersStep
-        tripMembers={[currentUser, member]}
-        setTripMembers={vi.fn()}
-      />
-    )
+    render(<MembersStep tripMembers={[currentUser, member]} setTripMembers={vi.fn()} />)
 
     expect(screen.getByText('Alice')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /remove alice/i })).toBeInTheDocument()
   })
 
   it('does not show remove button for current user', () => {
-    render(
-      <MembersStep
-        tripMembers={[currentUser]}
-        setTripMembers={vi.fn()}
-      />
-    )
+    render(<MembersStep tripMembers={[currentUser]} setTripMembers={vi.fn()} />)
 
     expect(screen.getByText('Me')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /remove me/i })).not.toBeInTheDocument()
@@ -105,14 +95,14 @@ describe('MembersStep', () => {
 
   it('removes a member when remove button is clicked', async () => {
     const setTripMembers = vi.fn()
-    const member = makeUser({ uid: 'member-1', id: 'member-1', displayName: 'Alice', username: 'alice' })
+    const member = makeUser({
+      uid: 'member-1',
+      id: 'member-1',
+      displayName: 'Alice',
+      username: 'alice',
+    })
 
-    render(
-      <MembersStep
-        tripMembers={[currentUser, member]}
-        setTripMembers={setTripMembers}
-      />
-    )
+    render(<MembersStep tripMembers={[currentUser, member]} setTripMembers={setTripMembers} />)
 
     await userEvent.click(screen.getByRole('button', { name: /remove alice/i }))
     expect(setTripMembers).toHaveBeenCalledWith([currentUser])
@@ -120,7 +110,13 @@ describe('MembersStep', () => {
 
   it('appends selected user to tripMembers via onSelect', async () => {
     const setTripMembers = vi.fn()
-    const friend = makeUser({ uid: 'f1', id: 'f1', displayName: 'Bob', username: 'bob' })
+    const friend = makeUser({
+      uid: 'f1',
+      id: 'f1',
+      displayName: 'Bob',
+      username: 'bob',
+      sendFriendRequest: false,
+    })
 
     mockUseFriendSearch.mockReturnValue({
       friendHits: [friend],
@@ -128,22 +124,22 @@ describe('MembersStep', () => {
       isLoading: false,
     })
 
-    render(
-      <MembersStep
-        tripMembers={[currentUser]}
-        setTripMembers={setTripMembers}
-      />
-    )
+    render(<MembersStep tripMembers={[currentUser]} setTripMembers={setTripMembers} />)
 
     const input = screen.getByPlaceholderText(/search/i)
     await userEvent.click(input)
-    await userEvent.click(screen.getByRole('button', { name: /add bob/i }))
+    await userEvent.click(screen.getByLabelText('Add to trip'))
 
     expect(setTripMembers).toHaveBeenCalledWith([currentUser, friend])
   })
 
   it('shows status badges for already-selected members in dropdown', async () => {
-    const member = makeUser({ uid: 'member-1', id: 'member-1', displayName: 'Alice', username: 'alice' })
+    const member = makeUser({
+      uid: 'member-1',
+      id: 'member-1',
+      displayName: 'Alice',
+      username: 'alice',
+    })
 
     mockUseFriendSearch.mockReturnValue({
       friendHits: [member],
@@ -151,12 +147,7 @@ describe('MembersStep', () => {
       isLoading: false,
     })
 
-    render(
-      <MembersStep
-        tripMembers={[currentUser, member]}
-        setTripMembers={vi.fn()}
-      />
-    )
+    render(<MembersStep tripMembers={[currentUser, member]} setTripMembers={vi.fn()} />)
 
     const input = screen.getByPlaceholderText(/search/i)
     await userEvent.click(input)
@@ -175,12 +166,7 @@ describe('MembersStep', () => {
       isLoading: false,
     })
 
-    render(
-      <MembersStep
-        tripMembers={[currentUser]}
-        setTripMembers={vi.fn()}
-      />
-    )
+    render(<MembersStep tripMembers={[currentUser]} setTripMembers={vi.fn()} />)
 
     expect(mockUseFriendSearch).toHaveBeenCalledWith(
       expect.objectContaining({ currentUserUid: 'current-user' })

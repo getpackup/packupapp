@@ -41,6 +41,13 @@ function TripPartyMemberBadge({ member }: { member: TripMember }) {
       </Badge>
     )
   }
+  if (member.status === TripMemberStatus.Left) {
+    return (
+      <Badge variant="destructive">
+        <UserX /> Left
+      </Badge>
+    )
+  }
 }
 
 export default TripPartyMemberBadge

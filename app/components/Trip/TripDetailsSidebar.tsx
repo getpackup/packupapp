@@ -1,4 +1,12 @@
-import { BadgeInfo, CalendarIcon, Ellipsis, MapPinIcon, MessageSquareMore } from 'lucide-react'
+import {
+  BadgeInfo,
+  CalendarIcon,
+  Ellipsis,
+  MapPinIcon,
+  MessageSquareMore,
+  UserMinus,
+  UserPlus,
+} from 'lucide-react'
 import { useState } from 'react'
 
 import useAuth from '~/contexts/auth/useAuth'
@@ -21,13 +29,11 @@ import StaticMapImage from '../StaticMapImage'
 import { AspectRatio } from '../ui/aspect-ratio'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu'
+import { Label } from '../ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Separator } from '../ui/separator'
+import { Switch } from '../ui/switch'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import UserMediaObject from '../UserMediaObject'
 import { AddTripMember } from './AddTripMember'
 import { EditTripDates } from './EditTripDates'
@@ -50,8 +56,16 @@ export const acceptedTripMembersOnly = (tripMembers: TripMember[]) =>
       member.status !== TripMemberStatus.Declined && member.status !== TripMemberStatus.Removed
   )
 
-const SidebarItem = ({ children }: { children: React.ReactNode }) => {
-  return <div className="text-sidebar-foreground rounded-lg px-3 py-2">{children}</div>
+const SidebarItem = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) => {
+  return (
+    <div className={cn('text-sidebar-foreground rounded-lg px-3 py-2', className)}>{children}</div>
+  )
 }
 
 const SubHeading = ({ children }: { children: React.ReactNode }) => {
@@ -82,6 +96,10 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
   const customTagDefs = closet?.customTags ?? []
   const colorMap = useCustomTagColorMap(userId)
   const customTagNames = new Set(customTagDefs.map((ct) => ct.name))
+
+  const removeMemberFromTrip = async (memberId: string) => {
+    console.log('removing member', memberId)
+  }
 
   const onlyCustomTags = trip ? trip.tags.filter((tag) => customTagNames.has(tag)) : []
 
@@ -132,37 +150,97 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
                   member.status === TripMemberStatus.Declined ||
                   member.status === TripMemberStatus.Removed
               ) && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="p-1 opacity-80 hover:opacity-100">
-                    <Ellipsis className="h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => setShowAllMembers(!showAllMembers)}>
-                      Toggle declined & removed members {showAllMembers ? 'off' : 'on'}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon-sm">
+                      <Ellipsis className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="flex items-center justify-start gap-4">
+                    <Switch
+                      checked={showAllMembers}
+                      id="show-declined-removed-members"
+                      onCheckedChange={() => setShowAllMembers(!showAllMembers)}
+                    />
+                    <Label htmlFor="show-declined-removed-members" className="text-xs font-normal">
+                      Show declined & removed members
+                    </Label>
+                  </PopoverContent>
+                </Popover>
               )}
             </div>
           </SubHeading>
-          {tripMembers
-            .sort((a, b) => a.invitedAt.seconds - b.invitedAt.seconds)
-            .map((member) => {
-              const user = users?.find((user) => user.id === member.uid)
-              if (!user) {
-                return null
-              }
+          <div className="divide-border divide-y">
+            {tripMembers
+              .sort((a, b) => {
+                const statusOrder: Record<TripMemberStatus, number> = {
+                  [TripMemberStatus.Owner]: 0,
+                  [TripMemberStatus.Accepted]: 1,
+                  [TripMemberStatus.Pending]: 2,
+                  [TripMemberStatus.Declined]: 3,
+                  [TripMemberStatus.Removed]: 4,
+                  [TripMemberStatus.Left]: 5,
+                }
 
-              return (
-                <SidebarItem key={member.uid}>
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <UserMediaObject user={user} />
-                    <TripPartyMemberBadge member={member} />
-                  </div>
-                </SidebarItem>
-              )
-            })}
+                const statusDiff = statusOrder[a.status] - statusOrder[b.status]
+                if (statusDiff !== 0) {
+                  return statusDiff
+                }
 
+                return a.invitedAt.seconds - b.invitedAt.seconds
+              })
+              .map((member) => {
+                const foundMember = users?.find((user) => user.id === member.uid)
+                if (!foundMember) {
+                  return null
+                }
+
+                return (
+                  <SidebarItem key={member.uid} className="group rounded-none">
+                    <div className="flex items-center justify-between gap-2">
+                      <UserMediaObject user={foundMember} />
+                      <div className="flex items-center gap-2">
+                        {member.uid !== user?.uid &&
+                          (member.status === TripMemberStatus.Pending ||
+                            member.status === TripMemberStatus.Accepted) && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  className="opacity-30 group-hover:opacity-100"
+                                  onClick={() => removeMemberFromTrip(member.uid)}
+                                >
+                                  <UserMinus />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Remove from trip</TooltipContent>
+                            </Tooltip>
+                          )}
+                        {member.uid !== user?.uid &&
+                          (member.status === TripMemberStatus.Removed ||
+                            member.status === TripMemberStatus.Left) && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  className="opacity-30 group-hover:opacity-100"
+                                  onClick={() => removeMemberFromTrip(member.uid)}
+                                >
+                                  <UserPlus />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Re-invite to trip</TooltipContent>
+                            </Tooltip>
+                          )}
+                        <TripPartyMemberBadge member={member} />
+                      </div>
+                    </div>
+                  </SidebarItem>
+                )
+              })}
+          </div>
           <SubHeading>Details</SubHeading>
           <SidebarItem>
             <div className="flex items-center justify-between gap-2">

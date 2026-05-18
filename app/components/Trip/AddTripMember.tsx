@@ -1,5 +1,6 @@
 import { useQueries } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
+import { useState } from 'react'
 import { useFetcher, useParams } from 'react-router'
 import { toast } from 'sonner'
 
@@ -7,7 +8,6 @@ import { useAuth } from '~/contexts/auth/useAuth'
 import { createSystemMessage } from '~/lib/chat'
 import { formattedDateRange } from '~/lib/date'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
-import { useIsMobile } from '~/lib/useIsMobile'
 import { useFriendsQuery, useSendFriendRequest } from '~/services/friends'
 import { useCreateChatMessage, useUpdateTrip } from '~/services/trips'
 import { fetchUserById, userKeys } from '~/services/users'
@@ -15,23 +15,19 @@ import type { Trip } from '~/types/Trip'
 import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
 
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '../ui/dialog'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet'
+import ResponsiveDialogContainer from '../ResponsiveDialogContainer'
+import { Button } from '../ui/button'
+import { Dialog, DialogContent, DialogTitle } from '../ui/dialog'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { UpgradeAccountGate } from '../UpgradeAccountGate'
 import { UserSearchCombobox } from '../UserSearchCombobox'
 
-export function AddTripMember({
-  trip,
-  tripMembers,
-}: {
-  trip: Trip
-  tripMembers: TripMember[]
-}) {
+export function AddTripMember({ trip, tripMembers }: { trip: Trip; tripMembers: TripMember[] }) {
+  const [open, setOpen] = useState(false)
   const { mutateAsync: updateTrip } = useUpdateTrip(trip.tripId)
   const { mutateAsync: sendMessage } = useCreateChatMessage()
   const { user } = useAuth()
   const isAnonymous = useIsAnonymous()
-  const isMobile = useIsMobile()
   const { id } = useParams()
   const fetcher = useFetcher()
 
@@ -52,7 +48,7 @@ export function AddTripMember({
 
   const friends = friendUserQueries.map((q) => q.data).filter((u): u is User => u != null)
 
-  const handleSelect = async (selectedUser: User, options: { sendFriendRequest: boolean }) => {
+  const handleSelect = async (selectedUser: User & { sendFriendRequest?: boolean }) => {
     if (!user || !id) return
 
     const payload = {
@@ -91,7 +87,7 @@ export function AddTripMember({
 
       toast.success(`${selectedUser.username} has been invited to the trip`)
 
-      if (options.sendFriendRequest && user.uid) {
+      if (selectedUser.sendFriendRequest && user.uid) {
         try {
           await sendFriendReq({ senderUid: user.uid, recipientUid: selectedUser.uid })
           const formData = new FormData()
@@ -99,9 +95,7 @@ export function AddTripMember({
           formData.append('recipientUid', selectedUser.uid)
           formData.append('requesterDisplayName', user.displayName ?? '')
           formData.append('requesterUsername', user.username)
-          fetch('/resource/send-friend-request', { method: 'POST', body: formData }).catch(
-            () => {}
-          )
+          fetch('/resource/send-friend-request', { method: 'POST', body: formData }).catch(() => {})
         } catch {
           // Friend request is independent — don't block the trip invite
         }
@@ -112,16 +106,21 @@ export function AddTripMember({
   }
 
   const trigger = (
-    <button type="button" className="p-1 opacity-80 hover:opacity-100">
-      <Plus className="size-4" />
-      <span className="sr-only">Add member</span>
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button type="button" variant="ghost" size="icon-sm" className="" onClick={() => setOpen(true)}>
+          <Plus className="size-4" />
+          <span className="sr-only">Add member</span>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>Add Trip Member</TooltipContent>
+    </Tooltip>
   )
 
   if (isAnonymous) {
     return (
-      <Dialog>
-        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <Dialog open={open} onOpenChange={setOpen}>
+        {trigger}
         <DialogContent aria-describedby={undefined}>
           <DialogTitle>Create an account</DialogTitle>
           <UpgradeAccountGate message="Create an account to invite friends and assign gear to your crew.">
@@ -142,27 +141,18 @@ export function AddTripMember({
     />
   )
 
-  if (isMobile) {
-    return (
-      <Sheet>
-        <SheetTrigger asChild>{trigger}</SheetTrigger>
-        <SheetContent side="bottom">
-          <SheetHeader>
-            <SheetTitle>Add Trip Member</SheetTitle>
-          </SheetHeader>
-          <div className="px-4 pb-4">{content}</div>
-        </SheetContent>
-      </Sheet>
-    )
-  }
-
   return (
-    <Dialog>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent aria-describedby={undefined}>
-        <DialogTitle>Add Trip Member</DialogTitle>
+    <>
+      {trigger}
+      <ResponsiveDialogContainer
+        open={open}
+        onOpenChange={setOpen}
+        title="Add Trip Member"
+        description="Search for friends to invite to your trip."
+        contentProps={{ 'aria-describedby': undefined }}
+      >
         {content}
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContainer>
+    </>
   )
 }
