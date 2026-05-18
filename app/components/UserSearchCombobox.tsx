@@ -4,11 +4,10 @@ import { useState } from 'react'
 import { useFriendSearch } from '../services/useFriendSearch'
 import type { TripMember } from '../types/TripMember'
 import type { User } from '../types/User'
-
+import TripPartyMemberBadge from './Trip/TripPartyMemberBadge'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'
 import { Input } from './ui/input'
-import TripPartyMemberBadge from './Trip/TripPartyMemberBadge'
 import UserMediaObject from './UserMediaObject'
 
 type UserSearchComboboxProps = {
@@ -30,7 +29,7 @@ export function UserSearchCombobox({
   const [isOpen, setIsOpen] = useState(false)
   const [friendRequestFor, setFriendRequestFor] = useState<Record<string, boolean>>({})
 
-  const { friendHits, allUserHits, isLoading } = useFriendSearch({
+  const { friendHits, allUserHits } = useFriendSearch({
     query,
     friends,
     currentUserUid,

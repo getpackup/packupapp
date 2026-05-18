@@ -1,7 +1,6 @@
 import './app.css'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { useEffect } from 'react'
 import {
   type ActionFunction,
@@ -146,7 +145,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {children}
             {loaderData.showCookieBanner && <CookieBanner />}
           </TooltipProvider>
-          <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
         </QueryClientProvider>
         <ScrollRestoration />
         <Scripts />
