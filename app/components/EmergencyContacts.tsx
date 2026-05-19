@@ -132,155 +132,160 @@ export function EmergencyContacts() {
     setFormOpen(true)
   }
 
-  if (isAnonymous) {
-    return (
-      <UpgradeAccountGate message="Create an account to manage your emergency contacts.">
-        <div />
-      </UpgradeAccountGate>
-    )
-  }
-
   const formTitle = editingIndex !== null ? 'Edit contact' : 'Add emergency contact'
   const deleteContactName = deletingIndex !== null ? contacts[deletingIndex]?.name : null
 
   return (
     <div className="space-y-4">
       <h3 className="mb-2 text-lg font-bold">Emergency Contacts</h3>
-      <div className="divide-border divide-y">
-        {contacts.map((contact, index) => (
-          <div
-            key={index}
-            data-testid="emergency-contact"
-            className="flex items-center justify-between py-3"
-          >
-            <div className="min-w-0 space-y-0.5">
-              <p className="font-medium">{contact.name}</p>
-              <p className="text-muted-foreground text-sm">{contact.phoneNumber}</p>
-              {contact.email && <p className="text-muted-foreground text-sm">{contact.email}</p>}
-            </div>
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Edit"
-                onClick={() => handleEdit(index)}
+      {isAnonymous ? (
+        <UpgradeAccountGate message="Create an account to manage your emergency contacts.">
+          <div />
+        </UpgradeAccountGate>
+      ) : (
+        <>
+          <div className="divide-border divide-y">
+            {contacts.map((contact, index) => (
+              <div
+                key={index}
+                data-testid="emergency-contact"
+                className="flex items-center justify-between py-3"
               >
-                <Pencil className="size-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Delete"
-                onClick={() => setDeletingIndex(index)}
-              >
-                <Trash2 className="size-4" />
-              </Button>
-            </div>
+                <div className="min-w-0 space-y-0.5">
+                  <p className="font-medium">{contact.name}</p>
+                  <p className="text-muted-foreground text-sm">{contact.phoneNumber}</p>
+                  {contact.email && (
+                    <p className="text-muted-foreground text-sm">{contact.email}</p>
+                  )}
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Edit"
+                    onClick={() => handleEdit(index)}
+                  >
+                    <Pencil className="size-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Delete"
+                    onClick={() => setDeletingIndex(index)}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+          {contacts.length < MAX_CONTACTS && (
+            <Button variant="outline" onClick={handleAdd}>
+              <Plus className="size-4" />
+              Add emergency contact
+            </Button>
+          )}
+          {isMediumBreakpoint ? (
+            <Dialog open={formOpen} onOpenChange={(open) => !open && closeForm()}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{formTitle}</DialogTitle>
+                  <DialogDescription></DialogDescription>
+                </DialogHeader>
+                <form
+                  id="ec-form"
+                  noValidate
+                  onSubmit={handleSubmit(onSubmit)}
+                  className="space-y-3"
+                >
+                  <ContactFormFields register={register} errors={errors} />
+                </form>
+                <DialogFooter>
+                  <Button variant="outline" onClick={closeForm}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" form="ec-form">
+                    Save
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <Drawer open={formOpen} onOpenChange={(open) => !open && closeForm()}>
+              <DrawerContent>
+                <DrawerHeader>
+                  <DrawerTitle>{formTitle}</DrawerTitle>
+                  <DrawerDescription></DrawerDescription>
+                </DrawerHeader>
+                <form
+                  id="ec-form"
+                  noValidate
+                  onSubmit={handleSubmit(onSubmit)}
+                  className="space-y-3 px-4"
+                >
+                  <ContactFormFields register={register} errors={errors} />
+                </form>
+                <DrawerFooter>
+                  <Button type="submit" form="ec-form">
+                    Save
+                  </Button>
+                  <Button variant="outline" onClick={closeForm}>
+                    Cancel
+                  </Button>
+                </DrawerFooter>
+              </DrawerContent>
+            </Drawer>
+          )}
 
-      {contacts.length < MAX_CONTACTS && (
-        <Button variant="outline" onClick={handleAdd}>
-          <Plus className="size-4" />
-          Add emergency contact
-        </Button>
-      )}
-
-      {isMediumBreakpoint ? (
-        <Dialog open={formOpen} onOpenChange={(open) => !open && closeForm()}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{formTitle}</DialogTitle>
-              <DialogDescription></DialogDescription>
-            </DialogHeader>
-            <form id="ec-form" noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-              <ContactFormFields register={register} errors={errors} />
-            </form>
-            <DialogFooter>
-              <Button variant="outline" onClick={closeForm}>
-                Cancel
-              </Button>
-              <Button type="submit" form="ec-form">
-                Save
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      ) : (
-        <Drawer open={formOpen} onOpenChange={(open) => !open && closeForm()}>
-          <DrawerContent>
-            <DrawerHeader>
-              <DrawerTitle>{formTitle}</DrawerTitle>
-              <DrawerDescription></DrawerDescription>
-            </DrawerHeader>
-            <form
-              id="ec-form"
-              noValidate
-              onSubmit={handleSubmit(onSubmit)}
-              className="space-y-3 px-4"
+          {isMediumBreakpoint ? (
+            <Dialog
+              open={deletingIndex !== null}
+              onOpenChange={(open) => !open && setDeletingIndex(null)}
             >
-              <ContactFormFields register={register} errors={errors} />
-            </form>
-            <DrawerFooter>
-              <Button type="submit" form="ec-form">
-                Save
-              </Button>
-              <Button variant="outline" onClick={closeForm}>
-                Cancel
-              </Button>
-            </DrawerFooter>
-          </DrawerContent>
-        </Drawer>
-      )}
-
-      {isMediumBreakpoint ? (
-        <Dialog
-          open={deletingIndex !== null}
-          onOpenChange={(open) => !open && setDeletingIndex(null)}
-        >
-          <DialogContent aria-describedby={undefined}>
-            <DialogHeader>
-              <DialogTitle>Delete contact</DialogTitle>
-            </DialogHeader>
-            <p className="text-muted-foreground text-sm">
-              Are you sure you want to delete
-              {deleteContactName ? ` ${deleteContactName}` : ' this contact'} as an Emergency
-              Contact? This action cannot be undone.
-            </p>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDeletingIndex(null)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleConfirmDelete}>
-                Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      ) : (
-        <Drawer
-          open={deletingIndex !== null}
-          onOpenChange={(open) => !open && setDeletingIndex(null)}
-        >
-          <DrawerContent>
-            <DrawerHeader>
-              <DrawerTitle>Delete contact</DrawerTitle>
-            </DrawerHeader>
-            <p className="text-muted-foreground px-4 text-sm">
-              Are you sure you want to delete
-              {deleteContactName ? ` ${deleteContactName}` : ' this contact'}?
-            </p>
-            <DrawerFooter>
-              <Button variant="destructive" onClick={handleConfirmDelete}>
-                Delete
-              </Button>
-              <Button variant="outline" onClick={() => setDeletingIndex(null)}>
-                Cancel
-              </Button>
-            </DrawerFooter>
-          </DrawerContent>
-        </Drawer>
+              <DialogContent aria-describedby={undefined}>
+                <DialogHeader>
+                  <DialogTitle>Delete contact</DialogTitle>
+                </DialogHeader>
+                <p className="text-muted-foreground text-sm">
+                  Are you sure you want to delete
+                  {deleteContactName ? ` ${deleteContactName}` : ' this contact'} as an Emergency
+                  Contact? This action cannot be undone.
+                </p>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setDeletingIndex(null)}>
+                    Cancel
+                  </Button>
+                  <Button variant="destructive" onClick={handleConfirmDelete}>
+                    Delete
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <Drawer
+              open={deletingIndex !== null}
+              onOpenChange={(open) => !open && setDeletingIndex(null)}
+            >
+              <DrawerContent>
+                <DrawerHeader>
+                  <DrawerTitle>Delete contact</DrawerTitle>
+                </DrawerHeader>
+                <p className="text-muted-foreground px-4 text-sm">
+                  Are you sure you want to delete
+                  {deleteContactName ? ` ${deleteContactName}` : ' this contact'}?
+                </p>
+                <DrawerFooter>
+                  <Button variant="destructive" onClick={handleConfirmDelete}>
+                    Delete
+                  </Button>
+                  <Button variant="outline" onClick={() => setDeletingIndex(null)}>
+                    Cancel
+                  </Button>
+                </DrawerFooter>
+              </DrawerContent>
+            </Drawer>
+          )}
+        </>
       )}
     </div>
   )

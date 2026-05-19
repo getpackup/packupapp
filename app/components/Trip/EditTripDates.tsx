@@ -5,17 +5,9 @@ import { type DateRange } from 'react-day-picker'
 import { useParams } from 'react-router'
 import { toast } from 'sonner'
 
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '~/components/ui/dialog'
 import { useUpdateTrip } from '~/services/trips'
 
+import ResponsiveDialogContainer from '../ResponsiveDialogContainer'
 import { Button } from '../ui/button'
 import { Calendar } from '../ui/calendar'
 
@@ -59,39 +51,29 @@ export function EditTripDates({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="">
-        <div className="flex flex-col">
-          <DialogHeader className="">
-            <DialogTitle>Update trip date</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Calendar
-              mode="range"
-              defaultMonth={dateRange?.from}
-              selected={dateRange}
-              onSelect={setDateRange}
-              captionLayout="dropdown"
-              className="mx-auto border-0 p-0"
-            />
-          </div>
-          <DialogFooter className="">
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </DialogClose>
-            <Button
-              type="button"
-              onClick={onSubmit}
-              disabled={!startDateHasChanged && !endDateHasChanged}
-            >
-              Save changes
-            </Button>
-          </DialogFooter>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <ResponsiveDialogContainer
+      open={open}
+      onOpenChange={setOpen}
+      title="Update trip dates"
+      trigger={children}
+      footerAction={
+        <Button
+          type="button"
+          onClick={onSubmit}
+          disabled={!startDateHasChanged && !endDateHasChanged}
+        >
+          Save changes
+        </Button>
+      }
+    >
+      <Calendar
+        mode="range"
+        defaultMonth={dateRange?.from}
+        selected={dateRange}
+        onSelect={setDateRange}
+        captionLayout="dropdown"
+        className="mx-auto border-0 p-0"
+      />
+    </ResponsiveDialogContainer>
   )
 }

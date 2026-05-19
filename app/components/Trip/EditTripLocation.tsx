@@ -5,26 +5,12 @@ import { useParams } from 'react-router'
 import { toast } from 'sonner'
 import z from 'zod'
 
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '~/components/ui/dialog'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from '~/components/ui/form'
+import { Form, FormControl, FormField, FormItem, FormMessage } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import { type PlacePrediction, useGooglePlaces } from '~/lib/useGooglePlaces'
 import { useUpdateTrip } from '~/services/trips'
 
+import ResponsiveDialogContainer from '../ResponsiveDialogContainer'
 import { Button } from '../ui/button'
 
 export function EditTripLocation({
@@ -118,72 +104,70 @@ export function EditTripLocation({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <DialogHeader>
-              <DialogTitle>Update trip location</DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem className="mb-2 w-full">
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Enter a location..."
-                        onChange={(e) => handleNameChange(e.target.value)}
-                        onFocus={(e) => {
-                          field.onBlur()
-                          setTimeout(() => {
-                            e.target.setSelectionRange(e.target.value.length, e.target.value.length)
-                          }, 10)
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {predictions.length > 0 && (
-                <ul className="max-h-[200px] divide-y overflow-y-auto rounded border">
-                  {predictions.map((p) => (
-                    <li
-                      key={p.place_id}
-                      role="button"
-                      className="hover:bg-accent cursor-pointer p-2"
-                      onClick={() => handlePickPrediction(p)}
-                    >
-                      <div className="text-sm font-medium">
-                        {p.structured_formatting?.main_text || p.description}
-                      </div>
-                      {p.structured_formatting?.secondary_text && (
-                        <div className="text-muted-foreground text-xs">
-                          {p.structured_formatting.secondary_text}
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+    <ResponsiveDialogContainer
+      open={open}
+      onOpenChange={setOpen}
+      title="Update trip location"
+      trigger={children}
+      footerAction={
+        <Button
+          type="submit"
+          disabled={!form.formState.isDirty}
+          onClick={() => form.handleSubmit(onSubmit)()}
+        >
+          Save changes
+        </Button>
+      }
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="py-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem className="mb-2 w-full">
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Enter a location..."
+                      onChange={(e) => handleNameChange(e.target.value)}
+                      onFocus={(e) => {
+                        field.onBlur()
+                        setTimeout(() => {
+                          e.target.setSelectionRange(e.target.value.length, e.target.value.length)
+                        }, 10)
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="outline">
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button type="submit" disabled={!form.formState.isDirty}>
-                Save changes
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+            />
+            {predictions.length > 0 && (
+              <ul className="max-h-50 divide-y overflow-y-auto rounded border">
+                {predictions.map((p) => (
+                  <li
+                    key={p.place_id}
+                    role="button"
+                    className="hover:bg-accent cursor-pointer p-2"
+                    onClick={() => handlePickPrediction(p)}
+                  >
+                    <div className="text-sm font-medium">
+                      {p.structured_formatting?.main_text || p.description}
+                    </div>
+                    {p.structured_formatting?.secondary_text && (
+                      <div className="text-muted-foreground text-xs">
+                        {p.structured_formatting.secondary_text}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </form>
+      </Form>
+    </ResponsiveDialogContainer>
   )
 }

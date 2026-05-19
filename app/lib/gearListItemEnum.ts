@@ -86,4 +86,7 @@ export const gearListKeys = [...allGearListItems].map((item) => item.name)
 
 export const allActivityTags = allGearListItems.map((i) => i.label)
 
-export const allPredefinedTags = [...gearListCategories.map((c) => c.value), ...allActivityTags]
+// Some categories are also in other considerations, so dedupe with the set
+export const allPredefinedTags = [
+  ...new Set([...gearListCategories.map((c) => c.value), ...allActivityTags]),
+]

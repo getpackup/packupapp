@@ -5,25 +5,11 @@ import { useParams } from 'react-router'
 import { toast } from 'sonner'
 import z from 'zod'
 
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '~/components/ui/dialog'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from '~/components/ui/form'
+import { Form, FormControl, FormField, FormItem, FormMessage } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import { useUpdateTrip } from '~/services/trips'
 
+import ResponsiveDialogContainer from '../ResponsiveDialogContainer'
 import { Button } from '../ui/button'
 
 export function EditTripName({
@@ -66,51 +52,49 @@ export function EditTripName({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <DialogHeader>
-              <DialogTitle>Update trip name</DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem className="w-full">
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="What do you want to call this trip?"
-                        onFocus={(e) => {
-                          field.onBlur()
-                          // Move cursor to the end instead of selecting all text
-                          setTimeout(() => {
-                            e.target.setSelectionRange(e.target.value.length, e.target.value.length)
-                          }, 10)
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="outline">
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button type="submit" disabled={!form.formState.isDirty}>
-                Save changes
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+    <ResponsiveDialogContainer
+      trigger={children}
+      open={open}
+      onOpenChange={setOpen}
+      title="Update trip name"
+      footerAction={
+        <Button
+          type="submit"
+          disabled={!form.formState.isDirty}
+          onClick={() => form.handleSubmit(onSubmit)()}
+        >
+          Save changes
+        </Button>
+      }
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="py-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="What do you want to call this trip?"
+                      onFocus={(e) => {
+                        field.onBlur()
+                        // Move cursor to the end instead of selecting all text
+                        setTimeout(() => {
+                          e.target.setSelectionRange(e.target.value.length, e.target.value.length)
+                        }, 10)
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </form>
+      </Form>
+    </ResponsiveDialogContainer>
   )
 }

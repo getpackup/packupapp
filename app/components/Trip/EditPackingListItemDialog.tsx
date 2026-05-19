@@ -20,25 +20,10 @@ import {
 import { useUpdatePackingListItem } from '~/services/trips'
 import type { PackingListItem } from '~/types/PackingListItem'
 
+import ResponsiveDialogContainer from '../ResponsiveDialogContainer'
 import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '../ui/form'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form'
 import { Input } from '../ui/input'
 import {
   MultiSelect,
@@ -47,23 +32,17 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from '../ui/multi-select'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Textarea } from '../ui/textarea'
 
 const weightUnits = ['g', 'kg', 'oz', 'lb'] as const
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  tags: z.array(z.string()),
-  description: z.string(),
-  weight: z.string(),
-  weightUnit: z.enum(weightUnits),
+  tags: z.array(z.string()).min(1, 'Select at least one tag'),
+  description: z.string().optional(),
+  weight: z.string().optional(),
+  weightUnit: z.optional(z.enum(weightUnits)),
   quantity: z.number().min(1),
   saveToCloset: z.boolean(),
 })
@@ -80,7 +59,10 @@ function EditPackingListItemDialog({ item, open, onOpenChange }: EditPackingList
   const { mutateAsync: updateItem, isPending } = useUpdatePackingListItem({
     tripId: tripId ?? '',
   })
-  const { data: closet } = useGearClosetQuery({ userId: user?.uid ?? '', queryOptions: { enabled: !!user?.uid } })
+  const { data: closet } = useGearClosetQuery({
+    userId: user?.uid ?? '',
+    queryOptions: { enabled: !!user?.uid },
+  })
   const customTags = closet?.customTags ?? []
   const colorMap = useCustomTagColorMap(user?.uid ?? '')
   const { mutateAsync: updateGearClosetItem } = useUpdateGearClosetItem(user?.uid ?? '')
@@ -97,8 +79,8 @@ function EditPackingListItemDialog({ item, open, onOpenChange }: EditPackingList
       name: item.name,
       tags: getItemTags(item),
       description: item.overrides?.description ?? item.description ?? '',
-      weight: item.overrides?.weight ?? item.weight ?? '',
-      weightUnit: item.overrides?.weightUnit ?? item.weightUnit ?? 'g',
+      weight: item.overrides?.weight ?? item.weight ?? undefined,
+      weightUnit: item.overrides?.weightUnit || item.weightUnit || undefined,
       quantity: item.quantity,
       saveToCloset: false,
     },
@@ -116,7 +98,7 @@ function EditPackingListItemDialog({ item, open, onOpenChange }: EditPackingList
     }
 
     if (isGearLinked) {
-      const overrides: Record<string, string> = {}
+      const overrides: PackingListItem['overrides'] = {}
       if (values.description !== (item.description ?? '')) {
         overrides.description = values.description
       }
@@ -183,54 +165,56 @@ function EditPackingListItemDialog({ item, open, onOpenChange }: EditPackingList
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="sm:max-w-[425px]"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-      >
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <DialogHeader>
-              <DialogTitle>Edit item</DialogTitle>
-              <DialogDescription>
-                {isGearLinked
-                  ? 'Changes to description and weight are saved as overrides for this trip.'
-                  : 'Update the details for this packing list item.'}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="tags"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tags</FormLabel>
-                    <MultiSelect
-                      values={field.value}
-                      onValuesChange={field.onChange}
+    <ResponsiveDialogContainer
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Edit item"
+      description={
+        isGearLinked
+          ? 'Changes to description and weight are saved as overrides for this trip.'
+          : 'Update the details for this packing list item.'
+      }
+      footerAction={
+        <Button type="submit" disabled={isPending} onClick={() => form.handleSubmit(onSubmit)()}>
+          {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+          {isPending ? 'Saving...' : 'Save'}
+        </Button>
+      }
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid gap-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="tags"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tags</FormLabel>
+                  <MultiSelect values={field.value} onValuesChange={field.onChange}>
+                    <MultiSelectTrigger className="w-full">
+                      <MultiSelectValue placeholder="Select tags..." />
+                    </MultiSelectTrigger>
+                    <MultiSelectContent
+                      search={{ placeholder: 'Search tags...', emptyMessage: 'No tags found.' }}
                     >
-                      <MultiSelectTrigger className="w-full">
-                        <MultiSelectValue placeholder="Select tags..." />
-                      </MultiSelectTrigger>
-                      <MultiSelectContent
-                        search={{ placeholder: 'Search tags...', emptyMessage: 'No tags found.' }}
-                      >
-                        {allPredefinedTags.map((tag) => (
-                          <MultiSelectItem key={tag} value={tag} badgeLabel={
+                      {allPredefinedTags.map((tag) => (
+                        <MultiSelectItem
+                          key={tag}
+                          value={tag}
+                          badgeLabel={
                             <span className="flex items-center gap-1.5">
                               <span
                                 className={cn(
@@ -240,19 +224,23 @@ function EditPackingListItemDialog({ item, open, onOpenChange }: EditPackingList
                               />
                               {tag}
                             </span>
-                          }>
-                            <span
-                              className={cn(
-                                'inline-block h-2 w-2 shrink-0 rounded-full',
-                                getTagDotClass(tag, colorMap)
-                              )}
-                            />
-                            {tag}
-                          </MultiSelectItem>
-                        ))}
-                        {customTags.length > 0 &&
-                          customTags.map((ct) => (
-                            <MultiSelectItem key={ct.name} value={ct.name} badgeLabel={
+                          }
+                        >
+                          <span
+                            className={cn(
+                              'inline-block h-2 w-2 shrink-0 rounded-full',
+                              getTagDotClass(tag, colorMap)
+                            )}
+                          />
+                          {tag}
+                        </MultiSelectItem>
+                      ))}
+                      {customTags.length > 0 &&
+                        customTags.map((ct) => (
+                          <MultiSelectItem
+                            key={ct.name}
+                            value={ct.name}
+                            badgeLabel={
                               <span className="flex items-center gap-1.5">
                                 <span
                                   className={cn(
@@ -262,126 +250,117 @@ function EditPackingListItemDialog({ item, open, onOpenChange }: EditPackingList
                                 />
                                 {ct.name}
                               </span>
-                            }>
-                              <span
-                                className={cn(
-                                  'inline-block h-2 w-2 shrink-0 rounded-full',
-                                  getTagDotClass(ct.name, colorMap)
-                                )}
-                              />
-                              {ct.name}
-                            </MultiSelectItem>
-                          ))}
-                      </MultiSelectContent>
-                    </MultiSelect>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                            }
+                          >
+                            <span
+                              className={cn(
+                                'inline-block h-2 w-2 shrink-0 rounded-full',
+                                getTagDotClass(ct.name, colorMap)
+                              )}
+                            />
+                            {ct.name}
+                          </MultiSelectItem>
+                        ))}
+                    </MultiSelectContent>
+                  </MultiSelect>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea rows={2} placeholder="Optional description" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-3">
               <FormField
                 control={form.control}
-                name="description"
+                name="weight"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>Weight</FormLabel>
                     <FormControl>
-                      <Textarea rows={2} placeholder="Optional description" {...field} />
+                      <Input placeholder="e.g. 120" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-2 gap-3">
-                <FormField
-                  control={form.control}
-                  name="weight"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Weight</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. 120" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="weightUnit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Unit</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {weightUnits.map((unit) => (
-                            <SelectItem key={unit} value={unit}>
-                              {unit}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
               <FormField
                 control={form.control}
-                name="quantity"
+                name="weightUnit"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Quantity</FormLabel>
+                    <FormLabel>Unit</FormLabel>
+                    <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || undefined}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {weightUnits.map((unit) => (
+                          <SelectItem key={unit} value={unit}>
+                            {unit}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <FormField
+              control={form.control}
+              name="quantity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Quantity</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={1}
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {isGearLinked && (
+              <FormField
+                control={form.control}
+                name="saveToCloset"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center gap-2">
                     <FormControl>
-                      <Input
-                        type="number"
-                        min={1}
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      <Checkbox
+                        id="saveToCloset"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormLabel htmlFor="saveToCloset">
+                      Also update this item in your gear closet
+                    </FormLabel>
                   </FormItem>
                 )}
               />
-              {isGearLinked && (
-                <FormField
-                  control={form.control}
-                  name="saveToCloset"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center gap-2">
-                      <FormControl>
-                        <Checkbox
-                          id="saveToCloset"
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel htmlFor="saveToCloset">
-                        Also update this item in your gear closet
-                      </FormLabel>
-                    </FormItem>
-                  )}
-                />
-              )}
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button type="submit" disabled={isPending}>
-                {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isPending ? 'Saving...' : 'Save'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+            )}
+          </div>
+        </form>
+      </Form>
+    </ResponsiveDialogContainer>
   )
 }
 

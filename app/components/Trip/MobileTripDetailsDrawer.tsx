@@ -18,10 +18,7 @@ interface MobileTripDetailsDrawerProps {
   users: User[] | undefined
 }
 
-export default function MobileTripDetailsDrawer({
-  trip,
-  users,
-}: MobileTripDetailsDrawerProps) {
+export default function MobileTripDetailsDrawer({ trip, users }: MobileTripDetailsDrawerProps) {
   return (
     <Drawer>
       <DrawerTrigger asChild>
@@ -31,8 +28,8 @@ export default function MobileTripDetailsDrawer({
         </Button>
       </DrawerTrigger>
       <DrawerContent className="max-h-[85vh]">
-        <DrawerHeader className="sr-only">
-          <DrawerTitle>{trip.name}</DrawerTitle>
+        <DrawerHeader>
+          <DrawerTitle>Trip Details</DrawerTitle>
         </DrawerHeader>
         <div className="overflow-y-auto">
           <TripDetailsSidebar trip={trip} users={users} />
