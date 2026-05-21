@@ -50,10 +50,7 @@ describe('SafetyItineraryEmail', () => {
   it('does not render members with Removed status', async () => {
     const propsWithRemoved = {
       ...baseProps,
-      members: [
-        ...baseProps.members,
-        { displayName: 'Mallory', status: TripMemberStatus.Removed },
-      ],
+      members: [...baseProps.members, { displayName: 'Mallory', status: TripMemberStatus.Removed }],
     }
     const html = await render(<SafetyItineraryEmail {...propsWithRemoved} />)
     expect(html).not.toContain('Mallory')
@@ -71,7 +68,7 @@ describe('SafetyItineraryEmail', () => {
   it('renders prompt to add contacts when no emergency contacts exist', async () => {
     const propsNoContacts = { ...baseProps, emergencyContacts: [] }
     const html = await render(<SafetyItineraryEmail {...propsNoContacts} />)
-    expect(html).toContain('Settings')
+    expect(html).toContain('Profile')
     expect(html).toContain('emergency contact')
   })
 

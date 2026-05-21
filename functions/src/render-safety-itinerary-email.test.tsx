@@ -45,7 +45,7 @@ describe('renderSafetyItineraryHtml', () => {
   it('renders prompt when no emergency contacts', async () => {
     const html = await renderSafetyItineraryHtml({ ...basePayload, emergencyContacts: [] })
     expect(html).toContain('emergency contact')
-    expect(html).toContain('Settings')
+    expect(html).toContain('Profile')
   })
 
   it('snapshot matches expected output', async () => {
