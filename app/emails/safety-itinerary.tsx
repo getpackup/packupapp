@@ -135,10 +135,11 @@ const SafetyItineraryEmailImpl: FC<SafetyItineraryEmailProps> = ({
         ) : (
           <Row>
             <Column>
+              {/* TODO: update to Settings on launch of v2 */}
               <Text className="text-primary m-0 text-left font-sans text-base leading-relaxed dark:text-gray-300">
                 You have no emergency contacts on file. Add at least one emergency contact in your{' '}
-                <Link href={`${url}/settings`} className="text-accent underline">
-                  Settings
+                <Link href={`${url}/profile`} className="text-accent underline">
+                  Profile
                 </Link>{' '}
                 so it appears here next time.
               </Text>
