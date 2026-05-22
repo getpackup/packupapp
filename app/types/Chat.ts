@@ -43,7 +43,6 @@ export interface UserReadStatus {
   userId: string
   lastReadAt: Timestamp
   lastReadMessageId: string // ID of last message they read
-  unreadCount: number // Calculated based on messages after lastReadAt
 
   // Typing indicator support
   isTyping: boolean
@@ -89,11 +88,6 @@ REALTIME LISTENERS:
 - Listen to messages collection for real-time chat updates
 - Listen to chatReadStatus/{currentUserId} for read receipts
 - Listen to chatReadStatus collection for typing indicators
-
-UNREAD COUNT CALCULATION:
-1. Query messages where createdAt > user's lastReadAt
-2. Count results (or use messageCount - messages up to lastReadAt)
-3. Update UserReadStatus.unreadCount periodically
 
 OPTIMIZATION TIPS:
 - Paginate messages (e.g., load last 50, then load more on scroll)
