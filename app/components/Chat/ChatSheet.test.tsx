@@ -11,6 +11,8 @@ vi.mock('../../contexts/auth/useAuth', () => {
   return { useAuth: fn, default: fn }
 })
 
+Element.prototype.scrollTo = vi.fn()
+
 vi.mock('../../lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(() => false),
 }))
@@ -78,10 +80,10 @@ const baseTripProps = {
   ] as any[],
 }
 
-function renderComponent(props = baseTripProps) {
+function renderComponent(props = baseTripProps, defaultOpen?: boolean) {
   return render(
     <MemoryRouter>
-      <ChatSheet {...props} />
+      <ChatSheet {...props} defaultOpen={defaultOpen} />
     </MemoryRouter>
   )
 }
@@ -89,7 +91,6 @@ function renderComponent(props = baseTripProps) {
 describe('ChatSheet', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    Element.prototype.scrollTo = vi.fn()
   })
 
   describe('mark chat as read on open', () => {
@@ -136,6 +137,27 @@ describe('ChatSheet', () => {
       await user.click(screen.getByRole('button', { name: /trip chat/i }))
 
       expect(mockMarkChatReadAsync).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('defaultOpen prop', () => {
+    it('is closed by default when defaultOpen is not provided', () => {
+      renderComponent()
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+
+    it('opens automatically when defaultOpen is true', () => {
+      renderComponent(baseTripProps, true)
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /trip chat/i })).toBeInTheDocument()
+    })
+
+    it('can be opened via the trigger button when defaultOpen is false', async () => {
+      const user = userEvent.setup()
+      renderComponent(baseTripProps, false)
+
+      await user.click(screen.getByRole('button', { name: /trip chat/i }))
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
     })
   })
 })

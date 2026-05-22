@@ -1,6 +1,6 @@
 import { limit, where } from 'firebase/firestore'
 import { useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 
 import { AnonymousUserBanner } from '~/components/AnonymousUserBanner'
 import ChatSheet from '~/components/Chat/ChatSheet'
@@ -24,7 +24,9 @@ export default function TripDetails({ params }: Route.ComponentProps) {
   const { id } = params
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const isAnonymous = useIsAnonymous()
+  const chatOpen = searchParams.get('chat') === 'open'
 
   const { data: trip, isLoading: isLoadingTrip } = useTripByIdQuery({ tripId: id })
 
@@ -71,7 +73,7 @@ export default function TripDetails({ params }: Route.ComponentProps) {
           trip && (
             <div className="flex items-center gap-1 md:hidden">
               <MobileTripDetailsDrawer trip={trip} users={users} />
-              {users && <ChatSheet trip={trip} users={users} compact />}
+              {users && <ChatSheet trip={trip} users={users} compact defaultOpen={chatOpen} />}
             </div>
           )
         }
@@ -94,7 +96,7 @@ export default function TripDetails({ params }: Route.ComponentProps) {
               <TripDetailsSidebar trip={trip} users={users} />
             </div>
             <div className="absolute right-4 bottom-4 hidden md:block">
-              {users && <ChatSheet trip={trip} users={users} />}
+              {users && <ChatSheet trip={trip} users={users} defaultOpen={chatOpen} />}
             </div>
           </div>
         )}

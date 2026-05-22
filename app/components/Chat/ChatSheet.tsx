@@ -35,6 +35,7 @@ type ChatSheetProps = {
   trip: Trip
   users: User[]
   compact?: boolean
+  defaultOpen?: boolean
 }
 
 const systemUser: User = {
@@ -46,7 +47,7 @@ const systemUser: User = {
   uid: 'system',
 }
 
-function ChatSheet({ trip, users, compact }: ChatSheetProps) {
+function ChatSheet({ trip, users, compact, defaultOpen }: ChatSheetProps) {
   const { user } = useAuth()
   const isAnonymous = useIsAnonymous()
   const [userMap] = useState<Map<string, User>>(
@@ -180,7 +181,7 @@ function ChatSheet({ trip, users, compact }: ChatSheetProps) {
     }, [messages, replyToMessageId]) ?? null
 
   return (
-    <Sheet onOpenChange={handleOpenChange}>
+    <Sheet defaultOpen={defaultOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         {compact ? (
           <Button variant="ghost" size="icon">
