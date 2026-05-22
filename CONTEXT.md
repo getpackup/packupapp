@@ -125,6 +125,30 @@ _Avoid_: Take, grab, pick
 - An **Emergency Contact** belongs to exactly one registered User and is not trip-specific
 - A Trip Member who **Leaves** a Trip gets status `Left` — distinct from `Removed` (owner-initiated) and `Declined` (never accepted)
 - **Trip Settings** is accessible from the trip sidebar and groups per-trip actions: Delete Trip, Leave Trip, and the Safety Itinerary opt-out toggle
+- Each registered User has a global **Chat Message Notification** opt-out in Settings; a per-trip mute in Trip Settings is planned for a future phase
+- A registered User's **FCM Tokens** are stored on their User document and used to deliver Chat Message Notifications across all their devices; OS/browser permission is the per-device control
+
+### Chat
+
+**Trip Chat**:
+The real-time messaging feature within a Trip, accessible to all Trip Members via a slide-over sheet. Available to registered users only (Anonymous Users see an Account Gate). Messages are stored as a subcollection under the Trip.
+_Avoid_: Trip messages, trip discussion
+
+**Chat Message**:
+A single message posted in a Trip Chat by a Trip Member or the system (e.g. join/leave events). Has a type (`text`, `image`, `system`), sender, timestamp, and optional reply reference.
+_Avoid_: Post, comment
+
+**Chat Message Notification**:
+A push notification sent to Trip Members when a new Chat Message is posted. Content: "[Username] sent a message in [Trip Name]". Tapping navigates to the trip with the chat sheet pre-opened (`/trips/{tripId}?chat=open`). Only sent to members who did not send the message — all of the sender's registered devices are excluded. Delivered via FCM web push (service worker) for web browsers, Android TWA, and iOS PWA (home screen). iOS App Store native push is a separate phase. Requires explicit opt-in: OS/browser permission is requested the first time a user opens a Trip Chat. A global opt-out toggle in Settings suppresses all Chat Message Notifications regardless of device. Per-trip muting _(planned)_ will live in Trip Settings.
+_Avoid_: Chat alert, message alert, push alert
+
+**Unread Chat Indicator**:
+A dot badge shown on the TripCard (trips list) and on the Trip Chat button (within a trip) when the current user has unread messages in that trip's chat. Derived client-side by comparing `chatMetadata.lastMessageAt` against `userReadStatus.lastReadAt`. Cleared when the chat sheet is opened.
+_Avoid_: Unread count, unread badge, notification dot
+
+**FCM Token**:
+A device-specific registration token issued by Firebase Cloud Messaging, stored as an array on the User document in Firestore. Supports multiple tokens per user (phone, tablet, browser). Refreshed on each app load. Used by Cloud Functions to deliver Chat Message Notifications to specific devices while excluding all of the sender's registered devices. Stale tokens (rejected by FCM) are pruned automatically by the Cloud Function.
+_Avoid_: Push token, device token, registration ID
 
 ### Safety & Notifications
 
