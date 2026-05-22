@@ -34,6 +34,5 @@ export const initializeUserReadStatus = (userId: string): UserReadStatus => ({
   userId,
   lastReadAt: Timestamp.now(),
   lastReadMessageId: '',
-  unreadCount: 0,
   isTyping: false,
 })
