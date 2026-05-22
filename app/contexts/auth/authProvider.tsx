@@ -79,13 +79,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           currentUser.createdAt?.toDate().toISOString() ?? '',
           currentUser?.username
         )
+        registerFcmToken(currentUser.uid)
       }
-    }
-  }, [currentUser, firebaseUser?.isAnonymous])
-
-  useEffect(() => {
-    if (currentUser && !firebaseUser?.isAnonymous) {
-      registerFcmToken(currentUser.uid)
     }
   }, [currentUser, firebaseUser?.isAnonymous])
 

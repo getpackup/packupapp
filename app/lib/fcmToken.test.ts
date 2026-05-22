@@ -20,7 +20,7 @@ vi.mock('firebase/firestore', () => ({
   arrayUnion: (...args: any[]) => mockArrayUnion(...args),
 }))
 
-vi.mock('../firebase/config', () => ({
+vi.mock('~/firebase/config', () => ({
   firestoreDb: 'mock-db',
 }))
 
