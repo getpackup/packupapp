@@ -31,6 +31,10 @@ export interface ChatMetadata {
   createdAt: Timestamp
 }
 
+// Fields written on each new message; messageCount and createdAt are handled
+// separately (increment and server timestamp respectively).
+export type ChatMetadataWritePayload = Omit<ChatMetadata, 'messageCount' | 'createdAt'>
+
 // ==========================================
 // USER READ STATUS MODEL
 // ==========================================

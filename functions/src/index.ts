@@ -8,6 +8,7 @@ import {
 import { onSchedule } from 'firebase-functions/v2/scheduler'
 import algoliasearch from 'algoliasearch'
 
+import { buildChatMetadataDeps, processChatMessage } from './chat-metadata'
 import { renderSafetyItineraryHtml } from './render-safety-itinerary-email'
 import { renderInviteToTripHtml } from './render-invite-to-trip-email'
 import { buildFirestoreDeps, processSafetyItineraries } from './safety-itinerary'
@@ -97,6 +98,30 @@ async function deleteDocumentFromAlgolia(
     await getUsersIndex().deleteObject(snapshot.id)
   }
 }
+
+// ---------------------------------------------------------------------------
+// Chat metadata
+// ---------------------------------------------------------------------------
+
+export const updateChatMetadataOnMessageCreate = onDocumentCreated(
+  'trips/{tripId}/messages/{messageId}',
+  async (event) => {
+    const { tripId } = event.params
+    const messageData = event.data?.data()
+    if (!messageData) return
+
+    const deps = buildChatMetadataDeps(admin.firestore(), tripId)
+    await processChatMessage(
+      {
+        userId: messageData.userId,
+        userName: messageData.userName,
+        content: messageData.content,
+        createdAt: messageData.createdAt,
+      },
+      deps
+    )
+  }
+)
 
 // ---------------------------------------------------------------------------
 // Packing list
