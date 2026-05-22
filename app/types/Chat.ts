@@ -28,7 +28,6 @@ export interface ChatMetadata {
   lastMessageUserId: string
   lastMessageUserName: string
   messageCount: number
-  createdAt: Timestamp
 }
 
 // Fields written on each new message; messageCount and createdAt are handled

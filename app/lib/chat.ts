@@ -1,6 +1,6 @@
 import { Timestamp } from 'firebase/firestore'
 
-import type { ChatMessage, ChatMetadata, UserReadStatus } from '~/types/Chat'
+import type { ChatMessage, UserReadStatus } from '~/types/Chat'
 
 export const createChatMessage = (
   userId: string,
@@ -28,15 +28,6 @@ export const createSystemMessage = (content: string): Omit<ChatMessage, 'id'> =>
   isEdited: false,
   type: 'system',
   userPhotoUrl: '/icons/icon-192x192.png',
-})
-
-export const initializeChatMetadata = (): ChatMetadata => ({
-  lastMessageAt: Timestamp.now(),
-  lastMessageContent: '',
-  lastMessageUserId: '',
-  lastMessageUserName: '',
-  messageCount: 0,
-  createdAt: Timestamp.now(),
 })
 
 export const initializeUserReadStatus = (userId: string): UserReadStatus => ({
