@@ -50,7 +50,7 @@ const ResponsiveDialogContainer = ({
       {isMediumBreakpoint ? (
         <Dialog open={open} onOpenChange={onOpenChange}>
           {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-          <DialogContent {...contentProps}>
+          <DialogContent onClick={(e) => e.stopPropagation()} {...contentProps}>
             <DialogHeader>
               <DialogTitle>{title}</DialogTitle>
               {description && <DialogDescription>{description}</DialogDescription>}
@@ -67,7 +67,7 @@ const ResponsiveDialogContainer = ({
       ) : (
         <Drawer open={open} onOpenChange={onOpenChange}>
           {trigger && <DrawerTrigger asChild>{trigger}</DrawerTrigger>}
-          <DrawerContent {...contentProps}>
+          <DrawerContent onClick={(e) => e.stopPropagation()} {...contentProps}>
             <DrawerHeader>
               <DrawerTitle>{title}</DrawerTitle>
               {description && <DrawerDescription>{description}</DrawerDescription>}

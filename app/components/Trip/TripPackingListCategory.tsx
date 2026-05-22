@@ -227,6 +227,7 @@ const TripPackingListCategory = ({
               className="focus-visible:border-ring focus-visible:ring-ring/50 mx-2 flex w-full justify-between border-b pb-2 transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50"
               tabIndex={0}
               onKeyDown={(e) => {
+                if (e.target !== e.currentTarget) return
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault()
                   e.currentTarget.click()
