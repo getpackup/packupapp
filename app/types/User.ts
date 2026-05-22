@@ -21,6 +21,7 @@ export type User = {
   website?: string
   lastUpdated?: Timestamp
   createdAt?: Timestamp
+  fcmTokens?: string[]
   tagCounts?: Record<string, number>
   preferences?: {
     theme?: 'light' | 'dark'
