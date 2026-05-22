@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import FullPageSpinner from '~/components/FullPageSpinner'
 import { firebaseAuth } from '~/firebase/config'
 import { identify } from '~/lib/analytics'
+import { registerFcmToken } from '~/lib/fcmToken'
 import { useUserByIdQuery } from '~/services/users'
 import type { User } from '~/types/User'
 
@@ -79,6 +80,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           currentUser?.username
         )
       }
+    }
+  }, [currentUser, firebaseUser?.isAnonymous])
+
+  useEffect(() => {
+    if (currentUser && !firebaseUser?.isAnonymous) {
+      registerFcmToken(currentUser.uid)
     }
   }, [currentUser, firebaseUser?.isAnonymous])
 
