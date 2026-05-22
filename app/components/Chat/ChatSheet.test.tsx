@@ -4,14 +4,12 @@ import { Timestamp } from 'firebase/firestore'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../contexts/auth/useAuth', () => ({
-  useAuth: vi.fn(() => ({
+vi.mock('../../contexts/auth/useAuth', () => {
+  const fn = vi.fn(() => ({
     user: { uid: 'u1', username: 'testuser', email: 'test@test.com', isAnonymous: false },
-  })),
-  default: vi.fn(() => ({
-    user: { uid: 'u1', username: 'testuser', email: 'test@test.com', isAnonymous: false },
-  })),
-}))
+  }))
+  return { useAuth: fn, default: fn }
+})
 
 vi.mock('../../lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(() => false),
@@ -131,11 +129,7 @@ describe('ChatSheet', () => {
     })
 
     it('does not call markChatRead when user is not authenticated', async () => {
-      vi.mocked(useAuth).mockReturnValue({
-        user: null,
-        setUser: vi.fn(),
-      } as any)
-      ;(useAuth as any).mockReturnValue({ user: null })
+      vi.mocked(useAuth).mockReturnValue({ user: null } as any)
       const user = userEvent.setup()
       renderComponent()
 
