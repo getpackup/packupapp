@@ -1,8 +1,3 @@
-import 'mapbox-gl/dist/mapbox-gl.css'
-
-import { MapPin } from 'lucide-react'
-import { Map, Marker } from 'react-map-gl/mapbox'
-
 type StaticMapImageProps = {
   lat: number
   lng: number
@@ -12,22 +7,21 @@ type StaticMapImageProps = {
   label?: string
 }
 
+const STYLE_ID = 'getpackup/cknw0bimf0s1q18nxauvs45jj'
+const TOKEN = import.meta.env['VITE_MAPBOX_API_KEY'] as string
+
 const StaticMapImage = ({ lat, lng, width, height, zoom, label }: StaticMapImageProps) => {
+  const overlay = label ? `pin-s+555555(${lng},${lat})/` : ''
+  const src = `https://api.mapbox.com/styles/v1/${STYLE_ID}/static/${overlay}${lng},${lat},${zoom}/800x400@2x?access_token=${TOKEN}`
+
   return (
-    <Map
-      latitude={lat}
-      longitude={lng}
-      style={{ width: width, height: height }}
-      zoom={zoom}
-      mapStyle="mapbox://styles/getpackup/cknw0bimf0s1q18nxauvs45jj"
-      mapboxAccessToken={import.meta.env['VITE_MAPBOX_API_KEY']}
-    >
-      {label ? (
-        <Marker latitude={lat} longitude={lng}>
-          <MapPin />
-        </Marker>
-      ) : null}
-    </Map>
+    <img
+      src={src}
+      alt={label ?? 'Map'}
+      style={{ width, height }}
+      className="object-cover"
+      loading="lazy"
+    />
   )
 }
 

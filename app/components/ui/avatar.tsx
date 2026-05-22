@@ -9,6 +9,33 @@ type ImageLoadingStatus = 'idle' | 'loading' | 'loaded' | 'error'
 const imageStatusCache = new Map<string, ImageLoadingStatus>()
 const imageStatusListeners = new Map<string, Set<() => void>>()
 
+const LOAD_INTERVAL_MS = 200
+const loadQueue: Array<() => void> = []
+let queueRunning = false
+
+function processQueue() {
+  if (loadQueue.length === 0) {
+    queueRunning = false
+    return
+  }
+  loadQueue.shift()!()
+  setTimeout(processQueue, LOAD_INTERVAL_MS)
+}
+
+function scheduleLoad(load: () => void) {
+  if (!queueRunning) {
+    queueRunning = true
+    load()
+    if (loadQueue.length > 0) {
+      setTimeout(processQueue, LOAD_INTERVAL_MS)
+    } else {
+      queueRunning = false
+    }
+  } else {
+    loadQueue.push(load)
+  }
+}
+
 function useSharedImageLoadingStatus(src: string | undefined) {
   const subscribe = React.useCallback(
     (callback: () => void) => {
@@ -35,16 +62,18 @@ function useSharedImageLoadingStatus(src: string | undefined) {
     if (!src || imageStatusCache.has(src)) return
 
     imageStatusCache.set(src, 'loading')
-    const img = new Image()
-    img.src = src
-    img.onload = () => {
-      imageStatusCache.set(src, 'loaded')
-      imageStatusListeners.get(src)?.forEach((cb) => cb())
-    }
-    img.onerror = () => {
-      imageStatusCache.set(src, 'error')
-      imageStatusListeners.get(src)?.forEach((cb) => cb())
-    }
+    scheduleLoad(() => {
+      const img = new Image()
+      img.src = src
+      img.onload = () => {
+        imageStatusCache.set(src, 'loaded')
+        imageStatusListeners.get(src)?.forEach((cb) => cb())
+      }
+      img.onerror = () => {
+        imageStatusCache.set(src, 'error')
+        imageStatusListeners.get(src)?.forEach((cb) => cb())
+      }
+    })
   }, [src])
 
   return status
