@@ -661,6 +661,31 @@ export function useUpdateTypingStatus(tripId: string, userId: string | undefined
   })
 }
 
+export function useMarkChatRead(userId: string | undefined) {
+  return useMutation({
+    mutationFn: async ({
+      tripId,
+      lastReadMessageId,
+    }: {
+      tripId: string
+      lastReadMessageId: string
+    }) => {
+      if (!userId || !tripId) return
+
+      const docRef = doc(firestoreDb, 'trips', tripId, 'chatReadStatus', userId)
+      await setDoc(
+        docRef,
+        {
+          userId,
+          lastReadAt: Timestamp.now(),
+          lastReadMessageId,
+        },
+        { merge: true }
+      )
+    },
+  })
+}
+
 export function useUpdatePackingListItem({ tripId }: { tripId: string }) {
   const queryClient = useQueryClient()
   const packingListItemQueryKey = tripKeys.packingListRoot(tripId)

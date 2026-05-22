@@ -20,6 +20,7 @@ import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
 import {
   useCreateChatMessage,
+  useMarkChatRead,
   useTripChatMessagesQuery,
   useTripChatReadStatusQuery,
   useUpdateTypingStatus,
@@ -70,6 +71,17 @@ function ChatSheet({ trip, users, compact }: ChatSheetProps) {
   const { mutateAsync: sendMessage } = useCreateChatMessage()
 
   const { mutateAsync: updateTypingStatus } = useUpdateTypingStatus(trip.tripId, user?.uid)
+
+  const { mutateAsync: markChatRead } = useMarkChatRead(user?.uid)
+
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open || isAnonymous || !user?.uid) return
+      const lastMessageId = messages?.[messages.length - 1]?.id ?? ''
+      markChatRead({ tripId: trip.tripId, lastReadMessageId: lastMessageId })
+    },
+    [isAnonymous, user?.uid, messages, markChatRead, trip.tripId]
+  )
 
   const handleSendMessage = useCallback(
     async (text: string) => {
@@ -168,7 +180,7 @@ function ChatSheet({ trip, users, compact }: ChatSheetProps) {
     }, [messages, replyToMessageId]) ?? null
 
   return (
-    <Sheet>
+    <Sheet onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         {compact ? (
           <Button variant="ghost" size="icon">
