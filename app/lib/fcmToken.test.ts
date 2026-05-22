@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockGetToken = vi.fn()
 const mockGetMessaging = vi.fn()
@@ -36,7 +36,12 @@ describe('registerFcmToken', () => {
     mockArrayUnion.mockReset().mockImplementation((...args: any[]) => ({ __arrayUnion: args }))
     mockDoc.mockReset().mockReturnValue('mock-doc-ref')
 
+    vi.stubEnv('VITE_FIREBASE_FCM_VAPID_KEY', 'test-vapid-key')
     vi.stubGlobal('Notification', { permission: 'granted' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('skips when messaging is not supported', async () => {
@@ -75,7 +80,7 @@ describe('registerFcmToken', () => {
     await registerFcmToken('user-1')
 
     expect(mockGetToken).toHaveBeenCalledWith('mock-messaging', {
-      vapidKey: undefined,
+      vapidKey: 'test-vapid-key',
     })
     expect(mockDoc).toHaveBeenCalledWith('mock-db', 'users', 'user-1')
     expect(mockArrayUnion).toHaveBeenCalledWith('fcm-token-abc')
