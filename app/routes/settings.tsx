@@ -1,3 +1,4 @@
+import { ChatNotificationsToggle } from '~/components/ChatNotificationsToggle'
 import { EmergencyContacts } from '~/components/EmergencyContacts'
 import { FriendRequestEmailToggle } from '~/components/FriendRequestEmailToggle'
 import PageContent from '~/components/PageContent'
@@ -69,6 +70,18 @@ export default function Settings() {
               description="Receive an email when someone sends you a friend request."
             >
               <FriendRequestEmailToggle />
+            </PreferenceRow>
+          </div>
+        </section>
+
+        <section className="mb-16">
+          <h2 className="mb-2 text-lg font-bold">Notifications</h2>
+          <div className="divide-border divide-y">
+            <PreferenceRow
+              label="Chat Notifications"
+              description="Receive push notifications when a trip member sends a chat message."
+            >
+              <ChatNotificationsToggle />
             </PreferenceRow>
           </div>
         </section>

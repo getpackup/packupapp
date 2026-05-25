@@ -29,6 +29,7 @@ export type User = {
     hasDismissedFernwoodAd?: Timestamp
     safetyItineraryEnabled?: boolean
     friendRequestEmailEnabled?: boolean
+    chatNotificationsEnabled?: boolean
     temperatureUnit?: 'celsius' | 'fahrenheit'
     weightUnit?: WeightUnitPreferenceType
   }
