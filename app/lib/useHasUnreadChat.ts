@@ -34,6 +34,7 @@ export function useHasUnreadChat(tripId: string): boolean {
 
   if (isAnonymous || !user?.uid) return false
   if (!metadata) return false
-  if (!readStatus) return readStatus === null
+  if (readStatus === undefined) return false
+  if (readStatus === null) return true
   return metadata.lastMessageAt.toMillis() > readStatus.lastReadAt.toMillis()
 }
