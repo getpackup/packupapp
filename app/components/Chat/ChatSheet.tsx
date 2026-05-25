@@ -16,6 +16,7 @@ import {
 } from '~/components/ui/sheet'
 import useAuth from '~/contexts/auth/useAuth'
 import { createChatMessage } from '~/lib/chat'
+import { useHasUnreadChat } from '~/lib/useHasUnreadChat'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
 import {
@@ -74,6 +75,8 @@ function ChatSheet({ trip, users, compact, defaultOpen }: ChatSheetProps) {
   const { mutateAsync: updateTypingStatus } = useUpdateTypingStatus(trip.tripId, user?.uid)
 
   const { mutateAsync: markChatRead } = useMarkChatRead(user?.uid)
+
+  const hasUnread = useHasUnreadChat(trip.tripId)
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -184,14 +187,26 @@ function ChatSheet({ trip, users, compact, defaultOpen }: ChatSheetProps) {
     <Sheet defaultOpen={defaultOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         {compact ? (
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="relative">
             <MessageCircleIcon className="size-5" />
             <span className="sr-only">Trip Chat</span>
+            {hasUnread && (
+              <span
+                data-testid="unread-badge"
+                className="bg-destructive absolute top-0.5 right-0.5 size-2.5 rounded-full"
+              />
+            )}
           </Button>
         ) : (
-          <Button variant="accent" size="lg" className="shadow-2xl">
+          <Button variant="accent" size="lg" className="relative shadow-2xl">
             <MessageCircleIcon className="size-4" />
             Trip Chat
+            {hasUnread && (
+              <span
+                data-testid="unread-badge"
+                className="bg-destructive absolute -top-1 -right-1 size-3 rounded-full"
+              />
+            )}
           </Button>
         )}
       </SheetTrigger>
