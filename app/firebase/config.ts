@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
+import { getMessaging, isSupported } from 'firebase/messaging'
 import { getStorage } from 'firebase/storage'
 
 const firebaseConfig = {
@@ -19,3 +20,6 @@ export const firebaseAuth = getAuth(app)
 export const firestoreDb = getFirestore(app)
 
 export const firebaseStorage = getStorage(app)
+
+const supported = await isSupported()
+export const firebaseMessaging = supported ? getMessaging(app) : null

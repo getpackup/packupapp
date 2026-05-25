@@ -1,7 +1,7 @@
 import { arrayUnion, doc, updateDoc } from 'firebase/firestore'
-import { getMessaging, getToken, isSupported } from 'firebase/messaging'
+import { getToken, isSupported } from 'firebase/messaging'
 
-import { firestoreDb } from '~/firebase/config'
+import { firebaseMessaging, firestoreDb } from '~/firebase/config'
 
 export async function registerFcmToken(userId: string): Promise<void> {
   try {
@@ -10,7 +10,10 @@ export async function registerFcmToken(userId: string): Promise<void> {
 
     if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
 
-    const messaging = getMessaging()
+    const messaging = firebaseMessaging
+
+    if (!messaging) return
+
     const token = await getToken(messaging, {
       vapidKey: import.meta.env.VITE_FIREBASE_FCM_VAPID_KEY,
     })
