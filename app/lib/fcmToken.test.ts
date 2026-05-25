@@ -22,6 +22,7 @@ vi.mock('firebase/firestore', () => ({
 
 vi.mock('~/firebase/config', () => ({
   firestoreDb: 'mock-db',
+  firebaseMessaging: 'mock-messaging',
 }))
 
 import { registerFcmToken } from './fcmToken'

@@ -14,8 +14,11 @@ export async function registerFcmToken(userId: string): Promise<void> {
 
     if (!messaging) return
 
+    const vapidKey = import.meta.env.VITE_FIREBASE_FCM_VAPID_KEY
+    if (!vapidKey) return
+
     const token = await getToken(messaging, {
-      vapidKey: import.meta.env.VITE_FIREBASE_FCM_VAPID_KEY,
+      vapidKey: vapidKey,
     })
 
     if (!token) return
