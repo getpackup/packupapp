@@ -30,6 +30,7 @@ export type User = {
     safetyItineraryEnabled?: boolean
     chatNotificationsEnabled?: boolean
     friendRequestEmailEnabled?: boolean
+    chatNotificationsEnabled?: boolean
     temperatureUnit?: 'celsius' | 'fahrenheit'
     weightUnit?: WeightUnitPreferenceType
   }
