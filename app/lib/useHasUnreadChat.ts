@@ -1,8 +1,8 @@
 import { doc, onSnapshot } from 'firebase/firestore'
 import { useEffect, useState } from 'react'
 
-import { firestoreDb } from '~/firebase/config'
 import useAuth from '~/contexts/auth/useAuth'
+import { firestoreDb } from '~/firebase/config'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import type { ChatMetadata, UserReadStatus } from '~/types/Chat'
 
