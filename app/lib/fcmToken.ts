@@ -1,7 +1,7 @@
 import { arrayUnion, doc, updateDoc } from 'firebase/firestore'
-import { getToken, isSupported } from 'firebase/messaging'
+import { type Messaging, getToken, isSupported } from 'firebase/messaging'
 
-import { firebaseMessaging, firestoreDb } from '~/firebase/config'
+import { getFirebaseMessaging, firestoreDb } from '~/firebase/config'
 
 const FCM_DEBUG_PREFIX = '[fcmToken]'
 const FCM_TOKEN_TIMEOUT_MS = 15_000
@@ -18,7 +18,7 @@ function logFcmDebug(message: string, data?: unknown): void {
 }
 
 function getTokenWithTimeout(
-  messaging: NonNullable<typeof firebaseMessaging>,
+  messaging: Messaging,
   options: Parameters<typeof getToken>[1]
 ) {
   return Promise.race([
@@ -84,7 +84,7 @@ export async function registerFcmToken(userId: string): Promise<void> {
       return
     }
 
-    const messaging = firebaseMessaging
+    const messaging = await getFirebaseMessaging()
     if (!messaging) {
       logFcmDebug('Firebase messaging instance is unavailable')
       return

@@ -15,7 +15,7 @@ vi.mock('./fcmToken', () => ({
 }))
 
 vi.mock('~/firebase/config', () => ({
-  firebaseMessaging: 'mock-messaging',
+  getFirebaseMessaging: async () => 'mock-messaging',
   firestoreDb: 'mock-db',
 }))
 
@@ -104,11 +104,11 @@ describe('requestPushPermission', () => {
     expect(localStorage.getItem('push-permission-prompted')).toBe('true')
   })
 
-  it('skips getToken when firebaseMessaging is null', async () => {
+  it('skips getToken when getFirebaseMessaging returns null', async () => {
     const configModule = await import('~/firebase/config')
-    const original = configModule.firebaseMessaging
-    Object.defineProperty(configModule, 'firebaseMessaging', {
-      value: null,
+    const original = configModule.getFirebaseMessaging
+    Object.defineProperty(configModule, 'getFirebaseMessaging', {
+      value: async () => null,
       writable: true,
       configurable: true,
     })
@@ -119,7 +119,7 @@ describe('requestPushPermission', () => {
 
     expect(mockGetToken).not.toHaveBeenCalled()
 
-    Object.defineProperty(configModule, 'firebaseMessaging', {
+    Object.defineProperty(configModule, 'getFirebaseMessaging', {
       value: original,
       writable: true,
       configurable: true,

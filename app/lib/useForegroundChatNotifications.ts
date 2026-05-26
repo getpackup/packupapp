@@ -1,9 +1,9 @@
-import { isSupported, onMessage } from 'firebase/messaging'
+import { onMessage } from 'firebase/messaging'
 import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { toast } from 'sonner'
 
-import { firebaseMessaging } from '~/firebase/config'
+import { getFirebaseMessaging } from '~/firebase/config'
 
 export function useForegroundChatNotifications() {
   const navigate = useNavigate()
@@ -13,10 +13,10 @@ export function useForegroundChatNotifications() {
     let unsubscribe: (() => void) | undefined
 
     async function subscribe() {
-      const supported = await isSupported()
-      if (!supported || !firebaseMessaging) return
+      const messaging = await getFirebaseMessaging()
+      if (!messaging) return
 
-      unsubscribe = onMessage(firebaseMessaging, (payload) => {
+      unsubscribe = onMessage(messaging, (payload) => {
         const title = payload.notification?.title
         const url = payload.data?.url
         const tripId = payload.data?.tripId

@@ -1,6 +1,6 @@
 import { getToken, isSupported } from 'firebase/messaging'
 
-import { firebaseMessaging } from '~/firebase/config'
+import { getFirebaseMessaging } from '~/firebase/config'
 
 import { registerFcmToken } from './fcmToken'
 
@@ -40,7 +40,7 @@ export async function requestPushPermission(userId: string): Promise<void> {
     const supported = await isSupported()
     if (!supported) return
 
-    const messaging = firebaseMessaging
+    const messaging = await getFirebaseMessaging()
     if (!messaging) return
 
     const token = await getToken(messaging, {

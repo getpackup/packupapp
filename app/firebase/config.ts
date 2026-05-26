@@ -21,5 +21,7 @@ export const firestoreDb = getFirestore(app)
 
 export const firebaseStorage = getStorage(app)
 
-const supported = await isSupported()
-export const firebaseMessaging = supported ? getMessaging(app) : null
+export const getFirebaseMessaging = async () => {
+  const supported = await isSupported()
+  return supported ? getMessaging(app) : null
+}
