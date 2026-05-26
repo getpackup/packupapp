@@ -3,32 +3,32 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../firebase/config', () => ({
+vi.mock('~/firebase/config', () => ({
   firebaseAuth: {},
   firestoreDb: {},
 }))
 
-vi.mock('../../lib/useIsAnonymous', () => ({
+vi.mock('~/lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
 }))
 
-vi.mock('../../contexts/auth/useAuth', () => ({
+vi.mock('~/contexts/auth/useAuth', () => ({
   default: vi.fn(() => ({ user: { uid: 'user-1', isAnonymous: false } })),
   useAuth: vi.fn(() => ({ user: { uid: 'user-1', isAnonymous: false } })),
 }))
 
-vi.mock('../../contexts/globalState', () => ({
+vi.mock('~/contexts/globalState', () => ({
   useSoundsState: vi.fn(() => ({ soundsEnabled: false })),
 }))
 
 const mockCreateShoppingListItemAsync = vi.fn()
-vi.mock('../../services/shoppingList', () => ({
+vi.mock('~/services/shoppingList', () => ({
   useCreateShoppingListItem: vi.fn(() => ({
     mutateAsync: mockCreateShoppingListItemAsync,
   })),
 }))
 
-vi.mock('../../services/trips', () => ({
+vi.mock('~/services/trips', () => ({
   tripKeys: { byId: (id: string) => ['trip', id], members: (id: string) => ['members', id] },
   useDeletePackingListItem: vi.fn(() => ({ mutateAsync: vi.fn() })),
   useUpdatePackingListItem: vi.fn(() => ({ mutateAsync: vi.fn() })),
@@ -70,12 +70,12 @@ vi.mock('react-spring', () => ({
   useSpring: () => ({ transform: 'scale(1)' }),
 }))
 
-vi.mock('../../lib/useCheckboxSounds', () => ({
+vi.mock('~/lib/useCheckboxSounds', () => ({
   useCheckboxSounds: vi.fn(() => ({ playActive: vi.fn(), playOn: vi.fn(), playOff: vi.fn() })),
 }))
 
-import { useIsAnonymous } from '../../lib/useIsAnonymous'
-import type { PackingListItem } from '../../types/PackingListItem'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
+import type { PackingListItem } from '~/types/PackingListItem'
 
 import TripPackingListItem from './TripPackingListItem'
 

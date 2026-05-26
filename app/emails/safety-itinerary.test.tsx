@@ -1,7 +1,7 @@
 import { render } from '@react-email/render'
 import { describe, expect, it } from 'vitest'
 
-import { TripMemberStatus } from '../types/TripMember'
+import { TripMemberStatus } from '~/types/TripMember'
 
 import { SafetyItineraryEmail } from './safety-itinerary'
 

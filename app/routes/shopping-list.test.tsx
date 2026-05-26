@@ -2,27 +2,27 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('../lib/useIsAnonymous', () => ({
+vi.mock('~/lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
 }))
 
-vi.mock('../contexts/auth/useAuth', () => ({
+vi.mock('~/contexts/auth/useAuth', () => ({
   default: vi.fn(() => ({ user: { uid: 'test-uid' } })),
 }))
 
-vi.mock('../services/shoppingList', () => ({
+vi.mock('~/services/shoppingList', () => ({
   useShoppingListQuery: vi.fn(() => ({ data: [], isLoading: false })),
 }))
 
-vi.mock('../services/trips', () => ({
+vi.mock('~/services/trips', () => ({
   useTripsQuery: vi.fn(() => ({ data: [], isLoading: false })),
 }))
 
-vi.mock('../lib/useCheckboxSounds', () => ({
+vi.mock('~/lib/useCheckboxSounds', () => ({
   useCheckboxSounds: vi.fn(() => ({})),
 }))
 
-import { useIsAnonymous } from '../lib/useIsAnonymous'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import ShoppingList from './shopping-list'
 
 function renderRoute() {
@@ -38,14 +38,9 @@ describe('ShoppingList route', () => {
     vi.mocked(useIsAnonymous).mockReturnValue(true)
     renderRoute()
     expect(
-      screen.getByText(
-        'Create an account to see everything you need to buy before your trips.'
-      )
+      screen.getByText('Create an account to see everything you need to buy before your trips.')
     ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /create account/i })).toHaveAttribute(
-      'href',
-      '/signup'
-    )
+    expect(screen.getByRole('link', { name: /create account/i })).toHaveAttribute('href', '/signup')
   })
 
   it('does not show shopping list content for anonymous users', () => {
@@ -61,9 +56,7 @@ describe('ShoppingList route', () => {
     expect(screen.getByText('Current')).toBeInTheDocument()
     expect(screen.getByText('Past')).toBeInTheDocument()
     expect(
-      screen.queryByText(
-        'Create an account to see everything you need to buy before your trips.'
-      )
+      screen.queryByText('Create an account to see everything you need to buy before your trips.')
     ).not.toBeInTheDocument()
   })
 })

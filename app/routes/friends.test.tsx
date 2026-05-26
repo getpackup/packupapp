@@ -3,17 +3,17 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('../lib/useIsAnonymous', () => ({
+vi.mock('~/lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
 }))
 
-vi.mock('../contexts/auth/useAuth', () => ({
+vi.mock('~/contexts/auth/useAuth', () => ({
   useAuth: vi.fn(() => ({
     user: { uid: 'u1', username: 'testuser', email: 'test@test.com' },
   })),
 }))
 
-vi.mock('../services/friends', () => ({
+vi.mock('~/services/friends', () => ({
   useFriendsQuery: vi.fn(() => ({ data: [], isLoading: false })),
   usePendingFriendRequestsQuery: vi.fn(() => ({ data: [], isLoading: false })),
   useSentFriendRequestsQuery: vi.fn(() => ({ data: [], isLoading: false })),
@@ -24,11 +24,11 @@ vi.mock('../services/friends', () => ({
   useDeclinedFriendshipsQuery: vi.fn(() => ({ data: [], isLoading: false })),
 }))
 
-vi.mock('../services/users', () => ({
+vi.mock('~/services/users', () => ({
   useUserByIdQuery: vi.fn(() => ({ data: null })),
 }))
 
-import { useIsAnonymous } from '../lib/useIsAnonymous'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import {
   useAcceptFriendRequest,
   useDeclineFriendRequest,
@@ -37,8 +37,8 @@ import {
   usePendingFriendRequestsQuery,
   useDeclinedFriendshipsQuery,
   useSentFriendRequestsQuery,
-} from '../services/friends'
-import { useUserByIdQuery } from '../services/users'
+} from '~/services/friends'
+import { useUserByIdQuery } from '~/services/users'
 import Friends from './friends'
 
 function resetQueryMocks() {
@@ -46,8 +46,14 @@ function resetQueryMocks() {
   vi.mocked(usePendingFriendRequestsQuery).mockReturnValue({ data: [], isLoading: false } as any)
   vi.mocked(useDeclinedFriendshipsQuery).mockReturnValue({ data: [], isLoading: false } as any)
   vi.mocked(useUserByIdQuery).mockReturnValue({ data: null } as any)
-  vi.mocked(useAcceptFriendRequest).mockReturnValue({ mutateAsync: vi.fn(), isPending: false } as any)
-  vi.mocked(useDeclineFriendRequest).mockReturnValue({ mutateAsync: vi.fn(), isPending: false } as any)
+  vi.mocked(useAcceptFriendRequest).mockReturnValue({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  } as any)
+  vi.mocked(useDeclineFriendRequest).mockReturnValue({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  } as any)
 }
 
 function renderComponent() {
@@ -277,7 +283,13 @@ describe('Friends page', () => {
       isPending: false,
     } as any)
     vi.mocked(useUserByIdQuery).mockReturnValue({
-      data: { uid: 'sender', displayName: 'Sender User', username: 'sender', email: 'sender@test.com', photoURL: '' },
+      data: {
+        uid: 'sender',
+        displayName: 'Sender User',
+        username: 'sender',
+        email: 'sender@test.com',
+        photoURL: '',
+      },
     } as any)
     vi.mocked(usePendingFriendRequestsQuery).mockReturnValue({
       data: [
@@ -308,7 +320,13 @@ describe('Friends page', () => {
       isPending: false,
     } as any)
     vi.mocked(useUserByIdQuery).mockReturnValue({
-      data: { uid: 'sender', displayName: 'Sender User', username: 'sender', email: 'sender@test.com', photoURL: '' },
+      data: {
+        uid: 'sender',
+        displayName: 'Sender User',
+        username: 'sender',
+        email: 'sender@test.com',
+        photoURL: '',
+      },
     } as any)
     vi.mocked(usePendingFriendRequestsQuery).mockReturnValue({
       data: [

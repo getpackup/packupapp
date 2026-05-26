@@ -3,11 +3,11 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../lib/useIsAnonymous', () => ({
+vi.mock('~/lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
 }))
 
-vi.mock('../../services/gear', () => ({
+vi.mock('~/services/gear', () => ({
   useGearClosetQuery: vi.fn(() => ({ data: { customTags: [] } })),
   useCreateCustomTag: vi.fn(() => ({ mutateAsync: vi.fn() })),
   useUpdateCustomTag: vi.fn(() => ({ mutateAsync: vi.fn() })),

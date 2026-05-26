@@ -13,7 +13,7 @@ vi.mock('firebase/firestore', () => ({
   Timestamp: { fromDate: vi.fn(() => 'mock-ts') },
 }))
 
-vi.mock('../firebase/config', () => ({
+vi.mock('~/firebase/config', () => ({
   firestoreDb: 'mock-db',
 }))
 

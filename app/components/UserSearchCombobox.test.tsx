@@ -2,13 +2,13 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-import type { TripMember } from '../types/TripMember'
-import { TripMemberStatus } from '../types/TripMember'
-import type { User } from '../types/User'
+import type { TripMember } from '~/types/TripMember'
+import { TripMemberStatus } from '~/types/TripMember'
+import type { User } from '~/types/User'
 
 const mockUseFriendSearch = vi.fn()
 
-vi.mock('../services/useFriendSearch', () => ({
+vi.mock('~/services/useFriendSearch', () => ({
   useFriendSearch: (...args: unknown[]) => mockUseFriendSearch(...args),
 }))
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { calculateProfileCompletion } from './profileCompletion'
-import type { User } from '../types/User'
+import type { User } from '~/types/User'
 
 const baseUser: User = {
   uid: 'u1',

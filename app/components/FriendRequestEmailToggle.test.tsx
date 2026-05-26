@@ -4,19 +4,19 @@ import { toast } from 'sonner'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-vi.mock('../lib/useIsAnonymous', () => ({
+vi.mock('~/lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
 }))
 
 const mockUpdateUserAsync = vi.fn()
 
-vi.mock('../contexts/auth/useAuth', () => ({
+vi.mock('~/contexts/auth/useAuth', () => ({
   useAuth: vi.fn(() => ({
     user: { uid: 'u1', username: 'testuser', email: 'test@test.com', preferences: {} },
   })),
 }))
 
-vi.mock('../services/users', () => ({
+vi.mock('~/services/users', () => ({
   useUpdateUser: vi.fn(() => ({
     mutateAsync: mockUpdateUserAsync,
   })),
@@ -26,8 +26,8 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn() },
 }))
 
-import { useAuth } from '../contexts/auth/useAuth'
-import { useIsAnonymous } from '../lib/useIsAnonymous'
+import { useAuth } from '~/contexts/auth/useAuth'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { FriendRequestEmailToggle } from './FriendRequestEmailToggle'
 
 function renderComponent() {

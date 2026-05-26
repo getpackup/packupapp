@@ -1,9 +1,10 @@
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 
-import { useFriendSearch } from '../services/useFriendSearch'
-import type { TripMember } from '../types/TripMember'
-import type { User } from '../types/User'
+import { useFriendSearch } from '~/services/useFriendSearch'
+import type { TripMember } from '~/types/TripMember'
+import type { User } from '~/types/User'
+
 import TripPartyMemberBadge from './Trip/TripPartyMemberBadge'
 import { Button } from './ui/button'
 import { Checkbox } from './ui/checkbox'

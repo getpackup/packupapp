@@ -27,11 +27,11 @@ vi.mock('firebase/firestore', async () => {
   }
 })
 
-vi.mock('../firebase/config', () => ({
+vi.mock('~/firebase/config', () => ({
   firestoreDb: {},
 }))
 
-import { buildFriendshipId } from '../types/Friendship'
+import { buildFriendshipId } from '~/types/Friendship'
 import {
   fetchAllFriendships,
   sendFriendRequest,

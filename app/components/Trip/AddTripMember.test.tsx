@@ -2,9 +2,9 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
-import type { Trip } from '../../types/Trip'
+import type { Trip } from '~/types/Trip'
 
-vi.mock('../../lib/useIsAnonymous', () => ({
+vi.mock('~/lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
 }))
 
@@ -19,22 +19,22 @@ vi.mock('~/lib/use-screen-size', () => ({
   })),
 }))
 
-vi.mock('../../contexts/auth/useAuth', () => ({
+vi.mock('~/contexts/auth/useAuth', () => ({
   useAuth: vi.fn(() => ({ user: { uid: 'u1', username: 'testuser', email: 'test@test.com' } })),
   default: vi.fn(() => ({ user: { uid: 'u1', username: 'testuser', email: 'test@test.com' } })),
 }))
 
-vi.mock('../../services/trips', () => ({
+vi.mock('~/services/trips', () => ({
   useUpdateTrip: vi.fn(() => ({ mutateAsync: vi.fn() })),
   useCreateChatMessage: vi.fn(() => ({ mutateAsync: vi.fn() })),
 }))
 
-vi.mock('../../services/friends', () => ({
+vi.mock('~/services/friends', () => ({
   useFriendsQuery: vi.fn(() => ({ data: [], isLoading: false })),
   useSendFriendRequest: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
 }))
 
-vi.mock('../../services/users', () => ({
+vi.mock('~/services/users', () => ({
   useUserByIdQuery: vi.fn(() => ({ data: null })),
   userKeys: { byId: (id: string) => ['users', id] },
   fetchUserById: vi.fn(() => Promise.resolve(null)),

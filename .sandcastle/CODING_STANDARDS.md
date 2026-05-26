@@ -105,7 +105,7 @@ Firebase does not work under jsdom. Any file that imports Firebase directly or t
 
 ```ts
 // Correct — mock the service hook, not firebase/firestore
-vi.mock('../../services/trips', () => ({
+vi.mock('~/services/trips', () => ({
   useUpdateTrip: vi.fn(() => ({ mutateAsync: vi.fn() })),
 }))
 ```

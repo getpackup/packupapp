@@ -4,14 +4,13 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { UpgradeAccountGate } from './UpgradeAccountGate'
 
-const DEFAULT_MESSAGE =
-  'Plan on your computer, pack from your phone — and bring your whole crew.'
+const DEFAULT_MESSAGE = 'Plan on your computer, pack from your phone — and bring your whole crew.'
 
-vi.mock('../lib/useIsAnonymous', () => ({
+vi.mock('~/lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
 }))
 
-import { useIsAnonymous } from '../lib/useIsAnonymous'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
 
 function renderGate(props: { message?: string; children?: React.ReactNode }) {
   return render(

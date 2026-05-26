@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { User } from '../types/User'
+import type { User } from '~/types/User'
 
 const mockUser: User = {
   uid: 'test-uid',
@@ -36,19 +36,19 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
   }
 })
 
-vi.mock('../contexts/auth/useAuth', () => ({
+vi.mock('~/contexts/auth/useAuth', () => ({
   useAuth: () => ({ user: mockUser }),
 }))
 
-vi.mock('../services/users', () => ({
+vi.mock('~/services/users', () => ({
   useUpdateUser: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
 }))
 
-vi.mock('../services/friends', () => ({
+vi.mock('~/services/friends', () => ({
   useFriendsQuery: () => ({ data: [], isLoading: false }),
 }))
 
-vi.mock('../lib/useGooglePlaces', () => ({
+vi.mock('~/lib/useGooglePlaces', () => ({
   useGooglePlaces: () => ({
     isPlacesReady: false,
     fetchAutocompleteSuggestions: vi.fn().mockResolvedValue([]),
@@ -59,7 +59,7 @@ vi.mock('firebase/auth', () => ({
   updateProfile: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock('../firebase/config', () => ({
+vi.mock('~/firebase/config', () => ({
   firebaseAuth: { currentUser: null },
   firebaseStorage: {},
 }))
@@ -74,15 +74,15 @@ vi.mock('sonner', () => ({
   toast: { error: (...args: unknown[]) => mockToastError(...args) },
 }))
 
-vi.mock('../components/PageHeader', () => ({
+vi.mock('~/components/PageHeader', () => ({
   default: () => null,
 }))
 
-vi.mock('../components/PageContent', () => ({
+vi.mock('~/components/PageContent', () => ({
   default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }))
 
-vi.mock('../components/ui/tooltip', () => ({
+vi.mock('~/components/ui/tooltip', () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   TooltipTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   TooltipContent: () => null,

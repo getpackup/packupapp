@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import type { User } from '../types/User'
+import type { User } from '~/types/User'
 
 type AlgoliaSearch = typeof import('./algoliaSearch').algoliaSearch
 
@@ -38,7 +38,11 @@ export function useFriendSearch({
   friendsRef.current = friends
 
   const friendUidKey = useMemo(
-    () => friends.map((f) => f.uid).sort().join(','),
+    () =>
+      friends
+        .map((f) => f.uid)
+        .sort()
+        .join(','),
     [friends]
   )
 
@@ -84,9 +88,7 @@ export function useFriendSearch({
           if ('hits' in result && result.hits) {
             const friendUids = new Set(friendsRef.current.map((f: User) => f.uid))
             setAllUserHits(
-              result.hits.filter(
-                (h: User) => h.uid !== currentUserUid && !friendUids.has(h.uid)
-              )
+              result.hits.filter((h: User) => h.uid !== currentUserUid && !friendUids.has(h.uid))
             )
           }
         })

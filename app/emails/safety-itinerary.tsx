@@ -1,8 +1,9 @@
 import { Column, Link, Row, Section, Text } from '@react-email/components'
 import type { FC } from 'react'
 
-import type { SafetyItineraryEmailProps } from '../types/SafetyItinerary'
-import { TripMemberStatus } from '../types/TripMember'
+import type { SafetyItineraryEmailProps } from '~/types/SafetyItinerary'
+import { TripMemberStatus } from '~/types/TripMember'
+
 import BaseEmailTemplate from './base'
 import DarkAndLightIconsFromBase64 from './components/DarkAndLightIconsFromBase64'
 

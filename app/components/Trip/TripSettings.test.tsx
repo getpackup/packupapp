@@ -10,12 +10,12 @@ vi.mock('react-router', async () => {
   return { ...actual, useNavigate: () => mockNavigate }
 })
 
-vi.mock('../../contexts/auth/useAuth', () => ({
+vi.mock('~/contexts/auth/useAuth', () => ({
   useAuth: vi.fn(),
 }))
 
 const mockDeleteTripAsync = vi.fn()
-vi.mock('../../services/trips', () => ({
+vi.mock('~/services/trips', () => ({
   useDeleteTrip: vi.fn(() => ({
     mutateAsync: mockDeleteTripAsync,
     isPending: false,
@@ -25,9 +25,9 @@ vi.mock('../../services/trips', () => ({
   })),
 }))
 
-import { useAuth } from '../../contexts/auth/useAuth'
-import { TripMemberStatus } from '../../types/TripMember'
-import type { Trip } from '../../types/Trip'
+import { useAuth } from '~/contexts/auth/useAuth'
+import { TripMemberStatus } from '~/types/TripMember'
+import type { Trip } from '~/types/Trip'
 import { TripSettings } from './TripSettings'
 
 const ts = Timestamp.fromDate(new Date('2026-06-01'))
@@ -183,7 +183,7 @@ describe('TripSettings', () => {
     })
 
     it('confirming leave updates member status and navigates away', async () => {
-      const { useUpdateTrip } = await import('../../services/trips')
+      const { useUpdateTrip } = await import('~/services/trips')
       const mockUpdateAsync = vi.fn()
       vi.mocked(useUpdateTrip).mockReturnValue({ mutateAsync: mockUpdateAsync } as any)
 
@@ -237,7 +237,7 @@ describe('TripSettings', () => {
     })
 
     it('clicking toggle calls updateTrip with safetyItineraryOptedOut', async () => {
-      const { useUpdateTrip } = await import('../../services/trips')
+      const { useUpdateTrip } = await import('~/services/trips')
       const mockUpdateAsync = vi.fn()
       vi.mocked(useUpdateTrip).mockReturnValue({ mutateAsync: mockUpdateAsync } as any)
 

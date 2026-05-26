@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
-import type { User } from '../types/User'
+import type { User } from '~/types/User'
 
 const mockSearch = vi.fn()
 
@@ -68,7 +68,13 @@ describe('useFriendSearch', () => {
 
   it('filters friendHits locally for 1-char query without calling Algolia', async () => {
     const friends = [
-      makeUser({ uid: 'f1', id: 'f1', displayName: 'Alice', username: 'alice', email: 'alice@test.com' }),
+      makeUser({
+        uid: 'f1',
+        id: 'f1',
+        displayName: 'Alice',
+        username: 'alice',
+        email: 'alice@test.com',
+      }),
       makeUser({ uid: 'f2', id: 'f2', displayName: 'Bob', username: 'bob', email: 'bob@test.com' }),
     ]
 
@@ -84,9 +90,7 @@ describe('useFriendSearch', () => {
   })
 
   it('fires Algolia after 2+ chars (debounced) and returns results in allUserHits', async () => {
-    const friends = [
-      makeUser({ uid: 'f1', id: 'f1', displayName: 'Alice', username: 'alice' }),
-    ]
+    const friends = [makeUser({ uid: 'f1', id: 'f1', displayName: 'Alice', username: 'alice' })]
 
     const algoliaUser = makeUser({
       uid: 'u1',
