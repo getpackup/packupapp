@@ -16,6 +16,7 @@ import {
 } from '~/components/ui/sheet'
 import useAuth from '~/contexts/auth/useAuth'
 import { createChatMessage } from '~/lib/chat'
+import { requestPushPermission } from '~/lib/pushPermission'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
 import {
@@ -80,6 +81,7 @@ function ChatSheet({ trip, users, compact, defaultOpen }: ChatSheetProps) {
       if (!open || isAnonymous || !user?.uid) return
       const lastMessageId = messages?.[messages.length - 1]?.id ?? ''
       markChatRead({ tripId: trip.tripId, lastReadMessageId: lastMessageId })
+      requestPushPermission(user.uid)
     },
     [isAnonymous, user?.uid, messages, markChatRead, trip.tripId]
   )
