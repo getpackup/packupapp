@@ -1,5 +1,3 @@
-/* eslint-disable no-undef */
-
 self.addEventListener('push', (event) => {
   if (!event.data) return
 
@@ -10,8 +8,7 @@ self.addEventListener('push', (event) => {
     return
   }
 
-  const title =
-    payload.notification?.title ?? payload.data?.title ?? 'New message'
+  const title = payload.notification?.title ?? payload.data?.title ?? 'New message'
   const url = payload.data?.url ?? '/'
 
   event.waitUntil(
@@ -28,15 +25,13 @@ self.addEventListener('notificationclick', (event) => {
   const url = event.notification.data?.url ?? '/'
 
   event.waitUntil(
-    self.clients
-      .matchAll({ type: 'window', includeUncontrolled: true })
-      .then((windowClients) => {
-        for (const client of windowClients) {
-          if (client.url.includes(url) && 'focus' in client) {
-            return client.focus()
-          }
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (client.url.includes(url) && 'focus' in client) {
+          return client.focus()
         }
-        return self.clients.openWindow(url)
-      })
+      }
+      return self.clients.openWindow(url)
+    })
   )
 })

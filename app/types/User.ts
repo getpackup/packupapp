@@ -24,14 +24,13 @@ export type User = {
   fcmTokens?: string[]
   tagCounts?: Record<string, number>
   preferences?: {
-    theme?: 'light' | 'dark'
-    hasSeenPackingListTour?: boolean
-    hasDismissedFernwoodAd?: Timestamp
-    safetyItineraryEnabled?: boolean
     chatNotificationsEnabled?: boolean
     friendRequestEmailEnabled?: boolean
-    chatNotificationsEnabled?: boolean
+    hasDismissedFernwoodAd?: Timestamp
+    hasSeenPackingListTour?: boolean
+    safetyItineraryEnabled?: boolean
     temperatureUnit?: 'celsius' | 'fahrenheit'
+    theme?: 'light' | 'dark'
     weightUnit?: WeightUnitPreferenceType
   }
 }
