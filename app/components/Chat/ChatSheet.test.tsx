@@ -57,6 +57,14 @@ vi.mock('../../services/trips', () => ({
   useUpdateChatMessage: vi.fn(() => ({ mutateAsync: vi.fn() })),
 }))
 
+const { mockRequestPushPermission } = vi.hoisted(() => ({
+  mockRequestPushPermission: vi.fn(),
+}))
+
+vi.mock('../../lib/pushPermission', () => ({
+  requestPushPermission: mockRequestPushPermission,
+}))
+
 import { useAuth } from '../../contexts/auth/useAuth'
 import { useIsAnonymous } from '../../lib/useIsAnonymous'
 import { useTripChatMessagesQuery } from '../../services/trips'
@@ -91,6 +99,10 @@ function renderComponent(props = baseTripProps, defaultOpen?: boolean) {
 describe('ChatSheet', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(useAuth).mockReturnValue({
+      user: { uid: 'u1', username: 'testuser', email: 'test@test.com', isAnonymous: false },
+    } as any)
+    vi.mocked(useIsAnonymous).mockReturnValue(false)
   })
 
   describe('mark chat as read on open', () => {
@@ -137,6 +149,37 @@ describe('ChatSheet', () => {
       await user.click(screen.getByRole('button', { name: /trip chat/i }))
 
       expect(mockMarkChatReadAsync).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('push permission prompt on chat open', () => {
+    it('calls requestPushPermission with userId when sheet opens', async () => {
+      const user = userEvent.setup()
+      renderComponent()
+
+      await user.click(screen.getByRole('button', { name: /trip chat/i }))
+
+      expect(mockRequestPushPermission).toHaveBeenCalledWith('u1')
+    })
+
+    it('does not request push permission for anonymous users', async () => {
+      vi.mocked(useIsAnonymous).mockReturnValue(true)
+      const user = userEvent.setup()
+      renderComponent()
+
+      await user.click(screen.getByRole('button', { name: /trip chat/i }))
+
+      expect(mockRequestPushPermission).not.toHaveBeenCalled()
+    })
+
+    it('does not request push permission when user is not authenticated', async () => {
+      vi.mocked(useAuth).mockReturnValue({ user: null } as any)
+      const user = userEvent.setup()
+      renderComponent()
+
+      await user.click(screen.getByRole('button', { name: /trip chat/i }))
+
+      expect(mockRequestPushPermission).not.toHaveBeenCalled()
     })
   })
 

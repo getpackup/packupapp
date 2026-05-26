@@ -21,6 +21,7 @@ vi.mock('firebase/firestore', () => ({
 }))
 
 vi.mock('~/firebase/config', () => ({
+  firebaseMessaging: 'mock-messaging',
   firestoreDb: 'mock-db',
 }))
 
