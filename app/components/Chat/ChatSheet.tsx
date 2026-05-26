@@ -16,7 +16,7 @@ import {
 } from '~/components/ui/sheet'
 import useAuth from '~/contexts/auth/useAuth'
 import { createChatMessage } from '~/lib/chat'
-import { requestPushPermission } from '~/lib/pushPermission'
+import { useHasUnreadChat } from '~/lib/useHasUnreadChat'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
 import {
@@ -76,12 +76,13 @@ function ChatSheet({ trip, users, compact, defaultOpen }: ChatSheetProps) {
 
   const { mutateAsync: markChatRead } = useMarkChatRead(user?.uid)
 
+  const hasUnread = useHasUnreadChat(trip.tripId)
+
   const handleOpenChange = useCallback(
     (open: boolean) => {
       if (!open || isAnonymous || !user?.uid) return
       const lastMessageId = messages?.[messages.length - 1]?.id ?? ''
       markChatRead({ tripId: trip.tripId, lastReadMessageId: lastMessageId })
-      requestPushPermission(user.uid)
     },
     [isAnonymous, user?.uid, messages, markChatRead, trip.tripId]
   )
@@ -186,14 +187,26 @@ function ChatSheet({ trip, users, compact, defaultOpen }: ChatSheetProps) {
     <Sheet defaultOpen={defaultOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         {compact ? (
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="relative">
             <MessageCircleIcon className="size-5" />
             <span className="sr-only">Trip Chat</span>
+            {hasUnread && (
+              <span
+                data-testid="unread-badge"
+                className="bg-destructive absolute top-0.5 right-0.5 size-2.5 rounded-full"
+              />
+            )}
           </Button>
         ) : (
-          <Button variant="accent" size="lg" className="shadow-2xl">
+          <Button variant="accent" size="lg" className="relative shadow-2xl">
             <MessageCircleIcon className="size-4" />
             Trip Chat
+            {hasUnread && (
+              <span
+                data-testid="unread-badge"
+                className="bg-destructive absolute -top-1 -right-1 size-3 rounded-full"
+              />
+            )}
           </Button>
         )}
       </SheetTrigger>

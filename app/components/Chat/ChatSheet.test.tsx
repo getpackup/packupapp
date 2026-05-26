@@ -17,6 +17,13 @@ vi.mock('~/lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(() => false),
 }))
 
+const { mockUseHasUnreadChat } = vi.hoisted(() => ({
+  mockUseHasUnreadChat: vi.fn(() => false),
+}))
+vi.mock('../../lib/useHasUnreadChat', () => ({
+  useHasUnreadChat: mockUseHasUnreadChat,
+}))
+
 const mockMarkChatReadAsync = vi.fn()
 const mockSendMessageAsync = vi.fn()
 const mockUpdateTypingAsync = vi.fn()
@@ -201,6 +208,25 @@ describe('ChatSheet', () => {
 
       await user.click(screen.getByRole('button', { name: /trip chat/i }))
       expect(screen.getByRole('dialog')).toBeInTheDocument()
+    })
+  })
+
+  describe('unread badge', () => {
+    it('shows dot badge when useHasUnreadChat returns true', () => {
+      mockUseHasUnreadChat.mockReturnValue(true)
+      renderComponent()
+      expect(screen.getByTestId('unread-badge')).toBeInTheDocument()
+    })
+
+    it('does not show dot badge when useHasUnreadChat returns false', () => {
+      mockUseHasUnreadChat.mockReturnValue(false)
+      renderComponent()
+      expect(screen.queryByTestId('unread-badge')).not.toBeInTheDocument()
+    })
+
+    it('passes tripId to useHasUnreadChat', () => {
+      renderComponent()
+      expect(mockUseHasUnreadChat).toHaveBeenCalledWith('trip-1')
     })
   })
 })
