@@ -20,17 +20,18 @@ export async function requestPushPermission(userId: string): Promise<void> {
 
     if (isIosAppStore()) {
       return new Promise<void>((resolve) => {
+        const timeoutId = setTimeout(() => {
+          window.removeEventListener('push-permission-request', handler)
+          resolve()
+        }, 30_000)
+
         const handler = () => {
+          clearTimeout(timeoutId)
           window.removeEventListener('push-permission-request', handler)
           registerFcmToken(userId)
           resolve()
         }
         window.addEventListener('push-permission-request', handler)
-
-        setTimeout(() => {
-          window.removeEventListener('push-permission-request', handler)
-          resolve()
-        }, 30_000)
 
         ;(window as any).webkit?.messageHandlers?.['push-permission-request']?.postMessage({})
       })
