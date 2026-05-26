@@ -95,10 +95,14 @@ const baseTripProps = {
   ] as any[],
 }
 
-function renderComponent(props = baseTripProps, defaultOpen?: boolean) {
+function renderComponent(
+  props = baseTripProps,
+  open?: boolean,
+  onOpenChange?: (open: boolean) => void
+) {
   return render(
     <MemoryRouter>
-      <ChatSheet {...props} defaultOpen={defaultOpen} />
+      <ChatSheet {...props} open={open} onOpenChange={onOpenChange} />
     </MemoryRouter>
   )
 }
@@ -113,11 +117,8 @@ describe('ChatSheet', () => {
   })
 
   describe('mark chat as read on open', () => {
-    it('calls markChatRead with last message ID when sheet opens', async () => {
-      const user = userEvent.setup()
-      renderComponent()
-
-      await user.click(screen.getByRole('button', { name: /trip chat/i }))
+    it('calls markChatRead with last message ID when open becomes true', () => {
+      renderComponent(baseTripProps, true)
 
       expect(mockMarkChatReadAsync).toHaveBeenCalledWith({
         tripId: 'trip-1',
@@ -125,12 +126,9 @@ describe('ChatSheet', () => {
       })
     })
 
-    it('calls markChatRead with empty string when no messages exist', async () => {
+    it('calls markChatRead with empty string when no messages exist', () => {
       vi.mocked(useTripChatMessagesQuery).mockReturnValue({ data: [] } as any)
-      const user = userEvent.setup()
-      renderComponent()
-
-      await user.click(screen.getByRole('button', { name: /trip chat/i }))
+      renderComponent(baseTripProps, true)
 
       expect(mockMarkChatReadAsync).toHaveBeenCalledWith({
         tripId: 'trip-1',
@@ -138,76 +136,62 @@ describe('ChatSheet', () => {
       })
     })
 
-    it('does not call markChatRead for anonymous users', async () => {
+    it('does not call markChatRead for anonymous users', () => {
       vi.mocked(useIsAnonymous).mockReturnValue(true)
-      const user = userEvent.setup()
-      renderComponent()
-
-      await user.click(screen.getByRole('button', { name: /trip chat/i }))
+      renderComponent(baseTripProps, true)
 
       expect(mockMarkChatReadAsync).not.toHaveBeenCalled()
     })
 
-    it('does not call markChatRead when user is not authenticated', async () => {
+    it('does not call markChatRead when user is not authenticated', () => {
       vi.mocked(useAuth).mockReturnValue({ user: null } as any)
-      const user = userEvent.setup()
-      renderComponent()
-
-      await user.click(screen.getByRole('button', { name: /trip chat/i }))
+      renderComponent(baseTripProps, true)
 
       expect(mockMarkChatReadAsync).not.toHaveBeenCalled()
     })
   })
 
   describe('push permission prompt on chat open', () => {
-    it('calls requestPushPermission with userId when sheet opens', async () => {
-      const user = userEvent.setup()
-      renderComponent()
-
-      await user.click(screen.getByRole('button', { name: /trip chat/i }))
+    it('calls requestPushPermission with userId when open becomes true', () => {
+      renderComponent(baseTripProps, true)
 
       expect(mockRequestPushPermission).toHaveBeenCalledWith('u1')
     })
 
-    it('does not request push permission for anonymous users', async () => {
+    it('does not request push permission for anonymous users', () => {
       vi.mocked(useIsAnonymous).mockReturnValue(true)
-      const user = userEvent.setup()
-      renderComponent()
-
-      await user.click(screen.getByRole('button', { name: /trip chat/i }))
+      renderComponent(baseTripProps, true)
 
       expect(mockRequestPushPermission).not.toHaveBeenCalled()
     })
 
-    it('does not request push permission when user is not authenticated', async () => {
+    it('does not request push permission when user is not authenticated', () => {
       vi.mocked(useAuth).mockReturnValue({ user: null } as any)
-      const user = userEvent.setup()
-      renderComponent()
-
-      await user.click(screen.getByRole('button', { name: /trip chat/i }))
+      renderComponent(baseTripProps, true)
 
       expect(mockRequestPushPermission).not.toHaveBeenCalled()
     })
   })
 
-  describe('defaultOpen prop', () => {
-    it('is closed by default when defaultOpen is not provided', () => {
+  describe('open prop', () => {
+    it('is closed by default when open is not provided', () => {
       renderComponent()
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     })
 
-    it('opens automatically when defaultOpen is true', () => {
+    it('opens when open is true', () => {
       renderComponent(baseTripProps, true)
       expect(screen.getByRole('dialog')).toBeInTheDocument()
       expect(screen.getByRole('heading', { name: /trip chat/i })).toBeInTheDocument()
     })
 
-    it('can be opened via the trigger button when defaultOpen is false', async () => {
+    it('calls onOpenChange with true when trigger is clicked', async () => {
       const user = userEvent.setup()
-      renderComponent(baseTripProps, false)
+      const onOpenChange = vi.fn()
+      renderComponent(baseTripProps, false, onOpenChange)
 
       await user.click(screen.getByRole('button', { name: /trip chat/i }))
-      expect(screen.getByRole('dialog')).toBeInTheDocument()
+      expect(onOpenChange).toHaveBeenCalledWith(true)
     })
   })
 

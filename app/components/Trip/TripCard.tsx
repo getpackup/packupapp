@@ -107,22 +107,17 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
         await sendTripMemberStatusMessage(status)
         if (status === TripMemberStatus.Accepted) {
           toast.success(`Excellent! Let's start thinking about what you'll need to bring next 🤙`)
+          // TODO: add generator page or modal to help users get started with packing list after accepting the invitation
           navigate(`/trips/${trip.tripId}/generator`)
         }
         if (status === TripMemberStatus.Declined) {
-          toast.success(`Bummer... You have successfully declined to go on the trip 😔`)
+          toast.success(`Bummer... You have successfully declined to the trip invitation.`)
           // refetch the trips collection so the pending trip is removed
           refetch?.()
         }
       })
     }
   }
-
-  // const getAspectRatio = () => {
-  //   if (is2xlBreakpoint || isXlBreakpoint || isLargeBreakpoint) return 1.25
-  //   if (isMediumBreakpoint || isSmallBreakpoint || isXSmallBreakpoint) return 2.5
-  //   return 2.5
-  // }
 
   return (
     <div
@@ -139,8 +134,10 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
       {hasUnread && !isPending && (
         <span
           data-testid="tripcard-unread-badge"
-          className="bg-primary absolute top-2 right-2 z-10 h-3 w-3 rounded-full"
-        />
+          className="group bg-destructive absolute -top-2 -right-2 z-10 flex h-5 w-5 items-center justify-center rounded-full px-2 text-xs text-white hover:w-auto"
+        >
+          <span className="sr-only group-hover:not-sr-only">Unread chats</span>
+        </span>
       )}
       <div className="relative w-full flex-1 lg:w-2/5">
         {showRemaining && (

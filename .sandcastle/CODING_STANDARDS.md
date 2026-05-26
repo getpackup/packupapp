@@ -93,10 +93,16 @@ Read at least two existing test files in the same directory or a sibling directo
 
 ### Path aliases
 
-Use the `~` alias for imports from `app/`:
+Use the `~` alias for imports from `app/`, with the exception of anything used in the `functions/` directory, which should use relative imports. For example, in a test file:
 
 ```ts
 import { useAuth } from '~/contexts/auth/useAuth'
+```
+
+In a file in `functions/`:
+
+```ts
+import { someUtil } from '../lib/someUtil'
 ```
 
 ### Firebase in tests

@@ -1,8 +1,7 @@
 import { Column, Row, Section, Text } from '@react-email/components'
 import type { FC } from 'react'
 
-import type { InviteToTripEmailProps } from '~/types/InviteToTrip'
-
+import type { InviteToTripEmailProps } from '../types/InviteToTrip'
 import BaseEmailTemplate from './base'
 import CallToAction from './components/call-to-action'
 import DarkAndLightIconsFromBase64 from './components/DarkAndLightIconsFromBase64'

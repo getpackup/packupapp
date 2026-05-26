@@ -119,4 +119,35 @@ describe('registerFcmToken', () => {
 
     await expect(registerFcmToken('user-1')).resolves.toBeUndefined()
   })
+
+  it('retries once after AbortError push service failure', async () => {
+    mockIsSupported.mockResolvedValue(true)
+
+    const mockUnsubscribe = vi.fn().mockResolvedValue(true)
+    const mockGetSubscription = vi.fn().mockResolvedValue({ unsubscribe: mockUnsubscribe })
+    const swRegistration = {
+      pushManager: {
+        getSubscription: mockGetSubscription,
+      },
+    }
+
+    vi.stubGlobal('navigator', {
+      ...globalThis.navigator,
+      serviceWorker: { register: vi.fn().mockResolvedValue(swRegistration) },
+    })
+
+    const abortError = new Error('Registration failed - push service error')
+    abortError.name = 'AbortError'
+
+    mockGetToken.mockRejectedValueOnce(abortError).mockResolvedValueOnce('fcm-token-after-retry')
+
+    await registerFcmToken('user-1')
+
+    expect(mockGetToken).toHaveBeenCalledTimes(2)
+    expect(mockGetSubscription).toHaveBeenCalledTimes(1)
+    expect(mockUnsubscribe).toHaveBeenCalledTimes(1)
+    expect(mockUpdateDoc).toHaveBeenCalledWith('mock-doc-ref', {
+      fcmTokens: { __arrayUnion: ['fcm-token-after-retry'] },
+    })
+  })
 })

@@ -4,6 +4,7 @@ import { Outlet, redirect, useLocation, useNavigate } from 'react-router'
 import AuthProvider from '~/contexts/auth/authProvider'
 import { firebaseAuth } from '~/firebase/config'
 import { trackPage } from '~/lib/analytics'
+import { useForegroundChatNotifications } from '~/lib/useForegroundChatNotifications'
 import { isAuth } from '~/services/auth'
 
 import { BottomNav } from './BottomNav'
@@ -36,6 +37,8 @@ export async function clientLoader() {
 export default function AuthWrapper() {
   const navigate = useNavigate()
   const location = useLocation()
+
+  useForegroundChatNotifications()
 
   useEffect(() => {
     const unsubscribe = firebaseAuth.onAuthStateChanged((user) => {

@@ -7,13 +7,20 @@ const XL_BREAKPOINT = 1280 // 80rem
 const XXL_BREAKPOINT = 1536 // 96rem
 
 export const useScreenSize = () => {
-  const [breakpoints, setBreakpoints] = useState({
-    isXSmallBreakpoint: false,
-    isSmallBreakpoint: false,
-    isMediumBreakpoint: false,
-    isLargeBreakpoint: false,
-    isXlBreakpoint: false,
-    is2xlBreakpoint: false,
+  const [breakpoints, setBreakpoints] = useState<{
+    isXSmallBreakpoint: boolean | undefined
+    isSmallBreakpoint: boolean | undefined
+    isMediumBreakpoint: boolean | undefined
+    isLargeBreakpoint: boolean | undefined
+    isXlBreakpoint: boolean | undefined
+    is2xlBreakpoint: boolean | undefined
+  }>({
+    isXSmallBreakpoint: undefined,
+    isSmallBreakpoint: undefined,
+    isMediumBreakpoint: undefined,
+    isLargeBreakpoint: undefined,
+    isXlBreakpoint: undefined,
+    is2xlBreakpoint: undefined,
   })
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 import { formatDistanceToNow, isAfter, subSeconds } from 'date-fns'
 import { orderBy } from 'firebase/firestore'
 import { Dot, MessageCircleIcon, Reply, UserPlus, XIcon } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
 
 import { Button } from '~/components/ui/button'
@@ -37,7 +37,8 @@ type ChatSheetProps = {
   trip: Trip
   users: User[]
   compact?: boolean
-  defaultOpen?: boolean
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 const systemUser: User = {
@@ -49,7 +50,7 @@ const systemUser: User = {
   uid: 'system',
 }
 
-function ChatSheet({ trip, users, compact, defaultOpen }: ChatSheetProps) {
+function ChatSheet({ trip, users, compact, open, onOpenChange }: ChatSheetProps) {
   const { user } = useAuth()
   const isAnonymous = useIsAnonymous()
   const [userMap] = useState<Map<string, User>>(
@@ -79,15 +80,19 @@ function ChatSheet({ trip, users, compact, defaultOpen }: ChatSheetProps) {
 
   const hasUnread = useHasUnreadChat(trip.tripId)
 
-  const handleOpenChange = useCallback(
-    (open: boolean) => {
-      if (!open || isAnonymous || !user?.uid) return
-      const lastMessageId = messages?.[messages.length - 1]?.id ?? ''
-      markChatRead({ tripId: trip.tripId, lastReadMessageId: lastMessageId })
-      requestPushPermission(user.uid)
-    },
-    [isAnonymous, user?.uid, messages, markChatRead, trip.tripId]
-  )
+  const wasOpenRef = useRef(false)
+  useEffect(() => {
+    if (open && !wasOpenRef.current) {
+      wasOpenRef.current = true
+      if (!isAnonymous && user?.uid) {
+        const lastMessageId = messages?.[messages.length - 1]?.id ?? ''
+        markChatRead({ tripId: trip.tripId, lastReadMessageId: lastMessageId })
+        requestPushPermission(user.uid)
+      }
+    } else if (!open) {
+      wasOpenRef.current = false
+    }
+  }, [open, isAnonymous, user?.uid, messages, markChatRead, trip.tripId])
 
   const handleSendMessage = useCallback(
     async (text: string) => {
@@ -186,7 +191,7 @@ function ChatSheet({ trip, users, compact, defaultOpen }: ChatSheetProps) {
     }, [messages, replyToMessageId]) ?? null
 
   return (
-    <Sheet defaultOpen={defaultOpen} onOpenChange={handleOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
         {compact ? (
           <Button variant="ghost" size="icon" className="relative">
@@ -195,7 +200,7 @@ function ChatSheet({ trip, users, compact, defaultOpen }: ChatSheetProps) {
             {hasUnread && (
               <span
                 data-testid="unread-badge"
-                className="bg-destructive absolute top-0.5 right-0.5 size-2.5 rounded-full"
+                className="bg-destructive absolute top-1 right-1 size-3 rounded-full"
               />
             )}
           </Button>
@@ -204,10 +209,10 @@ function ChatSheet({ trip, users, compact, defaultOpen }: ChatSheetProps) {
             <MessageCircleIcon className="size-4" />
             Trip Chat
             {hasUnread && (
-              <span
-                data-testid="unread-badge"
-                className="bg-destructive absolute -top-1 -right-1 size-3 rounded-full"
-              />
+              <span className="absolute -top-1 -right-1.5 flex size-4" data-testid="unread-badge">
+                <span className="bg-destructive absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"></span>
+                <span className="bg-destructive relative inline-flex size-4 rounded-full"></span>
+              </span>
             )}
           </Button>
         )}
@@ -228,9 +233,7 @@ function ChatSheet({ trip, users, compact, defaultOpen }: ChatSheetProps) {
         {isAnonymous ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
             <UserPlus className="text-muted-foreground size-8" />
-            <p className="text-muted-foreground">
-              Create an account to chat with trip members
-            </p>
+            <p className="text-muted-foreground">Create an account to chat with trip members</p>
             <Button variant="accent" asChild>
               <Link to="/signup">
                 <UserPlus className="size-4" />
@@ -240,60 +243,66 @@ function ChatSheet({ trip, users, compact, defaultOpen }: ChatSheetProps) {
           </div>
         ) : (
           <>
-        <ChatContainer
-          messages={messages ?? []}
-          currentUserId={user?.uid ?? ''}
-          userMap={userMap}
-          setReplyToMessageId={setReplyToMessageId}
-        />
-        <SheetFooter className="border-t">
-          <div>
-            <div
-              className={cn(
-                'grid w-full overflow-hidden transition-all duration-300 ease-in-out',
-                replyToMessageContent ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-              )}
-            >
-              {replyToMessageContent && (
-                <div className="text-muted-foreground flex w-full items-center justify-between gap-2 text-sm">
-                  <div className="flex max-w-72 items-center gap-1">
-                    <Reply className="text-muted-foreground size-3 shrink-0 scale-x-[-1]" />
-                    <div className="min-w-0 truncate">
-                      <span className="font-bold">Replying to:</span> {replyToMessageContent}
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="icon-sm" onClick={() => setReplyToMessageId(null)}>
-                    <XIcon className="size-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-            <div
-              className={cn(
-                'grid overflow-hidden transition-all duration-300 ease-in-out',
-                typingMessage ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-              )}
-            >
-              <div className="min-h-0">
-                {typingMessage && (
-                  <div className="flex items-center gap-2 pb-2">
-                    <div className="flex -space-x-2.5">
-                      <Dot className="animate-typing-dot-bounce size-4" />
-                      <Dot className="animate-typing-dot-bounce size-4 [animation-delay:90ms]" />
-                      <Dot className="animate-typing-dot-bounce size-4 [animation-delay:180ms]" />
-                    </div>
-                    <p className="text-muted-foreground text-xs">{typingMessage}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-            <MessageInput
-              onSendMessage={handleSendMessage}
-              replyToMessageId={replyToMessageId}
-              onTypingChange={handleTypingChange}
+            <ChatContainer
+              messages={messages ?? []}
+              currentUserId={user?.uid ?? ''}
+              userMap={userMap}
+              setReplyToMessageId={setReplyToMessageId}
             />
-          </div>
-        </SheetFooter>
+            <SheetFooter className="border-t">
+              <div>
+                <div
+                  className={cn(
+                    'grid w-full overflow-hidden transition-all duration-300 ease-in-out',
+                    replyToMessageContent
+                      ? 'grid-rows-[1fr] opacity-100'
+                      : 'grid-rows-[0fr] opacity-0'
+                  )}
+                >
+                  {replyToMessageContent && (
+                    <div className="text-muted-foreground flex w-full items-center justify-between gap-2 text-sm">
+                      <div className="flex max-w-72 items-center gap-1">
+                        <Reply className="text-muted-foreground size-3 shrink-0 scale-x-[-1]" />
+                        <div className="min-w-0 truncate">
+                          <span className="font-bold">Replying to:</span> {replyToMessageContent}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setReplyToMessageId(null)}
+                      >
+                        <XIcon className="size-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <div
+                  className={cn(
+                    'grid overflow-hidden transition-all duration-300 ease-in-out',
+                    typingMessage ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                  )}
+                >
+                  <div className="min-h-0">
+                    {typingMessage && (
+                      <div className="flex items-center gap-2 pb-2">
+                        <div className="flex -space-x-2.5">
+                          <Dot className="animate-typing-dot-bounce size-4" />
+                          <Dot className="animate-typing-dot-bounce size-4 [animation-delay:90ms]" />
+                          <Dot className="animate-typing-dot-bounce size-4 [animation-delay:180ms]" />
+                        </div>
+                        <p className="text-muted-foreground text-xs">{typingMessage}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <MessageInput
+                  onSendMessage={handleSendMessage}
+                  replyToMessageId={replyToMessageId}
+                  onTypingChange={handleTypingChange}
+                />
+              </div>
+            </SheetFooter>
           </>
         )}
       </SheetContent>

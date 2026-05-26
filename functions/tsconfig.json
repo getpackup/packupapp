@@ -11,8 +11,18 @@
     "resolveJsonModule": true,
     "declaration": false,
     "sourceMap": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "~/*": ["../app/*"]
+    }
   },
-  "include": ["src/**/*", "../app/emails/safety-itinerary.tsx", "../app/emails/base.tsx", "../app/types/TripMember.ts", "../app/types/EmergencyContact.ts", "../app/types/SafetyItinerary.ts"],
+  "include": [
+    "src/**/*",
+    "../app/emails/safety-itinerary.tsx",
+    "../app/emails/base.tsx",
+    "../app/types/TripMember.ts",
+    "../app/types/EmergencyContact.ts",
+    "../app/types/SafetyItinerary.ts"
+  ],
   "exclude": ["node_modules", "lib"]
 }

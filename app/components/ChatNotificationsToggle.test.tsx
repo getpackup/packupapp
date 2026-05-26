@@ -8,6 +8,15 @@ vi.mock('../lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
 }))
 
+const mockRegisterFcmToken = vi.fn()
+const mockRequestNotificationPermissionForFcm = vi.fn()
+
+vi.mock('../lib/fcmToken', () => ({
+  registerFcmToken: (...args: any[]) => mockRegisterFcmToken(...args),
+  requestNotificationPermissionForFcm: (...args: any[]) =>
+    mockRequestNotificationPermissionForFcm(...args),
+}))
+
 const mockUpdateUserAsync = vi.fn()
 
 vi.mock('../contexts/auth/useAuth', () => ({
@@ -23,7 +32,7 @@ vi.mock('../services/users', () => ({
 }))
 
 vi.mock('sonner', () => ({
-  toast: { success: vi.fn() },
+  toast: { success: vi.fn(), error: vi.fn() },
 }))
 
 import { useAuth } from '../contexts/auth/useAuth'
@@ -51,6 +60,8 @@ describe('ChatNotificationsToggle', () => {
     beforeEach(() => {
       vi.mocked(useIsAnonymous).mockReturnValue(false)
       mockUpdateUserAsync.mockReset()
+      mockRegisterFcmToken.mockReset().mockResolvedValue(undefined)
+      mockRequestNotificationPermissionForFcm.mockReset().mockResolvedValue('granted')
     })
 
     it('renders the switch', () => {
@@ -109,6 +120,7 @@ describe('ChatNotificationsToggle', () => {
       expect(mockUpdateUserAsync).toHaveBeenCalledWith({
         data: { preferences: { chatNotificationsEnabled: false } },
       })
+      expect(mockRequestNotificationPermissionForFcm).not.toHaveBeenCalled()
     })
 
     it('writes chatNotificationsEnabled = true when toggling on', async () => {
@@ -124,9 +136,11 @@ describe('ChatNotificationsToggle', () => {
       } as any)
       renderComponent()
       await user.click(screen.getByRole('switch'))
+      expect(mockRequestNotificationPermissionForFcm).toHaveBeenCalledTimes(1)
       expect(mockUpdateUserAsync).toHaveBeenCalledWith({
         data: { preferences: { chatNotificationsEnabled: true } },
       })
+      expect(mockRegisterFcmToken).toHaveBeenCalledWith('u1')
     })
 
     it('shows success toast when toggling off', async () => {
@@ -142,9 +156,7 @@ describe('ChatNotificationsToggle', () => {
       } as any)
       renderComponent()
       await user.click(screen.getByRole('switch'))
-      expect(toast.success).toHaveBeenCalledWith(
-        'Chat notifications disabled'
-      )
+      expect(toast.success).toHaveBeenCalledWith('Chat notifications disabled')
     })
 
     it('shows success toast when toggling on', async () => {
@@ -160,8 +172,30 @@ describe('ChatNotificationsToggle', () => {
       } as any)
       renderComponent()
       await user.click(screen.getByRole('switch'))
-      expect(toast.success).toHaveBeenCalledWith(
-        'Chat notifications enabled'
+      expect(toast.success).toHaveBeenCalledWith('Chat notifications enabled')
+    })
+
+    it('shows error toast and skips updates when notification permission is denied', async () => {
+      const user = userEvent.setup()
+      mockRequestNotificationPermissionForFcm.mockResolvedValue('denied')
+
+      vi.mocked(useAuth).mockReturnValue({
+        user: {
+          uid: 'u1',
+          username: 'testuser',
+          email: 'test@test.com',
+          preferences: { chatNotificationsEnabled: false },
+        },
+        setUser: vi.fn(),
+      } as any)
+
+      renderComponent()
+      await user.click(screen.getByRole('switch'))
+
+      expect(mockUpdateUserAsync).not.toHaveBeenCalled()
+      expect(mockRegisterFcmToken).not.toHaveBeenCalled()
+      expect(toast.error).toHaveBeenCalledWith(
+        'Please allow notifications in your browser to enable chat alerts'
       )
     })
   })

@@ -1,5 +1,5 @@
 import { limit, where } from 'firebase/firestore'
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 
 import { AnonymousUserBanner } from '~/components/AnonymousUserBanner'
@@ -12,6 +12,7 @@ import TripDetailsSidebar from '~/components/Trip/TripDetailsSidebar'
 import TripPackingList from '~/components/Trip/TripPackingList'
 import useAuth from '~/contexts/auth/useAuth'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
+import { useScreenSize } from '~/lib/use-screen-size'
 import { useTripByIdQuery, useTripMembersQuery } from '~/services/trips'
 
 import type { Route } from './+types/$id'
@@ -24,9 +25,28 @@ export default function TripDetails({ params }: Route.ComponentProps) {
   const { id } = params
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const isAnonymous = useIsAnonymous()
+  const { isMediumBreakpoint } = useScreenSize()
   const chatOpen = searchParams.get('chat') === 'open'
+
+  const handleChatOpenChange = useCallback(
+    (isOpen: boolean) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          if (isOpen) {
+            next.set('chat', 'open')
+          } else {
+            next.delete('chat')
+          }
+          return next
+        },
+        { replace: true }
+      )
+    },
+    [setSearchParams]
+  )
 
   const { data: trip, isLoading: isLoadingTrip } = useTripByIdQuery({ tripId: id })
 
@@ -73,7 +93,15 @@ export default function TripDetails({ params }: Route.ComponentProps) {
           trip && (
             <div className="flex items-center gap-1 md:hidden">
               <MobileTripDetailsDrawer trip={trip} users={users} />
-              {users && <ChatSheet trip={trip} users={users} compact defaultOpen={chatOpen} />}
+              {users && (
+                <ChatSheet
+                  trip={trip}
+                  users={users}
+                  compact
+                  open={isMediumBreakpoint === false ? chatOpen : false}
+                  onOpenChange={handleChatOpenChange}
+                />
+              )}
             </div>
           )
         }
@@ -96,7 +124,14 @@ export default function TripDetails({ params }: Route.ComponentProps) {
               <TripDetailsSidebar trip={trip} users={users} />
             </div>
             <div className="absolute right-4 bottom-4 hidden md:block">
-              {users && <ChatSheet trip={trip} users={users} defaultOpen={chatOpen} />}
+              {users && (
+                <ChatSheet
+                  trip={trip}
+                  users={users}
+                  open={isMediumBreakpoint === true ? chatOpen : false}
+                  onOpenChange={handleChatOpenChange}
+                />
+              )}
             </div>
           </div>
         )}
