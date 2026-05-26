@@ -1,7 +1,7 @@
 import { arrayUnion, doc, updateDoc } from 'firebase/firestore'
-import { type Messaging, getToken, isSupported } from 'firebase/messaging'
+import { getToken, isSupported, type Messaging } from 'firebase/messaging'
 
-import { getFirebaseMessaging, firestoreDb } from '~/firebase/config'
+import { firestoreDb, getFirebaseMessaging } from '~/firebase/config'
 
 const FCM_DEBUG_PREFIX = '[fcmToken]'
 const FCM_TOKEN_TIMEOUT_MS = 15_000
@@ -17,10 +17,7 @@ function logFcmDebug(message: string, data?: unknown): void {
   console.log(`${FCM_DEBUG_PREFIX} ${message}`, data)
 }
 
-function getTokenWithTimeout(
-  messaging: Messaging,
-  options: Parameters<typeof getToken>[1]
-) {
+function getTokenWithTimeout(messaging: Messaging, options: Parameters<typeof getToken>[1]) {
   return Promise.race([
     getToken(messaging, options),
     new Promise<never>((_, reject) => {
