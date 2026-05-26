@@ -65,7 +65,7 @@ function makeMessage(overrides: Partial<{ userId: string; userName: string; type
   return {
     userId: 'sender-uid',
     userName: 'Alice',
-    type: 'text' as string,
+    type: 'text',
     ...overrides,
   }
 }
@@ -81,7 +81,7 @@ describe('processChatNotification', () => {
     const users = new Map([
       ['recipient', makeUser('recipient')],
     ])
-    const { deps, sendNotifications } = makeDeps(trip, users as Map<string, Partial<User>>)
+    const { deps, sendNotifications } = makeDeps(trip, users)
     sendNotifications.mockResolvedValue([{ success: true }])
 
     await processChatNotification(
@@ -102,7 +102,7 @@ describe('processChatNotification', () => {
       ['user-owner', makeUser('user-owner')],
       ['user-accepted', makeUser('user-accepted')],
     ])
-    const { deps, sendNotifications } = makeDeps(makeTrip(), users as Map<string, Partial<User>>)
+    const { deps, sendNotifications } = makeDeps(makeTrip(), users)
 
     await processChatNotification(
       makeMessage({ type: 'system' }),
@@ -123,7 +123,7 @@ describe('processChatNotification', () => {
     const users = new Map([
       ['other', makeUser('other')],
     ])
-    const { deps, sendNotifications } = makeDeps(trip, users as Map<string, Partial<User>>)
+    const { deps, sendNotifications } = makeDeps(trip, users)
     sendNotifications.mockResolvedValue([{ success: true }])
 
     await processChatNotification(
@@ -149,7 +149,7 @@ describe('processChatNotification', () => {
       ['opted-out', makeUser('opted-out', { preferences: { chatNotificationsEnabled: false } })],
       ['opted-in', makeUser('opted-in')],
     ])
-    const { deps, sendNotifications } = makeDeps(trip, users as Map<string, Partial<User>>)
+    const { deps, sendNotifications } = makeDeps(trip, users)
     sendNotifications.mockResolvedValue([{ success: true }])
 
     await processChatNotification(
@@ -173,7 +173,7 @@ describe('processChatNotification', () => {
     const users = new Map([
       ['declined', makeUser('declined')],
     ])
-    const { deps, sendNotifications } = makeDeps(trip, users as Map<string, Partial<User>>)
+    const { deps, sendNotifications } = makeDeps(trip, users)
 
     await processChatNotification(
       makeMessage({ userId: 'sender' }),
@@ -194,7 +194,7 @@ describe('processChatNotification', () => {
     const users = new Map([
       ['left', makeUser('left')],
     ])
-    const { deps, sendNotifications } = makeDeps(trip, users as Map<string, Partial<User>>)
+    const { deps, sendNotifications } = makeDeps(trip, users)
 
     await processChatNotification(
       makeMessage({ userId: 'sender' }),
@@ -215,7 +215,7 @@ describe('processChatNotification', () => {
     const users = new Map([
       ['removed', makeUser('removed')],
     ])
-    const { deps, sendNotifications } = makeDeps(trip, users as Map<string, Partial<User>>)
+    const { deps, sendNotifications } = makeDeps(trip, users)
 
     await processChatNotification(
       makeMessage({ userId: 'sender' }),
@@ -236,7 +236,7 @@ describe('processChatNotification', () => {
     const users = new Map([
       ['recipient', makeUser('recipient', { fcmTokens: ['good-token', 'stale-token'] })],
     ])
-    const { deps, sendNotifications, removeTokens } = makeDeps(trip, users as Map<string, Partial<User>>)
+    const { deps, sendNotifications, removeTokens } = makeDeps(trip, users)
     sendNotifications.mockResolvedValue([
       { success: true },
       { success: false, error: { code: 'messaging/registration-token-not-registered' } },
@@ -261,7 +261,7 @@ describe('processChatNotification', () => {
     const users = new Map([
       ['recipient', makeUser('recipient')],
     ])
-    const { deps, sendNotifications, removeTokens } = makeDeps(trip, users as Map<string, Partial<User>>)
+    const { deps, sendNotifications, removeTokens } = makeDeps(trip, users)
     sendNotifications.mockResolvedValue([{ success: true }])
 
     await processChatNotification(
@@ -310,7 +310,7 @@ describe('processChatNotification', () => {
       ['no-tokens', makeUser('no-tokens', { fcmTokens: [] })],
       ['has-tokens', makeUser('has-tokens')],
     ])
-    const { deps, sendNotifications } = makeDeps(trip, users as Map<string, Partial<User>>)
+    const { deps, sendNotifications } = makeDeps(trip, users)
     sendNotifications.mockResolvedValue([{ success: true }])
 
     await processChatNotification(
@@ -333,7 +333,7 @@ describe('processChatNotification', () => {
     const users = new Map([
       ['pending', makeUser('pending')],
     ])
-    const { deps, sendNotifications } = makeDeps(trip, users as Map<string, Partial<User>>)
+    const { deps, sendNotifications } = makeDeps(trip, users)
     sendNotifications.mockResolvedValue([{ success: true }])
 
     await processChatNotification(
@@ -358,7 +358,7 @@ describe('processChatNotification', () => {
       ['alice', makeUser('alice', { fcmTokens: ['alice-stale'] })],
       ['bob', makeUser('bob', { fcmTokens: ['bob-stale'] })],
     ])
-    const { deps, sendNotifications, removeTokens } = makeDeps(trip, users as Map<string, Partial<User>>)
+    const { deps, sendNotifications, removeTokens } = makeDeps(trip, users)
     sendNotifications.mockResolvedValue([
       { success: false, error: { code: 'messaging/registration-token-not-registered' } },
       { success: false, error: { code: 'messaging/registration-token-not-registered' } },
