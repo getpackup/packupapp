@@ -9,6 +9,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler'
 import algoliasearch from 'algoliasearch'
 
 import { buildChatMetadataDeps, processChatMessage } from './chat-metadata'
+import { buildChatNotificationDeps, processChatNotification } from './send-chat-notifications'
 import { renderSafetyItineraryHtml } from './render-safety-itinerary-email'
 import { renderInviteToTripHtml } from './render-invite-to-trip-email'
 import { buildFirestoreDeps, processSafetyItineraries } from './safety-itinerary'
@@ -118,6 +119,32 @@ export const updateChatMetadataOnMessageCreate = onDocumentCreated(
         content: messageData.content,
         createdAt: messageData.createdAt,
       },
+      deps
+    )
+  }
+)
+
+// ---------------------------------------------------------------------------
+// Chat notifications
+// ---------------------------------------------------------------------------
+
+export const sendChatNotificationOnMessageCreate = onDocumentCreated(
+  'trips/{tripId}/messages/{messageId}',
+  async (event) => {
+    const { tripId } = event.params
+    const messageData = event.data?.data()
+    if (!messageData) return
+
+    const db = admin.firestore()
+    const messaging = admin.messaging()
+    const deps = buildChatNotificationDeps(db, messaging, tripId)
+    await processChatNotification(
+      {
+        userId: messageData.userId,
+        userName: messageData.userName,
+        type: messageData.type,
+      },
+      tripId,
       deps
     )
   }

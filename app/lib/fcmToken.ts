@@ -17,8 +17,14 @@ export async function registerFcmToken(userId: string): Promise<void> {
     const vapidKey = import.meta.env.VITE_FIREBASE_FCM_VAPID_KEY
     if (!vapidKey) return
 
+    const swRegistration =
+      'serviceWorker' in navigator
+        ? await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        : undefined
+
     const token = await getToken(messaging, {
-      vapidKey: vapidKey,
+      vapidKey,
+      serviceWorkerRegistration: swRegistration,
     })
 
     if (!token) return

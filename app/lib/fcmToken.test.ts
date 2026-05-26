@@ -40,6 +40,10 @@ describe('registerFcmToken', () => {
 
     vi.stubEnv('VITE_FIREBASE_FCM_VAPID_KEY', 'test-vapid-key')
     vi.stubGlobal('Notification', { permission: 'granted' })
+    vi.stubGlobal('navigator', {
+      ...globalThis.navigator,
+      serviceWorker: { register: vi.fn().mockResolvedValue('mock-sw-registration') },
+    })
   })
 
   afterEach(() => {
@@ -83,6 +87,7 @@ describe('registerFcmToken', () => {
 
     expect(mockGetToken).toHaveBeenCalledWith('mock-messaging', {
       vapidKey: 'test-vapid-key',
+      serviceWorkerRegistration: 'mock-sw-registration',
     })
     expect(mockDoc).toHaveBeenCalledWith('mock-db', 'users', 'user-1')
     expect(mockArrayUnion).toHaveBeenCalledWith('fcm-token-abc')
