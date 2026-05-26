@@ -9,6 +9,7 @@ import useAuth from '~/contexts/auth/useAuth'
 import { createSystemMessage } from '~/lib/chat'
 import { formattedDate, formattedDateRange } from '~/lib/date'
 import { useScreenSize } from '~/lib/use-screen-size'
+import { useHasUnreadChat } from '~/lib/useHasUnreadChat'
 import { cn } from '~/lib/utils'
 import { useCreateChatMessage, useTripMembersQuery, useUpdateTrip } from '~/services/trips'
 import type { Trip } from '~/types/Trip'
@@ -34,6 +35,7 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
   const { isLargeBreakpoint } = useScreenSize()
 
   const { user } = useAuth()
+  const hasUnread = useHasUnreadChat(trip.tripId)
 
   const { mutateAsync: updateTripAsync } = useUpdateTrip(trip.tripId)
   const { mutateAsync: sendMessage } = useCreateChatMessage()
@@ -125,7 +127,7 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
   return (
     <div
       className={cn(
-        'focus:ring-ring flex w-full flex-col gap-6 rounded-lg border p-4 transition-colors duration-300 lg:flex-row',
+        'focus:ring-ring relative flex w-full flex-col gap-6 rounded-lg border p-4 transition-colors duration-300 lg:flex-row',
         {
           'cursor-initial': isPending,
           'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer': !isPending,
@@ -134,6 +136,12 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
       tabIndex={0}
       onClick={() => (isPending ? null : navigate(`/trips/${trip.tripId}`))}
     >
+      {hasUnread && !isPending && (
+        <span
+          data-testid="tripcard-unread-badge"
+          className="bg-primary absolute top-2 right-2 z-10 h-3 w-3 rounded-full"
+        />
+      )}
       <div className="relative w-full flex-1 lg:w-2/5">
         {showRemaining && (
           <div className="absolute top-2 left-2 z-10 text-xs">
