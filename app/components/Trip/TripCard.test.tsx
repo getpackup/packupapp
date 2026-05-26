@@ -23,7 +23,7 @@ vi.mock('~/lib/useIsAnonymous', () => ({
 const { mockUseHasUnreadChat } = vi.hoisted(() => ({
   mockUseHasUnreadChat: vi.fn(() => false),
 }))
-vi.mock('../../lib/useHasUnreadChat', () => ({
+vi.mock('~/lib/useHasUnreadChat', () => ({
   useHasUnreadChat: mockUseHasUnreadChat,
 }))
 
