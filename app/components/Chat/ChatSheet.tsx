@@ -217,7 +217,7 @@ function ChatSheet({ trip, users, compact, open, onOpenChange }: ChatSheetProps)
           </Button>
         )}
       </SheetTrigger>
-      <SheetContent className="gap-0">
+      <SheetContent className="w-full gap-0 lg:w-auto">
         <SheetHeader className="border-b">
           <SheetTitle>Trip Chat</SheetTitle>
           <SheetDescription>
