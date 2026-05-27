@@ -20,6 +20,7 @@ This is a **React Router v7** application with server-side rendering using a ful
 - **Zustand** for client-side state management
 - **Tailwind CSS v4** + **Radix UI** for styling and components
 - **TypeScript** throughout
+- **React Hook Form** for form management with **Zod** for schema validation
 
 ### Project Structure
 - `app/routes/` - File-based routing with React Router v7
