@@ -60,7 +60,7 @@ export const action: ActionFunction = async ({ request }) => {
               },
             },
           ],
-        })
+        }).catch((err) => console.error('Failed to post to Slack:', err))
       }
       break
     }

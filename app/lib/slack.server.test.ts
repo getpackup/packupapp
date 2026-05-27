@@ -53,4 +53,10 @@ describe('postToSlack', () => {
     mockFetch.mockRejectedValue(new Error('Network error'))
     await expect(postToSlack('#feedback', { text: 'hello' })).rejects.toThrow('Network error')
   })
+
+  it('throws when SLACK_BOT_TOKEN is not set', async () => {
+    delete process.env.SLACK_BOT_TOKEN
+    await expect(postToSlack('#feedback', { text: 'hello' })).rejects.toThrow('SLACK_BOT_TOKEN is not set')
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
 })
