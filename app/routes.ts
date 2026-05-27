@@ -22,6 +22,7 @@ export default [
   route('resource/toggle-theme', 'routes/resource.toggle-theme.tsx'),
   route('resource/send-trip-invitation', 'routes/resource.send-trip-invitation.tsx'),
   route('resource/send-friend-request', 'routes/resource.send-friend-request.tsx'),
+  route('resource/send-feedback', 'routes/resource.send-feedback.tsx'),
   route('resource/send-signin-email', 'routes/resource.send-signin-email.tsx'),
   route('resource/create-checkout-session', 'routes/resource.create-checkout-session.tsx'),
   route('resource/create-portal-session', 'routes/resource.create-portal-session.tsx'),
