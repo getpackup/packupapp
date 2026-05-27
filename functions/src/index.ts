@@ -163,8 +163,8 @@ export const addIdToPackingListItemOnCreate = onDocumentCreated(
 export const newUserSignupPostToSlack = onDocumentCreated('users/{documentId}', async (event) => {
   const newUserData = event.data?.data()
   const isAnonymous = newUserData?.isAnonymous
-  const displayName = escapeSlackMrkdwn((newUserData?.displayName as string | undefined)?.trim() || '—')
-  const email = escapeSlackMrkdwn((newUserData?.email as string | undefined)?.trim() || '—')
+  const displayName = (newUserData?.displayName as string | undefined)?.trim() || '—'
+  const email = (newUserData?.email as string | undefined)?.trim() || '—'
   const userType = isAnonymous ? 'Anonymous' : 'Registered'
   const fallbackText = isAnonymous
     ? 'New :packup: user signup (Anonymous)!'
@@ -180,8 +180,8 @@ export const newUserSignupPostToSlack = onDocumentCreated('users/{documentId}', 
       {
         type: 'section',
         fields: [
-          { type: 'mrkdwn', text: `*Name*\n${displayName}` },
-          { type: 'mrkdwn', text: `*Email*\n${email}` },
+          { type: 'mrkdwn', text: `*Name*\n${escapeSlackMrkdwn(displayName)}` },
+          { type: 'mrkdwn', text: `*Email*\n${escapeSlackMrkdwn(email)}` },
           { type: 'mrkdwn', text: `*Type*\n${userType}` },
         ],
       },
