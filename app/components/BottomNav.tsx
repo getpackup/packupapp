@@ -175,7 +175,7 @@ export function BottomNav({ className }: BottomNavProps) {
                     )}
                     {!isAnonymous && user?.createdAt && (
                       <span className="text-muted-foreground text-xs font-normal">
-                        Joined {format(user.createdAt.toDate(), 'MMMM yyyy')}
+                        Joined {format(user.createdAt.toDate(), 'MMMM do, yyyy')}
                       </span>
                     )}
                   </div>

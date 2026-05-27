@@ -97,7 +97,7 @@ function FriendCard({ friendship, currentUid }: { friendship: Friendship; curren
       <div className="flex items-center gap-2">
         {friendship?.respondedAt && (
           <span className="text-muted-foreground text-xs font-normal">
-            Friends since {format(friendship.respondedAt.toDate(), 'MMMM dd, yyyy')}
+            Friends since {format(friendship.respondedAt.toDate(), 'MMMM do, yyyy')}
           </span>
         )}
 

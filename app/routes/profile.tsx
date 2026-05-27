@@ -465,7 +465,7 @@ export default function Profile() {
                           on Packup
                         </TooltipTrigger>
                         <TooltipContent>
-                          Joined {format(user?.createdAt?.toDate(), 'MMMM yyyy')}
+                          Joined {format(user?.createdAt?.toDate(), 'MMMM do, yyyy', {})}
                         </TooltipContent>
                       </Tooltip>
                     )}

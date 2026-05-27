@@ -69,6 +69,11 @@ This is a **React Router v7** application with server-side rendering using a ful
 - Custom animations using Framer Motion
 - Responsive design with mobile-first breakpoints and conditional rendering, using the `~/lib/use-screen-size` hook for JS-based breakpoint detection to match tailwind breakpoints
 
+### Firebase Utilities
+
+- **Client-side** (`~/firebase/config`): exports `firebaseAuth`, `firestoreDb`, `firebaseStorage`, and `getFirebaseMessaging`. Use in components and client-side hooks. Never import in server-only resource routes.
+- **Server-side** (`~/firebase/admin`): exports `getFirebaseAdmin()`, which initializes and returns the Firebase Admin app (singleton). Use in resource route actions that need the Admin SDK (e.g. `getAuth`, `getFirestore` from `firebase-admin`). Never import in client-side code.
+
 ### Environment & Configuration
 - Environment variables prefixed with `VITE_` for client-side
 - Firebase config in `app/firebase/config.ts`

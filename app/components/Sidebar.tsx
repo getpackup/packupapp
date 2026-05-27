@@ -248,7 +248,7 @@ export function Sidebar({ className }: SidebarProps) {
                     </span>
                     {user?.createdAt && (
                       <span className="text-muted-foreground text-xs">
-                        Joined {format(user.createdAt.toDate(), 'MMMM yyyy')}
+                        Joined {format(user.createdAt.toDate(), 'MMMM do, yyyy')}
                       </span>
                     )}
                   </div>

@@ -1,10 +1,10 @@
 import { render, toPlainText } from '@react-email/render'
 import sgMail from '@sendgrid/mail'
-import { cert, getApps, initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
 import { type ActionFunction } from 'react-router'
 
 import { MagicLinkSigninEmail } from '~/emails/magic-link-signin'
+import { getFirebaseAdmin } from '~/firebase/admin'
 import extractFromRequest from '~/lib/extractFromRequest'
 import getObjectFromFormData from '~/lib/getObjectFromFormData'
 
@@ -31,33 +31,7 @@ export const action: ActionFunction = async ({ request }) => {
       })
     }
 
-    // Initialize Firebase Admin
-    // Try individual env vars first (recommended for Netlify), fallback to base64 credential
-    const apps = getApps()
-    let app
-    if (apps.length > 0) {
-      app = apps[0]
-    } else if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
-      app = initializeApp({
-        credential: cert({
-          projectId: process.env.VITE_FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        }),
-      })
-    } else if (process.env.VITE_FIREBASE_ADMIN_CREDENTIAL) {
-      // Fallback to base64-encoded credential for backwards compatibility
-      const base64Credential = process.env.VITE_FIREBASE_ADMIN_CREDENTIAL
-      const decodedCredential = Buffer.from(base64Credential, 'base64').toString('utf-8')
-      const credential = JSON.parse(decodedCredential)
-      app = initializeApp({ credential: cert(credential) })
-    } else {
-      throw new Error(
-        'Firebase Admin credentials not configured. Set FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY, or VITE_FIREBASE_ADMIN_CREDENTIAL.'
-      )
-    }
-
-    const auth = getAuth(app)
+    const auth = getAuth(getFirebaseAdmin())
 
     const url = new URL(request.url)
     const baseUrl = url.origin

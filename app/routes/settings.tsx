@@ -1,3 +1,8 @@
+import { format } from 'date-fns'
+import { LogOut, UserMinus } from 'lucide-react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router'
+
 import { ChatNotificationsToggle } from '~/components/ChatNotificationsToggle'
 import { EmergencyContacts } from '~/components/EmergencyContacts'
 import { FriendRequestEmailToggle } from '~/components/FriendRequestEmailToggle'
@@ -6,7 +11,10 @@ import PageHeader from '~/components/PageHeader'
 import { SafetyItineraryToggle } from '~/components/SafetyItineraryToggle'
 import { SoundsToggle } from '~/components/SoundsToggle'
 import { ThemeToggle } from '~/components/ThemeToggle'
+import { Button } from '~/components/ui/button'
 import WeightUnitPreference from '~/components/WeightUnitPreference'
+import { useAuth } from '~/contexts/auth/useAuth'
+import { firebaseAuth } from '~/firebase/config'
 
 import type { Route } from './+types/home'
 
@@ -35,11 +43,29 @@ function PreferenceRow({
 }
 
 export default function Settings() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  async function handleLogoutAll() {
+    if (!user?.uid) return
+    setIsLoggingOut(true)
+    try {
+      const formData = new FormData()
+      formData.append('uid', user.uid)
+      await fetch('/resource/logout-all', { method: 'POST', body: formData })
+      await firebaseAuth.signOut()
+      navigate('/')
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
+
   return (
     <>
       <PageHeader crumbs={[{ label: 'Settings', href: '/settings' }]} />
-      <PageContent>
-        <section className="mb-16">
+      <PageContent className="space-y-16">
+        <section>
           <h2 className="mb-2 text-lg font-bold">Preferences</h2>
           <div className="divide-border divide-y">
             <PreferenceRow label="Display Theme" description="Switch between light and dark mode">
@@ -56,7 +82,7 @@ export default function Settings() {
             </PreferenceRow>
           </div>
         </section>
-        <section className="mb-16">
+        <section>
           <h2 className="mb-2 text-lg font-bold">Emails</h2>
           <div className="divide-border divide-y">
             <PreferenceRow
@@ -74,7 +100,7 @@ export default function Settings() {
           </div>
         </section>
 
-        <section className="mb-16">
+        <section>
           <h2 className="mb-2 text-lg font-bold">Notifications</h2>
           <div className="divide-border divide-y">
             <PreferenceRow
@@ -87,6 +113,37 @@ export default function Settings() {
         </section>
 
         <EmergencyContacts />
+
+        <section>
+          <h2 className="mb-2 text-lg font-bold">Account</h2>
+          {user?.createdAt && (
+            <p className="text-muted-foreground text-sm">
+              Packup member since {format(user.createdAt.toDate(), 'MMMM do, yyyy')}
+            </p>
+          )}
+          <PreferenceRow
+            label="Log out everywhere"
+            description="Logs you out of your account on all devices that you may be signed in on."
+          >
+            <div>
+              <Button variant="outline" onClick={handleLogoutAll} disabled={isLoggingOut}>
+                <LogOut className="size-4" />
+                {isLoggingOut ? 'Logging out…' : 'Log out'}
+              </Button>
+            </div>
+          </PreferenceRow>
+          <PreferenceRow
+            label="Delete Account"
+            description="Permanently delete your account and all associated data."
+          >
+            <div>
+              <Button variant="outline" onClick={() => navigate('/account-delete')}>
+                <UserMinus className="size-4" />
+                Request Deletion
+              </Button>
+            </div>
+          </PreferenceRow>
+        </section>
       </PageContent>
     </>
   )

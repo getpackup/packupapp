@@ -35,11 +35,7 @@ type ManageTagsDialogProps = {
   children: React.ReactNode
 }
 
-function ManageTagsDialog({
-  userId,
-  currentTags,
-  children,
-}: ManageTagsDialogProps) {
+function ManageTagsDialog({ userId, currentTags, children }: ManageTagsDialogProps) {
   const [selected, setSelected] = useState<string[]>(currentTags)
   const { mutateAsync: updateCategories, isPending } = useUpdateGearClosetCategories(userId)
 
@@ -59,7 +55,7 @@ function ManageTagsDialog({
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-125">
         <DialogHeader>
           <DialogTitle>Manage tags</DialogTitle>
           <DialogDescription>
@@ -70,7 +66,7 @@ function ManageTagsDialog({
         <div className="max-h-80 space-y-4 overflow-y-auto py-2">
           {tagGroups.map((group) => (
             <div key={group.label}>
-              <p className="text-muted-foreground mb-2 text-xs font-semibold uppercase tracking-wide">
+              <p className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
                 {group.label}
               </p>
               <div className="grid grid-cols-2 gap-3">
