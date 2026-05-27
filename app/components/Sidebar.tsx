@@ -273,10 +273,6 @@ export function Sidebar({ className }: SidebarProps) {
                         </Link>
                       </DropdownMenuItem>
                     ))}
-                  <DropdownMenuItem onClick={() => setIsFeedbackOpen(true)}>
-                    <MessageSquareIcon />
-                    Feedback
-                  </DropdownMenuItem>
                 </DropdownMenuGroup>
               ) : (
                 <DropdownMenuGroup>
@@ -288,12 +284,12 @@ export function Sidebar({ className }: SidebarProps) {
                       </Link>
                     </DropdownMenuItem>
                   ))}
-                  <DropdownMenuItem onClick={() => setIsFeedbackOpen(true)}>
-                    <MessageSquareIcon />
-                    Feedback
-                  </DropdownMenuItem>
                 </DropdownMenuGroup>
               )}
+              <DropdownMenuItem onClick={() => setIsFeedbackOpen(true)}>
+                <MessageSquareIcon />
+                Feedback
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} variant="destructive">
                 <LogOut />

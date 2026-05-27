@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useFetcher } from 'react-router'
 
-import { useFeedbackModalState } from '~/contexts/globalState'
 import { useAuth } from '~/contexts/auth/useAuth'
+import { useFeedbackModalState } from '~/contexts/globalState'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
 
@@ -16,6 +16,9 @@ import {
 
 const EMOTIONS = ['😍', '👋', '😭'] as const
 const CATEGORIES = ['Bug', 'Idea', 'Help', 'Other'] as const
+
+const inputClassName =
+  'border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-1 focus-visible:outline-none'
 
 export function FeedbackModal() {
   const { isFeedbackOpen, setIsFeedbackOpen } = useFeedbackModalState()
@@ -76,12 +79,11 @@ export function FeedbackModal() {
               </label>
               <textarea
                 id="feedback-message"
-                aria-label="Message"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="What's on your mind?"
                 rows={4}
-                className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-1 focus-visible:outline-none"
+                className={inputClassName}
               />
             </div>
 
@@ -142,7 +144,7 @@ export function FeedbackModal() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email (optional)"
-                  className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-1 focus-visible:outline-none"
+                  className={inputClassName}
                 />
               </div>
             )}
