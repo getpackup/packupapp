@@ -1,7 +1,6 @@
 import { format } from 'date-fns'
 import {
   EllipsisVertical,
-  HelpCircleIcon,
   Loader2,
   LogOut,
   MapIcon,
@@ -21,7 +20,7 @@ import { animated } from 'react-spring'
 
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { useAuth } from '~/contexts/auth/useAuth'
-import { useSidebarState } from '~/contexts/globalState'
+import { useFeedbackModalState, useSidebarState } from '~/contexts/globalState'
 import { firebaseAuth } from '~/firebase/config'
 import useBoop from '~/lib/useBoop'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
@@ -47,6 +46,7 @@ export function Sidebar({ className }: SidebarProps) {
   const { user, setUser } = useAuth()
   const isAnonymous = useIsAnonymous()
   const { isSidebarCollapsed, setIsSidebarCollapsed } = useSidebarState()
+  const { setIsFeedbackOpen } = useFeedbackModalState()
   const [nextStyle, triggerNext] = useBoop({ x: 2 }) as [any, () => void]
   const [animatingItem, setAnimatingItem] = useState<string | null>(null)
   const { data: pendingRequests } = usePendingFriendRequestsQuery(user?.uid ?? '')
@@ -76,8 +76,6 @@ export function Sidebar({ className }: SidebarProps) {
   const bottomItems = [
     { icon: User, label: 'Profile', href: '/profile' },
     { icon: Settings, label: 'Settings', href: '/settings' },
-    { icon: HelpCircleIcon, label: 'Support', href: '/support' },
-    { icon: MessageSquareIcon, label: 'Feedback', href: '/feedback' },
   ]
 
   const isActive = (href: string) => {
@@ -275,6 +273,10 @@ export function Sidebar({ className }: SidebarProps) {
                         </Link>
                       </DropdownMenuItem>
                     ))}
+                  <DropdownMenuItem onClick={() => setIsFeedbackOpen(true)}>
+                    <MessageSquareIcon />
+                    Feedback
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
               ) : (
                 <DropdownMenuGroup>
@@ -286,6 +288,10 @@ export function Sidebar({ className }: SidebarProps) {
                       </Link>
                     </DropdownMenuItem>
                   ))}
+                  <DropdownMenuItem onClick={() => setIsFeedbackOpen(true)}>
+                    <MessageSquareIcon />
+                    Feedback
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
               )}
               <DropdownMenuSeparator />

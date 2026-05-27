@@ -12,6 +12,8 @@ type GlobalState = {
   soundsEnabled: boolean
   setSoundsEnabled: (soundsEnabled: boolean) => void
   toggleSounds: () => void
+  isFeedbackOpen: boolean
+  setIsFeedbackOpen: (isFeedbackOpen: boolean) => void
 }
 
 const createMemoryStorage = () => {
@@ -48,10 +50,18 @@ const useGlobalState = create<GlobalState>()(
       soundsEnabled: true,
       setSoundsEnabled: (soundsEnabled) => set({ soundsEnabled }),
       toggleSounds: () => set({ soundsEnabled: !get().soundsEnabled }),
+      isFeedbackOpen: false,
+      setIsFeedbackOpen: (isFeedbackOpen) => set({ isFeedbackOpen }),
     }),
     {
       name: 'packup-global-state',
       storage: storageOption,
+      partialize: (state) => ({
+        isSidebarCollapsed: state.isSidebarCollapsed,
+        activePackingListFilter: state.activePackingListFilter,
+        packingListSearchValue: state.packingListSearchValue,
+        soundsEnabled: state.soundsEnabled,
+      }),
     }
   )
 )
@@ -89,6 +99,15 @@ export const useSoundsState = () => {
       soundsEnabled: state.soundsEnabled,
       setSoundsEnabled: state.setSoundsEnabled,
       toggleSounds: state.toggleSounds,
+    }))
+  )
+}
+
+export const useFeedbackModalState = () => {
+  return useGlobalState(
+    useShallow((state) => ({
+      isFeedbackOpen: state.isFeedbackOpen,
+      setIsFeedbackOpen: state.setIsFeedbackOpen,
     }))
   )
 }

@@ -8,19 +8,18 @@ import { useForegroundChatNotifications } from '~/lib/useForegroundChatNotificat
 import { isAuth } from '~/services/auth'
 
 import { BottomNav } from './BottomNav'
+import { FeedbackModal } from './FeedbackModal'
 import { Sidebar } from './Sidebar'
 
 const pageNameMap = (id?: string) => ({
   '/': 'Home',
   '/signin': 'Sign In',
   '/signup': 'Sign Up',
-  '/feedback': 'Feedback',
   '/friends': 'Friends',
   '/gear-closet': 'Gear Closet',
   '/profile': 'Profile',
   '/settings': 'Settings',
   '/shopping-list': 'Shopping List',
-  '/support': 'Support',
   '/templates': 'Templates',
   '/trips': 'Trips',
   [`/trips/${id}`]: `Trip By ID: ${id}`,
@@ -66,6 +65,7 @@ export default function AuthWrapper() {
           <Outlet />
         </main>
         <BottomNav className="md:hidden" />
+        <FeedbackModal />
       </div>
     </AuthProvider>
   )

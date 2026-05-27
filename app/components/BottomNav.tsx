@@ -1,6 +1,5 @@
 import { format } from 'date-fns'
 import {
-  HelpCircleIcon,
   Loader2,
   LogOut,
   MapIcon,
@@ -19,6 +18,7 @@ import { Link, useLocation, useNavigate } from 'react-router'
 
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { useAuth } from '~/contexts/auth/useAuth'
+import { useFeedbackModalState } from '~/contexts/globalState'
 import { firebaseAuth } from '~/firebase/config'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
@@ -46,8 +46,6 @@ const moreItems = [
   { icon: UsersIcon, label: 'Friends', href: '/friends' },
   { icon: User, label: 'Profile', href: '/profile' },
   { icon: Settings, label: 'Settings', href: '/settings' },
-  { icon: HelpCircleIcon, label: 'Support', href: '/support' },
-  { icon: MessageSquareIcon, label: 'Feedback', href: '/feedback' },
 ]
 
 interface BottomNavProps {
@@ -60,6 +58,7 @@ export function BottomNav({ className }: BottomNavProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const { setIsFeedbackOpen } = useFeedbackModalState()
   const { data: pendingRequests } = usePendingFriendRequestsQuery(user?.uid ?? '')
 
   const isActive = (href: string) => {
@@ -221,6 +220,16 @@ export function BottomNav({ className }: BottomNavProps) {
                     </Link>
                   </DrawerClose>
                 ))}
+              <button
+                onClick={() => {
+                  setDrawerOpen(false)
+                  setIsFeedbackOpen(true)
+                }}
+                className="text-foreground hover:bg-sidebar-accent flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors"
+              >
+                <MessageSquareIcon className="size-5" />
+                Feedback
+              </button>
             </div>
             <Separator />
             <div className="p-2">
