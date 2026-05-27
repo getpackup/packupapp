@@ -17,9 +17,12 @@ function buildSlackText(fields: SendFeedbackBody): string {
   const { message, emotion, category, isAnonymous, email, userDisplayName, userUsername, userEmail } = fields
   const isAnon = isAnonymous === 'true'
 
-  const identity = isAnon
-    ? `*Anonymous User*${email ? `\nEmail: ${email}` : ''}`
-    : `*${userDisplayName}* (@${userUsername})\nEmail: ${userEmail}`
+  let identity: string
+  if (isAnon) {
+    identity = email ? `*Anonymous User*\nEmail: ${email}` : `*Anonymous User*`
+  } else {
+    identity = `*${userDisplayName}* (@${userUsername})\nEmail: ${userEmail}`
+  }
 
   return `${emotion} *${category}* feedback\n\n${message}\n\n---\n${identity}`
 }

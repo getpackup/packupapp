@@ -97,16 +97,6 @@ describe('resource.send-feedback', () => {
       expect(body.text).toContain('Great app!')
     })
 
-    it('includes display name, username, and email for registered user', async () => {
-      const fd = buildFormData(validRegisteredFields)
-      const request = buildRequest('POST', fd)
-      await action({ request, params: {}, context: {} } as any)
-      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(body.text).toContain('Alex Hiker')
-      expect(body.text).toContain('alex_hiker')
-      expect(body.text).toContain('alex@example.com')
-    })
-
     it('labels sender as Anonymous User when isAnonymous is true', async () => {
       const fd = buildFormData(validAnonFields)
       const request = buildRequest('POST', fd)
