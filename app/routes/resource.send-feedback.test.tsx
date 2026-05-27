@@ -40,8 +40,8 @@ const validAnonFields = {
 describe('resource.send-feedback', () => {
   beforeEach(() => {
     mockFetch.mockReset()
-    mockFetch.mockResolvedValue(new Response(null, { status: 200 }))
-    process.env.SLACK_FEEDBACK_WEBHOOK_URL = 'https://hooks.slack.com/test-webhook'
+    mockFetch.mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }))
+    process.env.SLACK_BOT_TOKEN = 'xoxb-test-token'
   })
 
   describe('action', () => {
@@ -87,7 +87,7 @@ describe('resource.send-feedback', () => {
       expect(response.status).toBe(200)
       expect(mockFetch).toHaveBeenCalledTimes(1)
       const [url, init] = mockFetch.mock.calls[0]
-      expect(url).toBe('https://hooks.slack.com/test-webhook')
+      expect(url).toBe('https://slack.com/api/chat.postMessage')
       const body = JSON.parse(init.body)
       expect(body.blocks[0].text.text).toBe('New Feedback Submission')
       const bodyStr = JSON.stringify(body.blocks)
@@ -147,7 +147,7 @@ describe('resource.send-feedback', () => {
 
     it('returns 500 when Slack returns non-ok response', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      mockFetch.mockResolvedValue(new Response(null, { status: 500 }))
+      mockFetch.mockResolvedValue(new Response(JSON.stringify({ ok: false, error: 'channel_not_found' }), { status: 200 }))
       const fd = buildFormData(validRegisteredFields)
       const request = buildRequest('POST', fd)
       const response = (await action({ request, params: {}, context: {} } as any)) as Response

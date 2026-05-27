@@ -1,15 +1,7 @@
 import { type ActionFunction } from 'react-router'
 import Stripe from 'stripe'
 
-async function postToSlack(payload: { text: string; blocks?: object[] }) {
-  const url = process.env.STRIPE_SLACK_WEBHOOK_URL
-  if (!url) return
-  await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-}
+import { postToSlack } from '~/lib/slack.server'
 
 export const action: ActionFunction = async ({ request }) => {
   if (request.method !== 'POST') {
@@ -57,7 +49,7 @@ export const action: ActionFunction = async ({ request }) => {
       if (session.mode === 'payment') {
         const amount = session.amount_total ? (session.amount_total / 100).toFixed(2) : '—'
         const currency = (session.currency ?? '').toUpperCase()
-        await postToSlack({
+        await postToSlack('#stripe-events', {
           text: `One-time payment completed: ${amount} ${currency}`,
           blocks: [
             {

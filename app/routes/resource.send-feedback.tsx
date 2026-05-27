@@ -1,6 +1,7 @@
 import { type ActionFunction } from 'react-router'
 
 import getObjectFromFormData from '~/lib/getObjectFromFormData'
+import { postToSlack } from '~/lib/slack.server'
 
 interface SendFeedbackBody {
   message: string
@@ -70,16 +71,7 @@ export const action: ActionFunction = async ({ request }) => {
       })
     }
 
-    const webhookUrl = process.env.SLACK_FEEDBACK_WEBHOOK_URL
-    const slackResponse = await fetch(webhookUrl!, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(buildSlackPayload(fields)),
-    })
-
-    if (!slackResponse.ok) {
-      throw new Error(`Slack webhook responded with ${slackResponse.status}`)
-    }
+    await postToSlack('#feedback', buildSlackPayload(fields))
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

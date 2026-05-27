@@ -1,6 +1,7 @@
 import { type ActionFunction } from 'react-router'
 
 import getObjectFromFormData from '~/lib/getObjectFromFormData'
+import { postToSlack } from '~/lib/slack.server'
 
 interface DeleteAccountBody {
   message?: string
@@ -75,16 +76,7 @@ export const action: ActionFunction = async ({ request }) => {
     const formData = await request.formData()
     const fields = getObjectFromFormData<DeleteAccountBody>(formData)
 
-    const webhookUrl = process.env.SLACK_FEEDBACK_WEBHOOK_URL
-    const slackResponse = await fetch(webhookUrl!, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(buildSlackPayload(fields)),
-    })
-
-    if (!slackResponse.ok) {
-      throw new Error(`Slack webhook responded with ${slackResponse.status}`)
-    }
+    await postToSlack('#feedback', buildSlackPayload(fields))
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
