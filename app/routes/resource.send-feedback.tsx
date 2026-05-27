@@ -13,18 +13,39 @@ interface SendFeedbackBody {
   userEmail?: string
 }
 
-function buildSlackText(fields: SendFeedbackBody): string {
-  const { message, emotion, category, isAnonymous, email, userDisplayName, userUsername, userEmail } = fields
-  const isAnon = isAnonymous === 'true'
-
-  let identity: string
-  if (isAnon) {
-    identity = email ? `*Anonymous User*\nEmail: ${email}` : `*Anonymous User*`
-  } else {
-    identity = `*${userDisplayName}* (@${userUsername})\nEmail: ${userEmail}`
+function buildIdentityText(fields: SendFeedbackBody): string {
+  const { isAnonymous, email, userDisplayName, userUsername, userEmail } = fields
+  if (isAnonymous === 'true') {
+    return email ? `Anonymous User\nEmail: ${email}` : 'Anonymous User'
   }
+  return `${userDisplayName} (@${userUsername})\nEmail: ${userEmail}`
+}
 
-  return `${emotion} *${category}* feedback\n\n${message}\n\n---\n${identity}`
+function buildSlackPayload(fields: SendFeedbackBody): Record<string, unknown> {
+  const { message, emotion, category } = fields
+  const identity = buildIdentityText(fields)
+
+  return {
+    text: `${emotion} ${category} feedback`,
+    blocks: [
+      {
+        type: 'header',
+        text: { type: 'plain_text', text: 'New Feedback Submission', emoji: true },
+      },
+      {
+        type: 'section',
+        text: { type: 'mrkdwn', text: `*Message*\n${message}` },
+      },
+      {
+        type: 'section',
+        fields: [
+          { type: 'mrkdwn', text: `*Emotion*\n${emotion}` },
+          { type: 'mrkdwn', text: `*Category*\n${category}` },
+          { type: 'mrkdwn', text: `*From*\n${identity}` },
+        ],
+      },
+    ],
+  }
 }
 
 export const action: ActionFunction = async ({ request }) => {
@@ -51,7 +72,7 @@ export const action: ActionFunction = async ({ request }) => {
     const slackResponse = await fetch(webhookUrl!, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: buildSlackText(fields) }),
+      body: JSON.stringify(buildSlackPayload(fields)),
     })
 
     if (!slackResponse.ok) {

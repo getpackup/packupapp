@@ -89,12 +89,14 @@ describe('resource.send-feedback', () => {
       const [url, init] = mockFetch.mock.calls[0]
       expect(url).toBe('https://hooks.slack.com/test-webhook')
       const body = JSON.parse(init.body)
-      expect(body.text).toContain('Alex Hiker')
-      expect(body.text).toContain('alex_hiker')
-      expect(body.text).toContain('alex@example.com')
-      expect(body.text).toContain('😍')
-      expect(body.text).toContain('Idea')
-      expect(body.text).toContain('Great app!')
+      expect(body.blocks[0].text.text).toBe('New Feedback Submission')
+      const bodyStr = JSON.stringify(body.blocks)
+      expect(bodyStr).toContain('Alex Hiker')
+      expect(bodyStr).toContain('alex_hiker')
+      expect(bodyStr).toContain('alex@example.com')
+      expect(bodyStr).toContain('😍')
+      expect(bodyStr).toContain('Idea')
+      expect(bodyStr).toContain('Great app!')
     })
 
     it('labels sender as Anonymous User when isAnonymous is true', async () => {
@@ -103,7 +105,7 @@ describe('resource.send-feedback', () => {
       const response = (await action({ request, params: {}, context: {} } as any)) as Response
       expect(response.status).toBe(200)
       const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(body.text).toContain('Anonymous User')
+      expect(JSON.stringify(body.blocks)).toContain('Anonymous User')
     })
 
     it('includes optional email for Anonymous User when provided', async () => {
@@ -111,8 +113,9 @@ describe('resource.send-feedback', () => {
       const request = buildRequest('POST', fd)
       await action({ request, params: {}, context: {} } as any)
       const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(body.text).toContain('Anonymous User')
-      expect(body.text).toContain('anon@example.com')
+      const bodyStr = JSON.stringify(body.blocks)
+      expect(bodyStr).toContain('Anonymous User')
+      expect(bodyStr).toContain('anon@example.com')
     })
 
     it('returns 500 when Slack webhook call fails', async () => {

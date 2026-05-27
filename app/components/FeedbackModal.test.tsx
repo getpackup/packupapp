@@ -129,33 +129,41 @@ describe('FeedbackModal', () => {
       })
     })
 
-    it('is disabled when no fields are filled', () => {
+    it('is always enabled (errors shown on submit instead)', () => {
       renderComponent()
-      expect(screen.getByRole('button', { name: /send feedback/i })).toBeDisabled()
-    })
-
-    it('is disabled when only message is filled', async () => {
-      const user = userEvent.setup()
-      renderComponent()
-      await user.type(screen.getByRole('textbox', { name: /message/i }), 'hello')
-      expect(screen.getByRole('button', { name: /send feedback/i })).toBeDisabled()
-    })
-
-    it('is disabled when message and emotion are filled but not category', async () => {
-      const user = userEvent.setup()
-      renderComponent()
-      await user.type(screen.getByRole('textbox', { name: /message/i }), 'hello')
-      await user.click(screen.getByRole('button', { name: /😍/ }))
-      expect(screen.getByRole('button', { name: /send feedback/i })).toBeDisabled()
-    })
-
-    it('is enabled when message, emotion, and category are all filled', async () => {
-      const user = userEvent.setup()
-      renderComponent()
-      await user.type(screen.getByRole('textbox', { name: /message/i }), 'hello')
-      await user.click(screen.getByRole('button', { name: /😍/ }))
-      await user.click(screen.getByRole('button', { name: /bug/i }))
       expect(screen.getByRole('button', { name: /send feedback/i })).toBeEnabled()
+    })
+  })
+
+  describe('validation errors', () => {
+    beforeEach(() => {
+      vi.mocked(useFeedbackModalState).mockReturnValue({
+        isFeedbackOpen: true,
+        setIsFeedbackOpen: mockSetIsFeedbackOpen,
+      })
+    })
+
+    it('shows message error when submitting with an empty message', async () => {
+      const user = userEvent.setup()
+      renderComponent()
+      await user.click(screen.getByRole('button', { name: /send feedback/i }))
+      expect(await screen.findByText(/at least 10 characters/i)).toBeInTheDocument()
+    })
+
+    it('shows message error when message is too short', async () => {
+      const user = userEvent.setup()
+      renderComponent()
+      await user.type(screen.getByRole('textbox', { name: /message/i }), 'hello')
+      await user.click(screen.getByRole('button', { name: /send feedback/i }))
+      expect(await screen.findByText(/at least 10 characters/i)).toBeInTheDocument()
+    })
+
+    it('does not show an error when the message is long enough', async () => {
+      const user = userEvent.setup()
+      renderComponent()
+      await user.type(screen.getByRole('textbox', { name: /message/i }), 'long enough message')
+      await user.click(screen.getByRole('button', { name: /send feedback/i }))
+      expect(screen.queryByText(/at least 10 characters/i)).not.toBeInTheDocument()
     })
   })
 
@@ -170,7 +178,7 @@ describe('FeedbackModal', () => {
     it('submits form data to /resource/send-feedback', async () => {
       const user = userEvent.setup()
       renderComponent()
-      await user.type(screen.getByRole('textbox', { name: /message/i }), 'test feedback')
+      await user.type(screen.getByRole('textbox', { name: /message/i }), 'this is my test feedback')
       await user.click(screen.getByRole('button', { name: /👋/ }))
       await user.click(screen.getByRole('button', { name: /idea/i }))
       await user.click(screen.getByRole('button', { name: /send feedback/i }))
