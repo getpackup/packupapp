@@ -10,6 +10,7 @@ import algoliasearch from 'algoliasearch'
 
 import { buildChatMetadataDeps, processChatMessage } from './chat-metadata'
 import { buildChatNotificationDeps, processChatNotification } from './send-chat-notifications'
+import { postSlackMessage } from './slack'
 import { renderSafetyItineraryHtml } from './render-safety-itinerary-email'
 import { renderInviteToTripHtml } from './render-invite-to-trip-email'
 import { buildFirestoreDeps, processSafetyItineraries } from './safety-itinerary'
@@ -49,21 +50,6 @@ const adminStatsDoc = admin.firestore().collection('admin').doc('stats')
 
 function escapeSlackMrkdwn(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
-
-async function postSlackIncomingWebhook(
-  webhookUrl: string,
-  payload: Record<string, unknown>
-): Promise<void> {
-  await fetch(webhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-}
-
-async function postToSlack(webhookUrl: string, text: string): Promise<void> {
-  await postSlackIncomingWebhook(webhookUrl, { text })
 }
 
 function tripDateRangeLabel(trip: Trip): string {
@@ -177,14 +163,30 @@ export const addIdToPackingListItemOnCreate = onDocumentCreated(
 export const newUserSignupPostToSlack = onDocumentCreated('users/{documentId}', async (event) => {
   const newUserData = event.data?.data()
   const isAnonymous = newUserData?.isAnonymous
+  const displayName = escapeSlackMrkdwn((newUserData?.displayName as string | undefined)?.trim() || '—')
+  const email = escapeSlackMrkdwn((newUserData?.email as string | undefined)?.trim() || '—')
+  const userType = isAnonymous ? 'Anonymous' : 'Registered'
+  const fallbackText = isAnonymous
+    ? 'New :packup: user signup (Anonymous)!'
+    : `New :packup: user signup from ${displayName}!`
 
-  const webhookUrl = process.env.SLACK_NEW_USER_NOTIFS_CHANNEL_WEBHOOK_URL
-  if (!webhookUrl) throw new Error('SLACK_NEW_USER_NOTIFS_CHANNEL_WEBHOOK_URL not configured')
-
-  await postToSlack(
-    webhookUrl,
-    `New :packup: user signup from ${isAnonymous ? 'Anonymous' : `${newUserData?.displayName} - ${newUserData?.email}`}!`
-  )
+  await postSlackMessage('#new-users', {
+    text: fallbackText,
+    blocks: [
+      {
+        type: 'header',
+        text: { type: 'plain_text', text: 'New User Signup', emoji: true },
+      },
+      {
+        type: 'section',
+        fields: [
+          { type: 'mrkdwn', text: `*Name*\n${displayName}` },
+          { type: 'mrkdwn', text: `*Email*\n${email}` },
+          { type: 'mrkdwn', text: `*Type*\n${userType}` },
+        ],
+      },
+    ],
+  })
 })
 
 export const updateAlgoliaOnUserCreate = onDocumentCreated('users/{documentId}', async (event) => {
@@ -254,10 +256,7 @@ export const newTripCreatedPostToSlack = onDocumentCreated('trips/{documentId}',
 
   const fallbackText = `New Trip Created: ${tripName} (${dateRange})`
 
-  const webhookUrl = process.env.SLACK_NEW_TRIP_NOTIFS_CHANNEL_WEBHOOK_URL
-  if (!webhookUrl) throw new Error('SLACK_NEW_TRIP_NOTIFS_CHANNEL_WEBHOOK_URL not configured')
-
-  await postSlackIncomingWebhook(webhookUrl, {
+  await postSlackMessage('#new-trips', {
     text: fallbackText,
     blocks: [
       {
