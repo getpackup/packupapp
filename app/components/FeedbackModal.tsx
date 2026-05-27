@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { useFetcher } from 'react-router'
 import * as z from 'zod'
 
@@ -11,6 +11,7 @@ import { cn } from '~/lib/utils'
 
 import { Button } from './ui/button'
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form'
 import { Textarea } from './ui/textarea'
 
 const EMOTIONS = ['😍', '👋', '😭'] as const
@@ -42,7 +43,6 @@ export function FeedbackModal() {
     mode: 'onSubmit',
   })
 
-  const { errors } = form.formState
   const isSubmitting = fetcher.state !== 'idle'
   const isSuccess = fetcher.data?.success === true
 
@@ -64,6 +64,7 @@ export function FeedbackModal() {
       if (user.username) formData.set('userUsername', user.username)
       if (user.email) formData.set('userEmail', user.email)
     }
+    formData.set('url', window.location.href)
     fetcher.submit(formData, { method: 'POST', action: '/resource/send-feedback' })
   }
 
@@ -85,103 +86,116 @@ export function FeedbackModal() {
             </DialogClose>
           </div>
         ) : (
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="feedback-message" className="text-sm font-medium">
-                Message
-              </label>
-              <Textarea
-                id="feedback-message"
-                {...form.register('message')}
-                placeholder="What's on your mind?"
-                rows={4}
-                autoFocus
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+              <FormField
+                control={form.control}
+                name="message"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Message</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="What's on your mind?"
+                        rows={4}
+                        autoFocus
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {errors.message && (
-                <p className="text-destructive text-sm">{errors.message.message}</p>
-              )}
-            </div>
 
-            <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium">How are you feeling?</span>
-              <Controller
+              <FormField
                 control={form.control}
                 name="emotion"
                 render={({ field }) => (
-                  <div className="flex gap-2">
-                    {EMOTIONS.map((e) => (
-                      <button
-                        key={e}
-                        type="button"
-                        aria-label={e}
-                        aria-pressed={field.value === e}
-                        onClick={() => field.onChange(e)}
-                        className={cn(
-                          'flex h-10 w-10 items-center justify-center rounded-lg border text-lg transition-colors',
-                          field.value === e
-                            ? 'border-primary bg-primary/10'
-                            : 'border-input hover:bg-muted'
-                        )}
-                      >
-                        {e}
-                      </button>
-                    ))}
-                  </div>
+                  <FormItem>
+                    <FormLabel>How are you feeling?</FormLabel>
+                    <div className="flex gap-2">
+                      {EMOTIONS.map((e) => (
+                        <button
+                          key={e}
+                          type="button"
+                          aria-label={e}
+                          aria-pressed={field.value === e}
+                          onClick={() => field.onChange(e)}
+                          className={cn(
+                            'flex h-10 w-10 items-center justify-center rounded-lg border text-lg transition-colors',
+                            field.value === e
+                              ? 'border-primary bg-primary/10'
+                              : 'border-input hover:bg-muted'
+                          )}
+                        >
+                          {e}
+                        </button>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
-            </div>
 
-            <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium">Category</span>
-              <Controller
+              <FormField
                 control={form.control}
                 name="category"
                 render={({ field }) => (
-                  <div className="flex flex-wrap gap-2">
-                    {CATEGORIES.map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        aria-label={c}
-                        aria-pressed={field.value === c}
-                        onClick={() => field.onChange(c)}
-                        className={cn(
-                          'rounded-lg border px-3 py-1.5 text-sm transition-colors',
-                          field.value === c
-                            ? 'border-primary bg-primary/10 font-medium'
-                            : 'border-input hover:bg-muted'
-                        )}
-                      >
-                        {c}
-                      </button>
-                    ))}
-                  </div>
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <div className="flex flex-wrap gap-2">
+                      {CATEGORIES.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          aria-label={c}
+                          aria-pressed={field.value === c}
+                          onClick={() => field.onChange(c)}
+                          className={cn(
+                            'rounded-lg border px-3 py-1.5 text-sm transition-colors',
+                            field.value === c
+                              ? 'border-primary bg-primary/10 font-medium'
+                              : 'border-input hover:bg-muted'
+                          )}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
-            </div>
 
-            {isAnonymous && (
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="feedback-email" className="text-sm font-medium">
-                  Email <span className="text-muted-foreground font-normal">(optional)</span>
-                </label>
-                <input
-                  id="feedback-email"
-                  type="email"
-                  {...form.register('email')}
-                  placeholder="Email (optional)"
-                  className={inputClassName}
+              {isAnonymous && (
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Email{' '}
+                        <span className="text-muted-foreground font-normal">(optional)</span>
+                      </FormLabel>
+                      <FormControl>
+                        <input
+                          type="email"
+                          {...field}
+                          placeholder="Email (optional)"
+                          className={inputClassName}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                {errors.email && (
-                  <p className="text-destructive text-sm">{errors.email.message}</p>
-                )}
-              </div>
-            )}
+              )}
 
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Sending...' : 'Send Feedback'}
-            </Button>
-          </form>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Sending...' : 'Send Feedback'}
+              </Button>
+            </form>
+          </Form>
         )}
       </DialogContent>
     </Dialog>

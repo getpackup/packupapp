@@ -11,6 +11,7 @@ interface SendFeedbackBody {
   userDisplayName?: string
   userUsername?: string
   userEmail?: string
+  url?: string
 }
 
 function buildIdentityText(fields: SendFeedbackBody): string {
@@ -22,7 +23,7 @@ function buildIdentityText(fields: SendFeedbackBody): string {
 }
 
 function buildSlackPayload(fields: SendFeedbackBody): Record<string, unknown> {
-  const { message, emotion, category } = fields
+  const { message, emotion, category, url } = fields
   const identity = buildIdentityText(fields)
 
   return {
@@ -42,6 +43,7 @@ function buildSlackPayload(fields: SendFeedbackBody): Record<string, unknown> {
           { type: 'mrkdwn', text: `*Emotion*\n${emotion}` },
           { type: 'mrkdwn', text: `*Category*\n${category}` },
           { type: 'mrkdwn', text: `*From*\n${identity}` },
+          ...(url ? [{ type: 'mrkdwn', text: `*Page*\n${url}` }] : []),
         ],
       },
     ],

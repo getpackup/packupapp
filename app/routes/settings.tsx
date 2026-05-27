@@ -86,13 +86,13 @@ export default function Settings() {
           <h2 className="mb-2 text-lg font-bold">Emails</h2>
           <div className="divide-border divide-y">
             <PreferenceRow
-              label="Safety Itinerary Email"
+              label="Safety Itinerary"
               description="Receive an email the day before your trip with details, members, and emergency contacts. You can disable this on a per-trip basis in Trip Settings as well."
             >
               <SafetyItineraryToggle />
             </PreferenceRow>
             <PreferenceRow
-              label="Friend Request Email"
+              label="Friend Request"
               description="Receive an email when someone sends you a friend request."
             >
               <FriendRequestEmailToggle />

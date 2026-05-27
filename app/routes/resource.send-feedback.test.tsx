@@ -118,6 +118,23 @@ describe('resource.send-feedback', () => {
       expect(bodyStr).toContain('anon@example.com')
     })
 
+    it('includes url in Slack payload when provided', async () => {
+      const fd = buildFormData({ ...validRegisteredFields, url: 'https://app.getpackup.com/trips/123' })
+      const request = buildRequest('POST', fd)
+      await action({ request, params: {}, context: {} } as any)
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(JSON.stringify(body.blocks)).toContain('https://app.getpackup.com/trips/123')
+    })
+
+    it('omits Page field from Slack payload when url is not provided', async () => {
+      const fd = buildFormData(validRegisteredFields)
+      const request = buildRequest('POST', fd)
+      await action({ request, params: {}, context: {} } as any)
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
+      const sectionFields = body.blocks[2].fields
+      expect(sectionFields.every((f: { text: string }) => !f.text.includes('*Page*'))).toBe(true)
+    })
+
     it('returns 500 when Slack webhook call fails', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockFetch.mockRejectedValue(new Error('Network error'))
