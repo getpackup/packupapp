@@ -1,5 +1,5 @@
 import { limit, where } from 'firebase/firestore'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 
 import { AnonymousUserBanner } from '~/components/AnonymousUserBanner'
@@ -28,22 +28,27 @@ export default function TripDetails({ params }: Route.ComponentProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const isAnonymous = useIsAnonymous()
   const { isMediumBreakpoint } = useScreenSize()
-  const chatOpen = searchParams.get('chat') === 'open'
+  const [isChatOpen, setIsChatOpen] = useState(() => searchParams.get('chat') === 'open')
+
+  useEffect(() => {
+    if (searchParams.get('chat') === 'open') {
+      setIsChatOpen(true)
+    }
+  }, [searchParams])
 
   const handleChatOpenChange = useCallback(
     (isOpen: boolean) => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev)
-          if (isOpen) {
-            next.set('chat', 'open')
-          } else {
+      setIsChatOpen(isOpen)
+      if (!isOpen) {
+        setSearchParams(
+          (prev) => {
+            const next = new URLSearchParams(prev)
             next.delete('chat')
-          }
-          return next
-        },
-        { replace: true }
-      )
+            return next
+          },
+          { replace: true }
+        )
+      }
     },
     [setSearchParams]
   )
@@ -98,7 +103,7 @@ export default function TripDetails({ params }: Route.ComponentProps) {
                   trip={trip}
                   users={users}
                   compact
-                  open={isMediumBreakpoint === false ? chatOpen : false}
+                  open={isMediumBreakpoint === false ? isChatOpen : false}
                   onOpenChange={handleChatOpenChange}
                 />
               )}
@@ -128,7 +133,7 @@ export default function TripDetails({ params }: Route.ComponentProps) {
                 <ChatSheet
                   trip={trip}
                   users={users}
-                  open={isMediumBreakpoint === true ? chatOpen : false}
+                  open={isMediumBreakpoint === true ? isChatOpen : false}
                   onOpenChange={handleChatOpenChange}
                 />
               )}
