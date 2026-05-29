@@ -3,6 +3,9 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
+vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn(() => ({})) }))
+vi.mock('~/firebase/admin', () => ({ getFirebaseAdmin: vi.fn(() => ({})) }))
+
 import { action, loader } from './resource.send-feedback'
 
 function buildFormData(fields: Record<string, string>) {
@@ -134,7 +137,7 @@ describe('resource.send-feedback', () => {
       const sectionFields = body.blocks[2].fields
       expect(sectionFields.every((f: { text: string }) => !f.text.includes('*Page*'))).toBe(true)
     })
-
+  })
 
   describe('loader', () => {
     it('returns 404', async () => {

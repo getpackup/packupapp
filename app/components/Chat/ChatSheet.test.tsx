@@ -33,7 +33,7 @@ vi.mock('react-router', async (importOriginal) => {
   return { ...actual, useParams: vi.fn(() => ({ id: 'trip-1' })) }
 })
 
-vi.mock('~/services/trips', () => ({
+vi.mock('~/services/chat', () => ({
   useTripChatMessagesQuery: vi.fn(() => ({
     data: [
       {
@@ -74,7 +74,7 @@ vi.mock('~/lib/pushPermission', () => ({
 
 import { useAuth } from '~/contexts/auth/useAuth'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
-import { useTripChatMessagesQuery } from '~/services/trips'
+import { useTripChatMessagesQuery } from '~/services/chat'
 import ChatSheet from './ChatSheet'
 
 const baseTripProps = {

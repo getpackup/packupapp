@@ -23,7 +23,7 @@ import {
 } from '~/components/ui/dropdown-menu'
 import useAuth from '~/contexts/auth/useAuth'
 import { cn } from '~/lib/utils'
-import { useDeleteChatMessage, useUpdateChatMessage } from '~/services/trips'
+import { useDeleteChatMessage, useUpdateChatMessage } from '~/services/chat'
 import type { ChatMessage } from '~/types/Chat'
 import type { User } from '~/types/User'
 

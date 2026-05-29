@@ -3,6 +3,9 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
+vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn(() => ({})) }))
+vi.mock('~/firebase/admin', () => ({ getFirebaseAdmin: vi.fn(() => ({})) }))
+
 import { action, loader } from './resource.delete-account'
 
 function buildFormData(fields: Record<string, string>) {
@@ -156,7 +159,7 @@ describe('resource.delete-account', () => {
         expect(blocksStr).toContain('Unknown user')
       })
     })
-
+  })
 
   describe('loader', () => {
     it('returns 404', async () => {

@@ -18,7 +18,8 @@ import {
 import { Form } from '~/components/ui/form'
 import useAuth from '~/contexts/auth/useAuth'
 import { activityLabelToKey } from '~/lib/gearFilterUtils'
-import { tripKeys, useGeneratePackingList, useUpdateTrip } from '~/services/trips'
+import { tripKeys } from '~/services/tripKeys'
+import { useGeneratePackingList, useUpdateTrip } from '~/services/trips'
 import type { ActivityTypes } from '~/types/GearItem'
 import type { Trip } from '~/types/Trip'
 

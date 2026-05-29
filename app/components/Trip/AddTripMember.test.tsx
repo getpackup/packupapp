@@ -26,6 +26,9 @@ vi.mock('~/contexts/auth/useAuth', () => ({
 
 vi.mock('~/services/trips', () => ({
   useUpdateTrip: vi.fn(() => ({ mutateAsync: vi.fn() })),
+}))
+
+vi.mock('~/services/chat', () => ({
   useCreateChatMessage: vi.fn(() => ({ mutateAsync: vi.fn() })),
 }))
 

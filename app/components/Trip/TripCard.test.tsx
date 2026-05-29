@@ -29,8 +29,11 @@ vi.mock('~/lib/useHasUnreadChat', () => ({
 
 vi.mock('~/services/trips', () => ({
   useUpdateTrip: vi.fn(() => ({ mutateAsync: vi.fn() })),
-  useCreateChatMessage: vi.fn(() => ({ mutateAsync: vi.fn() })),
   useTripMembersQuery: vi.fn(() => ({ data: [] })),
+}))
+
+vi.mock('~/services/chat', () => ({
+  useCreateChatMessage: vi.fn(() => ({ mutateAsync: vi.fn() })),
 }))
 
 vi.mock('~/lib/use-screen-size', () => ({

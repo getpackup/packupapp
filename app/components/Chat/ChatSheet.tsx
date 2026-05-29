@@ -26,7 +26,7 @@ import {
   useTripChatMessagesQuery,
   useTripChatReadStatusQuery,
   useUpdateTypingStatus,
-} from '~/services/trips'
+} from '~/services/chat'
 import type { Trip } from '~/types/Trip'
 import type { User } from '~/types/User'
 
