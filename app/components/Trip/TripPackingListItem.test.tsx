@@ -8,31 +8,20 @@ vi.mock('~/firebase/config', () => ({
   firestoreDb: {},
 }))
 
-vi.mock('~/lib/useIsAnonymous', () => ({
-  useIsAnonymous: vi.fn(),
-}))
-
 vi.mock('~/contexts/auth/useAuth', () => ({
   default: vi.fn(() => ({ user: { uid: 'user-1', isAnonymous: false } })),
   useAuth: vi.fn(() => ({ user: { uid: 'user-1', isAnonymous: false } })),
 }))
 
-vi.mock('~/contexts/globalState', () => ({
-  useSoundsState: vi.fn(() => ({ soundsEnabled: false })),
-}))
-
-const mockCreateShoppingListItemAsync = vi.fn()
-vi.mock('~/services/shoppingList', () => ({
-  useCreateShoppingListItem: vi.fn(() => ({
-    mutateAsync: mockCreateShoppingListItemAsync,
-  })),
-}))
-
-vi.mock('~/services/trips', () => ({
-  tripKeys: { byId: (id: string) => ['trip', id], members: (id: string) => ['members', id] },
-  useDeletePackingListItem: vi.fn(() => ({ mutateAsync: vi.fn() })),
-  useUpdatePackingListItem: vi.fn(() => ({ mutateAsync: vi.fn() })),
-}))
+vi.mock('@tanstack/react-query', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tanstack/react-query')>()
+  return {
+    ...actual,
+    useQueryClient: vi.fn(() => ({ getQueryData: vi.fn(() => undefined) })),
+    useQuery: vi.fn(() => ({ data: undefined, isLoading: false, error: null })),
+    useMutation: vi.fn(() => ({ mutateAsync: vi.fn(), mutate: vi.fn() })),
+  }
+})
 
 vi.mock('react-router', async () => {
   const actual = await vi.importActual<typeof import('react-router')>('react-router')
@@ -42,21 +31,9 @@ vi.mock('react-router', async () => {
   }
 })
 
-vi.mock('@tanstack/react-query', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@tanstack/react-query')>()
-  return {
-    ...actual,
-    useQueryClient: vi.fn(() => ({
-      getQueryData: vi.fn((key: string[]) => {
-        if (key[0] === 'trip')
-          return { tripId: 'trip-1', tripMembers: { 'user-1': { role: 'owner' } } }
-        return []
-      }),
-    })),
-    useQuery: vi.fn(() => ({ data: undefined, isLoading: false, error: null })),
-    useMutation: vi.fn(() => ({ mutateAsync: vi.fn(), mutate: vi.fn() })),
-  }
-})
+vi.mock('~/contexts/globalState', () => ({
+  useSoundsState: vi.fn(() => ({ soundsEnabled: false })),
+}))
 
 vi.mock('react-spring', () => ({
   animated: {
@@ -74,7 +51,29 @@ vi.mock('~/lib/useCheckboxSounds', () => ({
   useCheckboxSounds: vi.fn(() => ({ playActive: vi.fn(), playOn: vi.fn(), playOff: vi.fn() })),
 }))
 
-import { useIsAnonymous } from '~/lib/useIsAnonymous'
+const mockHandleSendToShoppingList = vi.fn()
+const mockSetShowAccountGate = vi.fn()
+
+const defaultHookReturn = {
+  trip: { tripId: 'trip-1', tripMembers: { 'user-1': { role: 'owner' } } } as any,
+  users: [],
+  constraints: [],
+  togglePacked: vi.fn(),
+  handleQuantityChange: vi.fn(),
+  handleMoveToOrFromGroupItems: vi.fn(),
+  handleToggleAssignee: vi.fn(),
+  handleDelete: vi.fn(),
+  handleSendToShoppingList: mockHandleSendToShoppingList,
+  handleSelection: vi.fn(),
+  showAccountGate: false,
+  setShowAccountGate: mockSetShowAccountGate,
+}
+
+vi.mock('~/services/usePackingListItem', () => ({
+  usePackingListItem: vi.fn(() => defaultHookReturn),
+}))
+
+import { usePackingListItem } from '~/services/usePackingListItem'
 import type { PackingListItem } from '~/types/PackingListItem'
 
 import TripPackingListItem from './TripPackingListItem'
@@ -93,7 +92,8 @@ const baseItem: PackingListItem = {
   created: { seconds: 0, nanoseconds: 0 } as any,
 }
 
-function renderItem() {
+function renderItem(hookOverrides = {}) {
+  vi.mocked(usePackingListItem).mockReturnValue({ ...defaultHookReturn, ...hookOverrides })
   return render(
     <MemoryRouter>
       <TripPackingListItem
@@ -107,8 +107,7 @@ function renderItem() {
 }
 
 describe('TripPackingListItem — Shopping List gate', () => {
-  it('shows Account Gate dialog when anonymous user clicks Send to Shopping List', async () => {
-    vi.mocked(useIsAnonymous).mockReturnValue(true)
+  it('calls handleSendToShoppingList when Send to Shopping List is clicked', async () => {
     renderItem()
 
     const menuButton = screen.getByRole('button', { name: '' })
@@ -116,42 +115,30 @@ describe('TripPackingListItem — Shopping List gate', () => {
 
     const sendItem = await screen.findByText('Send to Shopping List')
     await userEvent.click(sendItem)
+
+    expect(mockHandleSendToShoppingList).toHaveBeenCalled()
+  })
+
+  it('shows Account Gate dialog when showAccountGate is true', async () => {
+    renderItem({ showAccountGate: true })
 
     expect(
       await screen.findByText(
         'Create an account to build your shopping list across all your trips.'
       )
     ).toBeInTheDocument()
-
-    expect(mockCreateShoppingListItemAsync).not.toHaveBeenCalled()
   })
 
-  it('does not show Account Gate for registered users', async () => {
-    vi.mocked(useIsAnonymous).mockReturnValue(false)
-    renderItem()
-
-    const menuButton = screen.getByRole('button', { name: '' })
-    await userEvent.click(menuButton)
-
-    const sendItem = await screen.findByText('Send to Shopping List')
-    await userEvent.click(sendItem)
+  it('does not show Account Gate when showAccountGate is false', () => {
+    renderItem({ showAccountGate: false })
 
     expect(
       screen.queryByText('Create an account to build your shopping list across all your trips.')
     ).not.toBeInTheDocument()
-
-    expect(mockCreateShoppingListItemAsync).toHaveBeenCalled()
   })
 
   it('Account Gate dialog has "Create account" CTA linking to /signup', async () => {
-    vi.mocked(useIsAnonymous).mockReturnValue(true)
-    renderItem()
-
-    const menuButton = screen.getByRole('button', { name: '' })
-    await userEvent.click(menuButton)
-
-    const sendItem = await screen.findByText('Send to Shopping List')
-    await userEvent.click(sendItem)
+    renderItem({ showAccountGate: true })
 
     const link = await screen.findByRole('link', { name: /Create account/i })
     expect(link).toHaveAttribute('href', '/signup')
