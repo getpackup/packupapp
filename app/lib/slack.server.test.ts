@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import type { Firestore } from 'firebase-admin/firestore'
 
 const mockFetch = vi.fn()
@@ -13,11 +13,18 @@ const mockAdd = vi.fn().mockResolvedValue(undefined)
 const mockDb = { collection: vi.fn().mockReturnValue({ add: mockAdd }) } as unknown as Firestore
 
 describe('notifyTeam', () => {
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>
+
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.SLACK_BOT_TOKEN = 'xoxb-test-token'
     mockFetch.mockResolvedValue(okResponse())
     configureTeamNotifications({ db: mockDb })
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore()
   })
 
   describe('channel routing', () => {
@@ -291,18 +298,16 @@ describe('notifyTeam', () => {
     })
 
     it('logs the error with event name', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockFetch.mockRejectedValue(new Error('Network error'))
       await notifyTeam('user-signed-up', {
         displayName: 'Alice',
         email: 'alice@test.com',
         isAnonymous: false,
       })
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('user-signed-up'),
         expect.any(Error)
       )
-      consoleSpy.mockRestore()
     })
 
     it('calls onError callback if configured', async () => {

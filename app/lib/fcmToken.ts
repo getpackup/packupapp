@@ -3,19 +3,7 @@ import { getToken, isSupported, type Messaging } from 'firebase/messaging'
 
 import { firestoreDb, getFirebaseMessaging } from '~/firebase/config'
 
-const FCM_DEBUG_PREFIX = '[fcmToken]'
 const FCM_TOKEN_TIMEOUT_MS = 15_000
-
-function logFcmDebug(message: string, data?: unknown): void {
-  if (!import.meta.env.DEV) return
-
-  if (typeof data === 'undefined') {
-    console.log(`${FCM_DEBUG_PREFIX} ${message}`)
-    return
-  }
-
-  console.log(`${FCM_DEBUG_PREFIX} ${message}`, data)
-}
 
 function getTokenWithTimeout(messaging: Messaging, options: Parameters<typeof getToken>[1]) {
   return Promise.race([
@@ -43,8 +31,6 @@ export async function requestNotificationPermissionForFcm(): Promise<Notificatio
 
   const permission = await Notification.requestPermission()
 
-  logFcmDebug('Notification permission request completed', { permission })
-
   return permission
 }
 
@@ -65,31 +51,25 @@ export async function registerFcmToken(userId: string): Promise<void> {
     const supported = await isSupported()
 
     if (!supported) {
-      logFcmDebug('Messaging not supported in this browser')
       return
     }
 
     if (typeof Notification === 'undefined') {
-      logFcmDebug('Notification API is unavailable')
       return
     }
 
     if (Notification.permission !== 'granted') {
-      logFcmDebug('Notification permission is not granted', {
-        permission: Notification.permission,
-      })
       return
     }
 
     const messaging = await getFirebaseMessaging()
     if (!messaging) {
-      logFcmDebug('Firebase messaging instance is unavailable')
       return
     }
 
     const vapidKey = import.meta.env.VITE_FIREBASE_FCM_VAPID_KEY
     if (!vapidKey) {
-      logFcmDebug('Missing VITE_FIREBASE_FCM_VAPID_KEY')
+      console.error('Missing VITE_FIREBASE_FCM_VAPID_KEY')
       return
     }
 
@@ -97,12 +77,6 @@ export async function registerFcmToken(userId: string): Promise<void> {
       'serviceWorker' in navigator
         ? await navigator.serviceWorker.register('/firebase-messaging-sw.js')
         : undefined
-
-    logFcmDebug('Resolved messaging and service worker registration', {
-      hasServiceWorkerRegistration: Boolean(swRegistration),
-      permission: Notification.permission,
-      vapidKeyLength: vapidKey.length,
-    })
 
     let token: string
 
@@ -114,7 +88,6 @@ export async function registerFcmToken(userId: string): Promise<void> {
     } catch (error) {
       if (!shouldRetryAfterPushServiceError(error)) throw error
 
-      logFcmDebug('Push subscription failed, clearing existing subscription and retrying once')
       await clearExistingPushSubscription(swRegistration)
 
       token = await getTokenWithTimeout(messaging, {
@@ -124,22 +97,16 @@ export async function registerFcmToken(userId: string): Promise<void> {
     }
 
     if (!token) {
-      logFcmDebug('getToken returned an empty token')
       return
     }
 
     const userRef = doc(firestoreDb, 'users', userId)
     await updateDoc(userRef, { fcmTokens: arrayUnion(token) })
-    logFcmDebug('Successfully registered token to Firestore')
   } catch (error) {
     if (shouldRetryAfterPushServiceError(error)) {
-      logFcmDebug(
+      console.error(
         'Push service rejected subscription. Check VAPID/project alignment. In Brave, enable Use Google services for push messaging (brave://settings/privacy), then restart the browser.'
       )
-    }
-
-    if (import.meta.env.DEV) {
-      console.error(`${FCM_DEBUG_PREFIX} Failed to register FCM token`, error)
     }
     // Fail silently — token registration is best-effort
   }

@@ -70,7 +70,7 @@ export function FeedbackModal() {
 
   return (
     <Dialog open={isFeedbackOpen} onOpenChange={setIsFeedbackOpen}>
-      <DialogContent showCloseButton={!isSuccess}>
+      <DialogContent showCloseButton={!isSuccess} aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Share Feedback</DialogTitle>
         </DialogHeader>
@@ -95,12 +95,7 @@ export function FeedbackModal() {
                   <FormItem>
                     <FormLabel>Message</FormLabel>
                     <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="What's on your mind?"
-                        rows={4}
-                        autoFocus
-                      />
+                      <Textarea {...field} placeholder="What's on your mind?" rows={4} autoFocus />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -174,8 +169,7 @@ export function FeedbackModal() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Email{' '}
-                        <span className="text-muted-foreground font-normal">(optional)</span>
+                        Email <span className="text-muted-foreground font-normal">(optional)</span>
                       </FormLabel>
                       <FormControl>
                         <input
