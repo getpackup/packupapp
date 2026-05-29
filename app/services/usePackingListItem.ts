@@ -102,20 +102,6 @@ export function usePackingListItem(item: PackingListItem, tripId: string) {
     })
   }
 
-  const handleSelection = (
-    isMultiSelecting: boolean,
-    onItemSelection: (itemId: string, isShiftClick: boolean, isCommandClick: boolean) => void,
-    event?: React.MouseEvent
-  ) => {
-    if (isMultiSelecting) {
-      const isShiftClick = event?.shiftKey ?? false
-      const isCommandClick = (event?.metaKey ?? false) || (event?.ctrlKey ?? false)
-      onItemSelection(item.id, isShiftClick, isCommandClick)
-    } else {
-      togglePacked()
-    }
-  }
-
   return {
     trip,
     users,
@@ -126,7 +112,6 @@ export function usePackingListItem(item: PackingListItem, tripId: string) {
     handleToggleAssignee,
     handleDelete,
     handleSendToShoppingList,
-    handleSelection,
     showAccountGate,
     setShowAccountGate,
   }

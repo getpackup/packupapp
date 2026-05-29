@@ -262,36 +262,3 @@ describe('usePackingListItem — handleSendToShoppingList', () => {
   })
 })
 
-describe('usePackingListItem — handleSelection', () => {
-  it('calls onItemSelection when multi-selecting', async () => {
-    const onItemSelection = vi.fn()
-    const { result } = renderHook(() => usePackingListItem(baseItem, 'trip-1'))
-    await act(async () =>
-      result.current.handleSelection(true, onItemSelection, undefined)
-    )
-    expect(onItemSelection).toHaveBeenCalledWith('item-1', false, false)
-    expect(mockUpdatePackingListItemAsync).not.toHaveBeenCalled()
-  })
-
-  it('calls togglePacked (not onItemSelection) when not multi-selecting', async () => {
-    const onItemSelection = vi.fn()
-    const { result } = renderHook(() => usePackingListItem(baseItem, 'trip-1'))
-    await act(async () =>
-      result.current.handleSelection(false, onItemSelection, undefined)
-    )
-    expect(onItemSelection).not.toHaveBeenCalled()
-    expect(mockUpdatePackingListItemAsync).toHaveBeenCalledWith({
-      data: { id: 'item-1', isPacked: true },
-    })
-  })
-
-  it('passes shiftKey and metaKey to onItemSelection', async () => {
-    const onItemSelection = vi.fn()
-    const { result } = renderHook(() => usePackingListItem(baseItem, 'trip-1'))
-    const fakeEvent = { shiftKey: true, metaKey: true, ctrlKey: false } as React.MouseEvent
-    await act(async () =>
-      result.current.handleSelection(true, onItemSelection, fakeEvent)
-    )
-    expect(onItemSelection).toHaveBeenCalledWith('item-1', true, true)
-  })
-})

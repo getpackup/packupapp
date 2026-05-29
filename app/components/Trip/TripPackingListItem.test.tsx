@@ -64,7 +64,6 @@ const defaultHookReturn = {
   handleToggleAssignee: vi.fn(),
   handleDelete: vi.fn(),
   handleSendToShoppingList: mockHandleSendToShoppingList,
-  handleSelection: vi.fn(),
   showAccountGate: false,
   setShowAccountGate: mockSetShowAccountGate,
 }

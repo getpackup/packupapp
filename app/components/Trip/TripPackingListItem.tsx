@@ -68,10 +68,19 @@ const TripPackingListItem = ({
     handleToggleAssignee,
     handleDelete,
     handleSendToShoppingList,
-    handleSelection,
     showAccountGate,
     setShowAccountGate,
   } = usePackingListItem(item, id ?? '')
+
+  const handleSelection = (event?: React.MouseEvent) => {
+    if (isMultiSelecting) {
+      const isShiftClick = event?.shiftKey ?? false
+      const isCommandClick = (event?.metaKey ?? false) || (event?.ctrlKey ?? false)
+      onItemSelection(item.id, isShiftClick, isCommandClick)
+    } else {
+      togglePacked()
+    }
+  }
 
   const springConfig = {
     tension: 400,
@@ -108,12 +117,12 @@ const TripPackingListItem = ({
             <>
               <Checkbox
                 checked={isSelected}
-                onClick={(e) => handleSelection(isMultiSelecting, onItemSelection, e)}
+                onClick={handleSelection}
                 id={item.id}
               />
               <span
                 className="cursor-pointer select-none"
-                onClick={(e) => handleSelection(isMultiSelecting, onItemSelection, e)}
+                onClick={handleSelection}
               >
                 {item.name}
               </span>
