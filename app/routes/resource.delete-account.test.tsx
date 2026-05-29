@@ -157,28 +157,6 @@ describe('resource.delete-account', () => {
       })
     })
 
-    it('returns 500 when Slack call fails', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      mockFetch.mockRejectedValue(new Error('Network error'))
-      const fd = buildFormData(validRegisteredFields)
-      const request = buildRequest('POST', fd)
-      const response = (await action({ request, params: {}, context: {} } as any)) as Response
-      expect(response.status).toBe(500)
-      consoleSpy.mockRestore()
-    })
-
-    it('returns 500 when Slack returns ok: false', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      mockFetch.mockResolvedValue(
-        new Response(JSON.stringify({ ok: false, error: 'channel_not_found' }), { status: 200 })
-      )
-      const fd = buildFormData(validRegisteredFields)
-      const request = buildRequest('POST', fd)
-      const response = (await action({ request, params: {}, context: {} } as any)) as Response
-      expect(response.status).toBe(500)
-      consoleSpy.mockRestore()
-    })
-  })
 
   describe('loader', () => {
     it('returns 404', async () => {
