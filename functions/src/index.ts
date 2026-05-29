@@ -10,7 +10,7 @@ import algoliasearch from 'algoliasearch'
 
 import { buildChatMetadataDeps, processChatMessage } from './chat-metadata'
 import { buildChatNotificationDeps, processChatNotification } from './send-chat-notifications'
-import { postSlackMessage } from './slack'
+import { configureTeamNotifications, notifyTeam } from '../../app/lib/slack.server'
 import { renderSafetyItineraryHtml } from './render-safety-itinerary-email'
 import { renderInviteToTripHtml } from './render-invite-to-trip-email'
 import { buildFirestoreDeps, processSafetyItineraries } from './safety-itinerary'
@@ -22,6 +22,7 @@ import { InviteToTripEmailProps } from '../../app/types/InviteToTrip'
 import { toPlainText } from '@react-email/render'
 
 admin.initializeApp()
+configureTeamNotifications({ db: admin.firestore() })
 
 // ---------------------------------------------------------------------------
 // Algolia
@@ -47,10 +48,6 @@ const adminStatsDoc = admin.firestore().collection('admin').doc('stats')
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function escapeSlackMrkdwn(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
 
 function tripDateRangeLabel(trip: Trip): string {
   const startMs = trip.startDate?.toMillis?.()
@@ -162,31 +159,11 @@ export const addIdToPackingListItemOnCreate = onDocumentCreated(
 
 export const newUserSignupPostToSlack = onDocumentCreated('users/{documentId}', async (event) => {
   const newUserData = event.data?.data()
-  const isAnonymous = newUserData?.isAnonymous
+  const isAnonymous = newUserData?.isAnonymous as boolean | undefined
   const displayName = (newUserData?.displayName as string | undefined)?.trim() || '—'
   const email = (newUserData?.email as string | undefined)?.trim() || '—'
-  const userType = isAnonymous ? 'Anonymous' : 'Registered'
-  const fallbackText = isAnonymous
-    ? 'New :packup: user signup (Anonymous)!'
-    : `New :packup: user signup from ${displayName}!`
 
-  await postSlackMessage('#new-users', {
-    text: fallbackText,
-    blocks: [
-      {
-        type: 'header',
-        text: { type: 'plain_text', text: 'New User Signup', emoji: true },
-      },
-      {
-        type: 'section',
-        fields: [
-          { type: 'mrkdwn', text: `*Name*\n${escapeSlackMrkdwn(displayName)}` },
-          { type: 'mrkdwn', text: `*Email*\n${escapeSlackMrkdwn(email)}` },
-          { type: 'mrkdwn', text: `*Type*\n${userType}` },
-        ],
-      },
-    ],
-  })
+  await notifyTeam('user-signed-up', { displayName, email, isAnonymous: !!isAnonymous })
 })
 
 export const updateAlgoliaOnUserCreate = onDocumentCreated('users/{documentId}', async (event) => {
@@ -254,26 +231,7 @@ export const newTripCreatedPostToSlack = onDocumentCreated('trips/{documentId}',
   const dateRange = tripDateRangeLabel(newTripData)
   const location = newTripData.startingPoint?.trim() || '—'
 
-  const fallbackText = `New Trip Created: ${tripName} (${dateRange})`
-
-  await postSlackMessage('#new-trips', {
-    text: fallbackText,
-    blocks: [
-      {
-        type: 'header',
-        text: { type: 'plain_text', text: 'New Trip Created', emoji: true },
-      },
-      {
-        type: 'section',
-        fields: [
-          { type: 'mrkdwn', text: `*Trip Name*\n${escapeSlackMrkdwn(tripName)}` },
-          { type: 'mrkdwn', text: `*Trip Owner*\n${escapeSlackMrkdwn(ownerLabel)}` },
-          { type: 'mrkdwn', text: `*Dates*\n${escapeSlackMrkdwn(dateRange)}` },
-          { type: 'mrkdwn', text: `*Location*\n${escapeSlackMrkdwn(location)}` },
-        ],
-      },
-    ],
-  })
+  await notifyTeam('trip-created', { tripName, ownerLabel, dateRange, location })
 })
 
 // Increment tripCount each time a new trip is created.

@@ -1,7 +1,11 @@
+import { getFirestore } from 'firebase-admin/firestore'
 import { type ActionFunction } from 'react-router'
 import Stripe from 'stripe'
 
-import { postToSlack } from '~/lib/slack.server'
+import { getFirebaseAdmin } from '~/firebase/admin'
+import { configureTeamNotifications, notifyTeam } from '~/lib/slack.server'
+
+configureTeamNotifications({ db: getFirestore(getFirebaseAdmin()) })
 
 export const action: ActionFunction = async ({ request }) => {
   if (request.method !== 'POST') {
@@ -49,18 +53,12 @@ export const action: ActionFunction = async ({ request }) => {
       if (session.mode === 'payment') {
         const amount = session.amount_total ? (session.amount_total / 100).toFixed(2) : '—'
         const currency = (session.currency ?? '').toUpperCase()
-        await postToSlack('#stripe-events', {
-          text: `One-time payment completed: ${amount} ${currency}`,
-          blocks: [
-            {
-              type: 'section',
-              text: {
-                type: 'mrkdwn',
-                text: `*One-time payment completed*\n• Amount: ${amount} ${currency}\n• Customer: ${session.customer_email ?? session.customer ?? '—'}\n• Session: \`${session.id}\``,
-              },
-            },
-          ],
-        }).catch((err) => console.error('Failed to post to Slack:', err))
+        await notifyTeam('payment-completed', {
+          amount,
+          currency,
+          customer: session.customer_email ?? String(session.customer ?? '—'),
+          sessionId: session.id,
+        })
       }
       break
     }

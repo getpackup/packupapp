@@ -1,7 +1,9 @@
+import { getFirestore } from 'firebase-admin/firestore'
 import { type ActionFunction } from 'react-router'
 
+import { getFirebaseAdmin } from '~/firebase/admin'
 import getObjectFromFormData from '~/lib/getObjectFromFormData'
-import { postToSlack } from '~/lib/slack.server'
+import { configureTeamNotifications, notifyTeam } from '~/lib/slack.server'
 
 interface DeleteAccountBody {
   message?: string
@@ -21,48 +23,7 @@ const REASON_LABELS: Record<string, string> = {
   'other-reason': 'Other reason',
 }
 
-function buildReasonsText(fields: DeleteAccountBody): string {
-  const selected = Object.keys(REASON_LABELS).filter((key) => fields[key as keyof DeleteAccountBody] === 'true')
-  return selected.length > 0 ? selected.map((k) => `• ${REASON_LABELS[k]}`).join('\n') : '_None selected_'
-}
-
-function buildIdentityText(fields: DeleteAccountBody): string {
-  const { userDisplayName, userUsername, userEmail } = fields
-  if (!userDisplayName && !userEmail) return 'Unknown user'
-  const name = userDisplayName && userUsername ? `${userDisplayName} (@${userUsername})` : userDisplayName ?? userUsername ?? 'Unknown'
-  return userEmail ? `${name}\nEmail: ${userEmail}` : name
-}
-
-function buildSlackPayload(fields: DeleteAccountBody): Record<string, unknown> {
-  const identity = buildIdentityText(fields)
-  const reasons = buildReasonsText(fields)
-
-  return {
-    text: `Account deletion request from ${identity}`,
-    blocks: [
-      {
-        type: 'header',
-        text: { type: 'plain_text', text: ':warning: Account Deletion Request', emoji: true },
-      },
-      {
-        type: 'section',
-        text: { type: 'mrkdwn', text: `*User*\n${identity}` },
-      },
-      {
-        type: 'section',
-        text: { type: 'mrkdwn', text: `*Reasons*\n${reasons}` },
-      },
-      ...(fields.message
-        ? [
-            {
-              type: 'section',
-              text: { type: 'mrkdwn', text: `*Additional feedback*\n${fields.message}` },
-            },
-          ]
-        : []),
-    ],
-  }
-}
+configureTeamNotifications({ db: getFirestore(getFirebaseAdmin()) })
 
 export const action: ActionFunction = async ({ request }) => {
   if (request.method !== 'POST') {
@@ -72,23 +33,25 @@ export const action: ActionFunction = async ({ request }) => {
     })
   }
 
-  try {
-    const formData = await request.formData()
-    const fields = getObjectFromFormData<DeleteAccountBody>(formData)
+  const formData = await request.formData()
+  const fields = getObjectFromFormData<DeleteAccountBody>(formData)
 
-    await postToSlack('#feedback', buildSlackPayload(fields))
+  const reasons = Object.keys(REASON_LABELS)
+    .filter((key) => fields[key as keyof DeleteAccountBody] === 'true')
+    .map((k) => REASON_LABELS[k])
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  } catch (error) {
-    console.error('Error sending account deletion to Slack:', error)
-    return new Response(JSON.stringify({ error: 'Failed to send request' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
+  await notifyTeam('account-deleted', {
+    displayName: fields.userDisplayName,
+    username: fields.userUsername,
+    email: fields.userEmail,
+    reasons,
+    message: fields.message,
+  })
+
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  })
 }
 
 export async function loader() {

@@ -1,7 +1,9 @@
+import { getFirestore } from 'firebase-admin/firestore'
 import { type ActionFunction } from 'react-router'
 
+import { getFirebaseAdmin } from '~/firebase/admin'
 import getObjectFromFormData from '~/lib/getObjectFromFormData'
-import { postToSlack } from '~/lib/slack.server'
+import { configureTeamNotifications, notifyTeam } from '~/lib/slack.server'
 
 interface SendFeedbackBody {
   message: string
@@ -15,41 +17,7 @@ interface SendFeedbackBody {
   url?: string
 }
 
-function buildIdentityText(fields: SendFeedbackBody): string {
-  const { isAnonymous, email, userDisplayName, userUsername, userEmail } = fields
-  if (isAnonymous === 'true') {
-    return email ? `Anonymous User\nEmail: ${email}` : 'Anonymous User'
-  }
-  return `${userDisplayName} (@${userUsername})\nEmail: ${userEmail}`
-}
-
-function buildSlackPayload(fields: SendFeedbackBody): Record<string, unknown> {
-  const { message, emotion, category, url } = fields
-  const identity = buildIdentityText(fields)
-
-  return {
-    text: `${emotion} ${category} feedback`,
-    blocks: [
-      {
-        type: 'header',
-        text: { type: 'plain_text', text: 'New Feedback Submission', emoji: true },
-      },
-      {
-        type: 'section',
-        text: { type: 'mrkdwn', text: `*Message*\n${message}` },
-      },
-      {
-        type: 'section',
-        fields: [
-          { type: 'mrkdwn', text: `*Emotion*\n${emotion}` },
-          { type: 'mrkdwn', text: `*Category*\n${category}` },
-          { type: 'mrkdwn', text: `*From*\n${identity}` },
-          ...(url ? [{ type: 'mrkdwn', text: `*Page*\n${url}` }] : []),
-        ],
-      },
-    ],
-  }
-}
+configureTeamNotifications({ db: getFirestore(getFirebaseAdmin()) })
 
 export const action: ActionFunction = async ({ request }) => {
   if (request.method !== 'POST') {
@@ -59,31 +27,33 @@ export const action: ActionFunction = async ({ request }) => {
     })
   }
 
-  try {
-    const formData = await request.formData()
-    const fields = getObjectFromFormData<SendFeedbackBody>(formData)
-    const { message, emotion, category } = fields
+  const formData = await request.formData()
+  const fields = getObjectFromFormData<SendFeedbackBody>(formData)
+  const { message, emotion, category } = fields
 
-    if (!message || !emotion || !category) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    }
-
-    await postToSlack('#feedback', buildSlackPayload(fields))
-
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  } catch (error) {
-    console.error('Error sending feedback to Slack:', error)
-    return new Response(JSON.stringify({ error: 'Failed to send feedback' }), {
-      status: 500,
+  if (!message || !emotion || !category) {
+    return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+      status: 400,
       headers: { 'Content-Type': 'application/json' },
     })
   }
+
+  await notifyTeam('feedback-submitted', {
+    message,
+    emotion,
+    category,
+    isAnonymous: fields.isAnonymous === 'true',
+    anonymousEmail: fields.email,
+    displayName: fields.userDisplayName,
+    username: fields.userUsername,
+    userEmail: fields.userEmail,
+    url: fields.url,
+  })
+
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  })
 }
 
 export async function loader() {

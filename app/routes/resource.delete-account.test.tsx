@@ -60,12 +60,12 @@ describe('resource.delete-account', () => {
       expect(init.headers['Authorization']).toBe('Bearer xoxb-test-token')
     })
 
-    it('posts to #feedback channel', async () => {
+    it('posts to #user-feedback channel', async () => {
       const fd = buildFormData(validRegisteredFields)
       const request = buildRequest('POST', fd)
       await action({ request, params: {}, context: {} } as any)
       const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(body.channel).toBe('#feedback')
+      expect(body.channel).toBe('#user-feedback')
     })
 
     describe('buildSlackPayload – reasons list', () => {
@@ -170,7 +170,7 @@ describe('resource.delete-account', () => {
     it('returns 500 when Slack returns ok: false', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       mockFetch.mockResolvedValue(
-        new Response(JSON.stringify({ ok: false, error: 'channel_not_found' }), { status: 200 }),
+        new Response(JSON.stringify({ ok: false, error: 'channel_not_found' }), { status: 200 })
       )
       const fd = buildFormData(validRegisteredFields)
       const request = buildRequest('POST', fd)
