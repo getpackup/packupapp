@@ -4,6 +4,9 @@ import type { Firestore } from 'firebase-admin/firestore'
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
+vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }))
+vi.mock('~/firebase/admin', () => ({ getFirebaseAdmin: vi.fn() }))
+
 import { configureTeamNotifications, notifyTeam } from './slack.server'
 
 const okResponse = () =>
@@ -365,21 +368,14 @@ describe('notifyTeam', () => {
       expect(onError).toHaveBeenCalledWith(expect.any(Error))
     })
 
-    it('does not write to Firestore when not configured', async () => {
-      configureTeamNotifications({ db: mockDb })
-      mockAdd.mockClear()
-      ;(mockDb.collection as ReturnType<typeof vi.fn>).mockClear()
+    it('always writes to Firestore on failure, using injected db if configured', async () => {
       mockFetch.mockRejectedValue(new Error('Slack down'))
-
-      const noDbConfig = { db: undefined as unknown as Firestore }
-      configureTeamNotifications(noDbConfig)
-
       await notifyTeam('user-signed-up', {
         displayName: 'Alice',
         email: 'alice@test.com',
         isAnonymous: false,
       })
-      expect(mockAdd).not.toHaveBeenCalled()
+      expect(mockAdd).toHaveBeenCalled()
     })
   })
 

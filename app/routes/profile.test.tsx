@@ -3,6 +3,7 @@ import React from 'react'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { User } from '~/types/User'
+import Profile from './profile'
 
 const mockUser: User = {
   uid: 'test-uid',
@@ -123,8 +124,7 @@ beforeAll(() => {
   )
 })
 
-async function renderProfile() {
-  const { default: Profile } = await import('./profile')
+function renderProfile() {
   return render(<Profile />)
 }
 
@@ -143,7 +143,7 @@ describe('Profile page', () => {
 
   describe('Save', () => {
     it('calls useUpdateUser with updated fields on save', async () => {
-      await renderProfile()
+      renderProfile()
 
       fireEvent.click(screen.getByText('Edit'))
 
@@ -160,7 +160,7 @@ describe('Profile page', () => {
     })
 
     it('exits edit mode after saving', async () => {
-      await renderProfile()
+      renderProfile()
 
       fireEvent.click(screen.getByText('Edit'))
       expect(screen.getByText('Save')).toBeInTheDocument()
@@ -176,7 +176,7 @@ describe('Profile page', () => {
 
   describe('Cancel', () => {
     it('does not call useUpdateUser on cancel', async () => {
-      await renderProfile()
+      renderProfile()
 
       fireEvent.click(screen.getByText('Edit'))
 
@@ -189,7 +189,7 @@ describe('Profile page', () => {
     })
 
     it('shows original values in view mode after cancelling', async () => {
-      await renderProfile()
+      renderProfile()
 
       fireEvent.click(screen.getByText('Edit'))
 
@@ -213,7 +213,7 @@ describe('Profile page', () => {
     }
 
     it('shows error toast for an invalid file type', async () => {
-      const { container } = await renderProfile()
+      const { container } = renderProfile()
       fireEvent.click(screen.getByText('Edit'))
 
       triggerFileInput(container, new File([''], 'photo.gif', { type: 'image/gif' }))
@@ -225,7 +225,7 @@ describe('Profile page', () => {
     })
 
     it('shows error toast for a file over 5 MB', async () => {
-      const { container } = await renderProfile()
+      const { container } = renderProfile()
       fireEvent.click(screen.getByText('Edit'))
 
       const largeFile = new File([''], 'photo.jpg', { type: 'image/jpeg' })

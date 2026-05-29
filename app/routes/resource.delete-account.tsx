@@ -1,9 +1,7 @@
-import { getFirestore } from 'firebase-admin/firestore'
 import { type ActionFunction } from 'react-router'
 
-import { getFirebaseAdmin } from '~/firebase/admin'
 import getObjectFromFormData from '~/lib/getObjectFromFormData'
-import { configureTeamNotifications, notifyTeam } from '~/lib/slack.server'
+import { notifyTeam } from '~/lib/slack.server'
 
 interface DeleteAccountBody {
   message?: string
@@ -22,8 +20,6 @@ const REASON_LABELS: Record<string, string> = {
   'better-alternative': 'Found a better alternative',
   'other-reason': 'Other reason',
 }
-
-configureTeamNotifications({ db: getFirestore(getFirebaseAdmin()) })
 
 export const action: ActionFunction = async ({ request }) => {
   if (request.method !== 'POST') {

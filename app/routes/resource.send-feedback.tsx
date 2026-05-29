@@ -1,9 +1,7 @@
-import { getFirestore } from 'firebase-admin/firestore'
 import { type ActionFunction } from 'react-router'
 
-import { getFirebaseAdmin } from '~/firebase/admin'
 import getObjectFromFormData from '~/lib/getObjectFromFormData'
-import { configureTeamNotifications, notifyTeam } from '~/lib/slack.server'
+import { notifyTeam } from '~/lib/slack.server'
 
 interface SendFeedbackBody {
   message: string
@@ -16,8 +14,6 @@ interface SendFeedbackBody {
   userEmail?: string
   url?: string
 }
-
-configureTeamNotifications({ db: getFirestore(getFirebaseAdmin()) })
 
 export const action: ActionFunction = async ({ request }) => {
   if (request.method !== 'POST') {

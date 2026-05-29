@@ -1,13 +1,16 @@
 import type { Firestore } from 'firebase-admin/firestore'
+import { getFirestore } from 'firebase-admin/firestore'
+
+import { getFirebaseAdmin } from '~/firebase/admin'
 
 // --- Config ---
 
 interface TeamNotificationsConfig {
-  db: Firestore
+  db?: Firestore
   onError?: (err: unknown) => void
 }
 
-let _config: TeamNotificationsConfig | null = null
+let _config: TeamNotificationsConfig = {}
 
 export function configureTeamNotifications(config: TeamNotificationsConfig): void {
   _config = config
@@ -227,10 +230,10 @@ async function postToSlack(channel: string, text: string, blocks: unknown[]): Pr
 async function writeFailureLog(
   event: NotifyTeamEvent,
   payload: NotifyTeamPayloads[NotifyTeamEvent],
-  error: unknown,
-  db: Firestore
+  error: unknown
 ): Promise<void> {
   try {
+    const db = _config.db ?? getFirestore(getFirebaseAdmin())
     await db.collection('teamNotificationFailures').add({
       event,
       payload,
@@ -256,7 +259,7 @@ export async function notifyTeam<E extends NotifyTeamEvent>(
     )
   } catch (err) {
     console.error(`notifyTeam failed for "${event}":`, err)
-    _config?.onError?.(err)
-    if (_config?.db) await writeFailureLog(event, payload, err, _config.db)
+    _config.onError?.(err)
+    await writeFailureLog(event, payload, err)
   }
 }

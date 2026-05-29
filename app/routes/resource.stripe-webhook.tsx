@@ -1,11 +1,7 @@
-import { getFirestore } from 'firebase-admin/firestore'
 import { type ActionFunction } from 'react-router'
 import Stripe from 'stripe'
 
-import { getFirebaseAdmin } from '~/firebase/admin'
-import { configureTeamNotifications, notifyTeam } from '~/lib/slack.server'
-
-configureTeamNotifications({ db: getFirestore(getFirebaseAdmin()) })
+import { notifyTeam } from '~/lib/slack.server'
 
 export const action: ActionFunction = async ({ request }) => {
   if (request.method !== 'POST') {
