@@ -1,5 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query'
-import { limit, Timestamp, where } from 'firebase/firestore'
 import {
   Check,
   Circle,
@@ -14,21 +12,15 @@ import {
   Users,
   X,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useParams } from 'react-router'
 import { animated, useSpring } from 'react-spring'
 
-import useAuth from '~/contexts/auth/useAuth'
 import { useSoundsState } from '~/contexts/globalState'
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
-import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
-import { useCreateShoppingListItem } from '~/services/shoppingList'
-import { tripKeys } from '~/services/tripKeys'
-import { useDeletePackingListItem, useUpdatePackingListItem } from '~/services/trips'
-import { type PackedByUserType, type PackingListItem } from '~/types/PackingListItem'
-import type { Trip } from '~/types/Trip'
-import type { User } from '~/types/User'
+import { usePackingListItem } from '~/services/usePackingListItem'
+import { type PackingListItem } from '~/types/PackingListItem'
 
 import { AccountGateDialog } from '../AccountGateDialog'
 import TagPills from '../TagPills'
@@ -66,20 +58,29 @@ const TripPackingListItem = ({
 }: TripPackingListItemProps) => {
   const { id } = useParams()
   const { soundsEnabled } = useSoundsState()
-  const { user } = useAuth()
 
-  const queryClient = useQueryClient()
+  const {
+    trip,
+    users,
+    togglePacked,
+    handleQuantityChange,
+    handleMoveToOrFromGroupItems,
+    handleToggleAssignee,
+    handleDelete,
+    handleSendToShoppingList,
+    showAccountGate,
+    setShowAccountGate,
+  } = usePackingListItem(item, id ?? '')
 
-  const trip = queryClient.getQueryData<Trip>(tripKeys.byId(id ?? ''))
-
-  const constraints = useMemo(
-    () =>
-      trip?.tripMembers && Object.keys(trip.tripMembers).length > 0
-        ? [where('uid', 'in', Object.keys(trip.tripMembers)), limit(10)]
-        : [],
-    [trip?.tripMembers]
-  )
-  const users = id ? queryClient.getQueryData<User[]>(tripKeys.members(id, constraints)) : []
+  const handleSelection = (event?: React.MouseEvent) => {
+    if (isMultiSelecting) {
+      const isShiftClick = event?.shiftKey ?? false
+      const isCommandClick = (event?.metaKey ?? false) || (event?.ctrlKey ?? false)
+      onItemSelection(item.id, isShiftClick, isCommandClick)
+    } else {
+      togglePacked()
+    }
+  }
 
   const springConfig = {
     tension: 400,
@@ -87,10 +88,8 @@ const TripPackingListItem = ({
     clamp: !item.isPacked,
   }
 
-  const isAnonymous = useIsAnonymous()
   const [active, setActive] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
-  const [showAccountGate, setShowAccountGate] = useState(false)
 
   const filledScale = item.isPacked ? (active ? 1.4 : 1) : 0
   const filledSpring = useSpring({
@@ -104,108 +103,6 @@ const TripPackingListItem = ({
     config: springConfig,
   })
 
-  const { mutateAsync: updatePackingListItemAsync } = useUpdatePackingListItem({ tripId: id ?? '' })
-  const { mutateAsync: deletePackingListItemAsync } = useDeletePackingListItem()
-  const { mutateAsync: createShoppingListItemAsync } = useCreateShoppingListItem()
-
-  const togglePacked = () => {
-    if (!id || !item.id) return
-
-    updatePackingListItemAsync({ data: { id: item.id, isPacked: !item.isPacked } })
-  }
-
-  const handleQuantityChange = (change: number) => {
-    if (!id || !item.id) return
-
-    const newQuantity = item.quantity + change
-
-    if (newQuantity < 1) return
-
-    updatePackingListItemAsync({ data: { id: item.id, quantity: newQuantity } })
-  }
-
-  const handleMoveToOrFromGroupItems = () => {
-    if (!id || !item.id || !user) return
-
-    const isAlreadyShared = item.packedBy[0].isShared
-
-    if (isAlreadyShared) {
-      updatePackingListItemAsync({
-        data: { id: item.id, packedBy: [{ uid: user.uid, quantity: 1, isShared: false }] },
-      })
-    } else {
-      updatePackingListItemAsync({
-        data: {
-          id: item.id,
-          packedBy: [{ uid: user.uid, quantity: 1, isShared: true }],
-        },
-      })
-    }
-  }
-
-  const handleToggleAssignee = (uid: string) => {
-    if (!id || !item.id) return
-
-    const isAssigned = item.packedBy.some((p) => p.uid === uid)
-    let newPackedBy: PackedByUserType[]
-
-    if (isAssigned) {
-      newPackedBy = item.packedBy.filter((p) => p.uid !== uid)
-      if (newPackedBy.length === 0) return
-    } else {
-      newPackedBy = [...item.packedBy, { uid, quantity: 1, isShared: true }]
-    }
-
-    updatePackingListItemAsync({ data: { id: item.id, packedBy: newPackedBy } })
-  }
-
-  const handleDelete = () => {
-    if (!id || !item.id) return
-
-    deletePackingListItemAsync({
-      tripId: id,
-      packingListItemId: item.id,
-    })
-  }
-
-  const handleSelection = (event?: React.MouseEvent) => {
-    if (isMultiSelecting) {
-      const isShiftClick = event?.shiftKey || false
-      const isCommandClick = event?.metaKey || event?.ctrlKey || false
-      onItemSelection(item.id, isShiftClick, isCommandClick)
-    } else {
-      togglePacked()
-    }
-  }
-
-  const handleSendToShoppingList = () => {
-    if (isAnonymous) {
-      setShowAccountGate(true)
-      return
-    }
-
-    if (!id || !item.id || !trip || !user) return
-
-    createShoppingListItemAsync({
-      data: {
-        actualPrice: null,
-        created: Timestamp.now(),
-        estimatedPrice: null,
-        isPurchased: false,
-        itemName: item.name,
-        notes: '',
-        priority: 'no priority',
-        purchasedAt: null,
-        quantity: item.quantity,
-        sourcePackingListItemId: item.id,
-        store: null,
-        tripId: trip.tripId,
-        updated: null,
-        userId: user.uid,
-      },
-    })
-  }
-
   return (
     <div className="text-sidebar-foreground hover:bg-sidebar-accent/40 rounded-lg px-3 py-2">
       <EditPackingListItemDialog item={item} open={editOpen} onOpenChange={setEditOpen} />
@@ -218,8 +115,15 @@ const TripPackingListItem = ({
         <div className="flex min-w-0 items-center gap-4">
           {isMultiSelecting ? (
             <>
-              <Checkbox checked={isSelected} onClick={(e) => handleSelection(e)} id={item.id} />
-              <span className="cursor-pointer select-none" onClick={(e) => handleSelection(e)}>
+              <Checkbox
+                checked={isSelected}
+                onClick={handleSelection}
+                id={item.id}
+              />
+              <span
+                className="cursor-pointer select-none"
+                onClick={handleSelection}
+              >
                 {item.name}
               </span>
             </>
