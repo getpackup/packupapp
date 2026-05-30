@@ -73,7 +73,6 @@ function AddFromGearClosetDialog({
       setSelectedCustomTags(new Set(ct))
     }
     // intentionally omit existingTags — we snapshot on open, not on every tag change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [controlledOpen])
 
   const handleOpenChange = (newOpen: boolean) => {
