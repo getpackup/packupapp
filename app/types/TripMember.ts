@@ -20,6 +20,7 @@ export type TripMember = {
   declinedAt?: Timestamp
   acceptedAt?: Timestamp
   removedAt?: Timestamp
+  personalTags?: string[]
   safetyItineraryOptedOut?: boolean
   status: TripMemberStatus
   uid: string

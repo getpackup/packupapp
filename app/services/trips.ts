@@ -21,6 +21,7 @@ import {
 import { toast } from 'sonner'
 
 import { firestoreDb } from '~/firebase/config'
+import { gearListOtherConsiderations } from '~/lib/gearListItemEnum'
 import { assemblePackingListItems } from '~/lib/packingList'
 import type { ActivityTypes, GearClosetItem, GearItem } from '~/types/GearItem'
 import type { PackingListItem } from '~/types/PackingListItem'
@@ -414,6 +415,10 @@ export function useGeneratePackingList() {
         existingTripTags,
       })
 
+      const otherConsiderationKeySet = new Set(gearListOtherConsiderations.map((item) => item.name))
+      const personalTagKeys = activityKeys.filter((key) => otherConsiderationKeySet.has(key))
+      const personalTags = [...personalTagKeys, ...customTagNames]
+
       if (itemData.length === 0) return []
 
       const batch = writeBatch(firestoreDb)
@@ -427,7 +432,11 @@ export function useGeneratePackingList() {
         createdItems.push({ ...fullItem, id: docRef.id })
       }
 
-      batch.update(doc(firestoreDb, 'trips', tripId), { tags: mergedTags, updated: now })
+      batch.update(doc(firestoreDb, 'trips', tripId), {
+        tags: mergedTags,
+        [`tripMembers.${userId}.personalTags`]: personalTags,
+        updated: now,
+      })
       await batch.commit()
       return createdItems
     },

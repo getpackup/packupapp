@@ -1,6 +1,9 @@
 import { activityKeyToLabel, filterGearByActivities } from '~/lib/gearFilterUtils'
+import { gearListOtherConsiderations } from './gearListItemEnum'
 import type { ActivityTypes, GearClosetItem, GearItem } from '~/types/GearItem'
 import type { PackingListItem } from '~/types/PackingListItem'
+
+const otherConsiderationKeySet = new Set(gearListOtherConsiderations.map((item) => item.name))
 
 export type NewPackingListItemData = Omit<PackingListItem, 'id' | 'created'>
 
@@ -35,17 +38,20 @@ export function assemblePackingListItems({
     customTagNames
   )
 
-  const activityLabels = activityKeys
+  const allActivityLabels = activityKeys
     .map((key) => activityKeyToLabel(key))
     .filter((label): label is string => !!label)
 
-  const mergedTags = Array.from(
-    new Set([...existingTripTags, ...activityLabels, ...customTagNames])
-  )
+  const sharedActivityLabels = activityKeys
+    .filter((key) => !otherConsiderationKeySet.has(key))
+    .map((key) => activityKeyToLabel(key))
+    .filter((label): label is string => !!label)
+
+  const mergedTags = Array.from(new Set([...existingTripTags, ...sharedActivityLabels]))
 
   if (matchingItems.length === 0) return { itemData: [], mergedTags }
 
-  const tripRelevantTags = new Set([...activityLabels, ...customTagNames])
+  const tripRelevantTags = new Set([...allActivityLabels, ...customTagNames])
 
   const itemData: NewPackingListItemData[] = matchingItems.map((item) => {
     const itemTags = item.tags.filter((tag) => tripRelevantTags.has(tag))

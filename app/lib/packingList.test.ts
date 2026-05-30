@@ -203,14 +203,37 @@ describe('assemblePackingListItems', () => {
       expect(mergedTags.filter((t) => t === 'Hiking')).toHaveLength(1)
     })
 
-    it('includes custom tag names in merged tags', () => {
+    it('excludes custom tag names from merged tags', () => {
       const { mergedTags } = assemblePackingListItems({
         ...baseParams,
         masterItems: [masterItem()],
         customItems: [],
-        customTagNames: ['Photography'],
+        customTagNames: ['MyCustomTag'],
       })
-      expect(mergedTags).toContain('Photography')
+      expect(mergedTags).not.toContain('MyCustomTag')
+    })
+
+    it('excludes Other Considerations labels from merged tags', () => {
+      const { mergedTags } = assemblePackingListItems({
+        ...baseParams,
+        masterItems: [],
+        customItems: [],
+        activityKeys: ['baby', 'photography'],
+        existingTripTags: [],
+      })
+      expect(mergedTags).not.toContain('Baby')
+      expect(mergedTags).not.toContain('Photography')
+    })
+
+    it('still generates items for Other Considerations keys', () => {
+      const { itemData } = assemblePackingListItems({
+        ...baseParams,
+        masterItems: [masterItem({ id: 'baby-item', baby: true, hiking: false })],
+        customItems: [],
+        activityKeys: ['baby'],
+      })
+      expect(itemData).toHaveLength(1)
+      expect(itemData[0].gearItemId).toBe('baby-item')
     })
   })
 
