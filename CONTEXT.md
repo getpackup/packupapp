@@ -36,8 +36,20 @@ _Avoid_: Buy list, purchase list, pre-trip list
 A personal inventory of gear a user owns, seeded from a default list and fully customizable. Scoped to a single user, not a trip.
 _Avoid_: Gear library, gear templates, inventory
 
+**Add from Gear Closet**:
+The action of batch-adding packing list items by selecting tags that filter against the user's Gear Closet. Items tagged with multiple selected tags are deduplicated. Repeatable — can be used at any time to add more items, not just on initial setup. Pre-selects the trip's shared tags plus the member's Personal Tags on open.
+_Avoid_: Generate packing list, generate gear list (implies one-shot; this is repeatable)
+
+**Trip Tags**:
+The tags stored on the Trip document (`trip.tags`) representing shared trip facts: activities (Hiking, Paddling, etc.), accommodations (Tent, Hostel, etc.), and camp kitchen style (Car Camping, Backcountry, etc.). Visible to all Trip Members on the Trip Card and in the sidebar. Do not include Other Considerations or custom Gear Closet tags — those are Personal Tags.
+_Avoid_: Tags (too generic — distinguish from Personal Tags)
+
+**Personal Tags**:
+Per-Trip-Member tag selections stored in `tripMembers[uid].personalTags`. Includes Other Considerations (Baby, Kids, Pets, Photography, transport modes, etc.) and any custom Gear Closet tags the member has applied to this trip. Visible only to that member — not shown on the Trip Card or to other Trip Members. Used to pre-select and persist personal gear filters in "Add from Gear Closet" and shown in that member's Custom Tags / Other Considerations sections in the Trip Details sidebar.
+_Avoid_: Private tags, user tags, my tags
+
 **Frequent Tags**:
-The tags a registered user has selected most often across their past trips, derived from a count stored on the User record (`tagCounts`). Surfaced at the top of the tag selection step during trip creation — unchecked by default — to speed up selection. The section is hidden entirely when no counts exist. Capped at a configurable maximum (default 5–6) to keep the signal useful. Predefined tags (activities, accommodations, camp kitchen, other considerations) and custom tags from the user's Gear Closet are both eligible; custom tags that have since been deleted from the Gear Closet are filtered out at display time. Counts are incremented at trip creation only.
+The tags a registered user has selected most often across their past trips, derived from a count stored on the User record (`tagCounts`). Surfaced at the top of the tag selection step during trip creation — unchecked by default — to speed up selection. The section is hidden entirely when no counts exist. Capped at a configurable maximum (default 5–6) to keep the signal useful. Both Trip Tags and Personal Tags are eligible; custom tags that have since been deleted from the Gear Closet are filtered out at display time. Counts are incremented at trip creation for both shared and personal selections.
 _Avoid_: Frequently used tags, recent favorites, popular tags
 
 ### Friends & Social
