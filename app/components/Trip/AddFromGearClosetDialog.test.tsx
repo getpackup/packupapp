@@ -2,23 +2,10 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('~/firebase/config', () => ({
-  firebaseAuth: {},
-  firestoreDb: {},
-}))
-
 vi.mock('~/contexts/auth/useAuth', () => ({
+  useAuth: vi.fn(() => ({ user: { uid: 'user-1' } })),
   default: vi.fn(() => ({ user: { uid: 'user-1' } })),
 }))
-
-vi.mock('@tanstack/react-query', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@tanstack/react-query')>()
-  return {
-    ...actual,
-    useQuery: vi.fn(() => ({ data: undefined, isLoading: false })),
-    useMutation: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
-  }
-})
 
 vi.mock('~/services/gear', () => ({
   useGearClosetQuery: vi.fn(() => ({ data: { customTags: [] } })),
