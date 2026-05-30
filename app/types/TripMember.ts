@@ -1,4 +1,4 @@
-import { Timestamp } from 'firebase/firestore'
+import type { Timestamp } from 'firebase/firestore'
 
 export enum TripMemberStatus {
   /** User is the one who created the trip */

@@ -1,8 +1,14 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Timestamp } from 'firebase/firestore'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const fakeTs = (d: Date) => ({ seconds: Math.floor(d.getTime() / 1000), nanoseconds: 0 }) as any
+
+vi.mock('firebase/firestore', () => ({
+  limit: vi.fn(),
+  where: vi.fn(),
+}))
 
 const mockNavigate = vi.fn()
 vi.mock('react-router', async () => {
@@ -37,6 +43,10 @@ vi.mock('~/services/chat', () => ({
   useCreateChatMessage: vi.fn(() => ({ mutateAsync: vi.fn() })),
 }))
 
+vi.mock('~/lib/chat', () => ({
+  createSystemMessage: vi.fn(() => ({ content: 'mocked', type: 'system' })),
+}))
+
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }))
@@ -52,7 +62,7 @@ import type { Trip } from '~/types/Trip'
 import { TripMemberStatus } from '~/types/TripMember'
 import TripCard from './TripCard'
 
-const ts = Timestamp.fromDate(new Date('2026-06-01'))
+const ts = fakeTs(new Date('2026-06-01'))
 
 function makeTrip(overrides: Partial<Trip> = {}): Trip {
   return {
@@ -61,7 +71,7 @@ function makeTrip(overrides: Partial<Trip> = {}): Trip {
     name: 'Backcountry Trip',
     description: '',
     startDate: ts,
-    endDate: Timestamp.fromDate(new Date('2026-06-05')),
+    endDate: fakeTs(new Date('2026-06-05')),
     lat: 0,
     lng: 0,
     owner: 'u1',
