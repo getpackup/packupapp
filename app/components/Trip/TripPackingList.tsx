@@ -30,7 +30,7 @@ import { Progress } from '../ui/progress'
 import { ScrollArea, ScrollBar } from '../ui/scroll-area'
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group'
 import AddPackingListDialog from './AddPackingListDialog'
-import GeneratePackingListDialog from './GeneratePackingListDialog'
+import AddFromGearClosetDialog from './AddFromGearClosetDialog'
 import TripPackingListCategory from './TripPackingListCategory'
 
 type TripPackingListProps = {
@@ -172,12 +172,12 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
         </div>
         {(packingList?.length ?? 0) > 0 && (
           <div className="mb-0 flex justify-end gap-2">
-            <GeneratePackingListDialog tripId={tripId} existingTags={trip?.tags}>
+            <AddFromGearClosetDialog tripId={tripId} existingTags={trip?.tags}>
               <Button variant="outline" size="sm" className="h-8 gap-1.5">
                 <Tag className="h-3.5 w-3.5" />
-                Add gear by tag
+                Add from Gear Closet
               </Button>
-            </GeneratePackingListDialog>
+            </AddFromGearClosetDialog>
             <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}}>
               <Button variant="default" size="sm" className="h-8 gap-1.5">
                 <Plus className="h-3.5 w-3.5" />
@@ -283,12 +283,12 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
                   Get started by generating a packing list or adding items manually
                 </EmptyDescription>
                 <EmptyContent className="flex-row justify-center gap-2">
-                  <GeneratePackingListDialog tripId={tripId} existingTags={trip?.tags}>
+                  <AddFromGearClosetDialog tripId={tripId} existingTags={trip?.tags}>
                     <Button>
                       <Wand2 className="h-4 w-4" />
-                      Generate packing list
+                      Add from Gear Closet
                     </Button>
-                  </GeneratePackingListDialog>
+                  </AddFromGearClosetDialog>
                   <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}}>
                     <Button variant="outline">Add an item</Button>
                   </AddPackingListDialog>
@@ -334,12 +334,12 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
                   Get started by generating a packing list or adding items manually
                 </EmptyDescription>
                 <EmptyContent className="flex-row justify-center gap-2">
-                  <GeneratePackingListDialog tripId={tripId} existingTags={trip?.tags}>
+                  <AddFromGearClosetDialog tripId={tripId} existingTags={trip?.tags}>
                     <Button>
                       <Wand2 className="h-4 w-4" />
-                      Generate packing list
+                      Add from Gear Closet
                     </Button>
-                  </GeneratePackingListDialog>
+                  </AddFromGearClosetDialog>
                   <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}}>
                     <Button variant="outline">Add an item</Button>
                   </AddPackingListDialog>
