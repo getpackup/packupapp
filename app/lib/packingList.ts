@@ -28,6 +28,7 @@ export function assemblePackingListItems({
 }): {
   itemData: NewPackingListItemData[]
   mergedTags: string[]
+  personalTags: string[]
 } {
   const matchingItems = filterGearByActivities(
     masterItems,
@@ -49,7 +50,10 @@ export function assemblePackingListItems({
 
   const mergedTags = Array.from(new Set([...existingTripTags, ...sharedActivityLabels]))
 
-  if (matchingItems.length === 0) return { itemData: [], mergedTags }
+  const personalTagKeys = activityKeys.filter((key) => otherConsiderationKeySet.has(key))
+  const personalTags = [...personalTagKeys, ...customTagNames]
+
+  if (matchingItems.length === 0) return { itemData: [], mergedTags, personalTags }
 
   const tripRelevantTags = new Set([...allActivityLabels, ...customTagNames])
 
@@ -73,5 +77,5 @@ export function assemblePackingListItems({
     return data
   })
 
-  return { itemData, mergedTags }
+  return { itemData, mergedTags, personalTags }
 }

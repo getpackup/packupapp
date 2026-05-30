@@ -21,7 +21,6 @@ import {
 import { toast } from 'sonner'
 
 import { firestoreDb } from '~/firebase/config'
-import { gearListOtherConsiderations } from '~/lib/gearListItemEnum'
 import { assemblePackingListItems } from '~/lib/packingList'
 import type { ActivityTypes, GearClosetItem, GearItem } from '~/types/GearItem'
 import type { PackingListItem } from '~/types/PackingListItem'
@@ -404,7 +403,7 @@ export function useGeneratePackingList() {
       )
       const existingTripTags = (tripSnap.data() as Trip | undefined)?.tags ?? []
 
-      const { itemData, mergedTags } = assemblePackingListItems({
+      const { itemData, mergedTags, personalTags } = assemblePackingListItems({
         masterItems,
         customItems,
         activityKeys,
@@ -414,10 +413,6 @@ export function useGeneratePackingList() {
         userId,
         existingTripTags,
       })
-
-      const otherConsiderationKeySet = new Set(gearListOtherConsiderations.map((item) => item.name))
-      const personalTagKeys = activityKeys.filter((key) => otherConsiderationKeySet.has(key))
-      const personalTags = [...personalTagKeys, ...customTagNames]
 
       if (itemData.length === 0) return []
 

@@ -237,6 +237,42 @@ describe('assemblePackingListItems', () => {
     })
   })
 
+  describe('personalTags', () => {
+    it('includes Other Considerations keys in personalTags', () => {
+      const { personalTags } = assemblePackingListItems({
+        ...baseParams,
+        masterItems: [],
+        customItems: [],
+        activityKeys: ['baby', 'hiking'],
+        existingTripTags: [],
+      })
+      expect(personalTags).toContain('baby')
+      expect(personalTags).not.toContain('hiking')
+    })
+
+    it('includes customTagNames in personalTags', () => {
+      const { personalTags } = assemblePackingListItems({
+        ...baseParams,
+        masterItems: [],
+        customItems: [],
+        customTagNames: ['MyCustomTag'],
+      })
+      expect(personalTags).toContain('MyCustomTag')
+    })
+
+    it('returns personalTags even when no items match', () => {
+      const { personalTags } = assemblePackingListItems({
+        ...baseParams,
+        masterItems: [masterItem({ hiking: false })],
+        customItems: [],
+        activityKeys: ['baby'],
+        customTagNames: ['MyTag'],
+      })
+      expect(personalTags).toContain('baby')
+      expect(personalTags).toContain('MyTag')
+    })
+  })
+
   describe('exclusions', () => {
     it('excludes items already in the packing list', () => {
       const { itemData } = assemblePackingListItems({
