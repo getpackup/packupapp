@@ -102,10 +102,10 @@ function EditPackingListItemDialog({ item, open, onOpenChange }: EditPackingList
       if (values.description !== (item.description ?? '')) {
         overrides.description = values.description
       }
-      if (values.weight !== (item.weight ?? '')) {
+      if (values.weight && values.weight !== (item.weight ?? '')) {
         overrides.weight = values.weight
       }
-      if (values.weightUnit !== (item.weightUnit ?? 'g')) {
+      if (values.weightUnit && values.weightUnit !== (item.weightUnit ?? 'g')) {
         overrides.weightUnit = values.weightUnit
       }
       if (Object.keys(overrides).length > 0) {
@@ -300,7 +300,10 @@ function EditPackingListItemDialog({ item, open, onOpenChange }: EditPackingList
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Unit</FormLabel>
-                    <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || undefined}>
+                    <Select
+                      onValueChange={(v) => field.onChange(v || undefined)}
+                      value={field.value || undefined}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />

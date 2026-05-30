@@ -161,9 +161,10 @@ export const newUserSignupPostToSlack = onDocumentCreated('users/{documentId}', 
   const newUserData = event.data?.data()
   const isAnonymous = newUserData?.isAnonymous as boolean | undefined
   const displayName = (newUserData?.displayName as string | undefined)?.trim() || '—'
+  const username = (newUserData?.username as string | undefined)?.trim() || '—'
   const email = (newUserData?.email as string | undefined)?.trim() || '—'
 
-  await notifyTeam('user-signed-up', { displayName, email, isAnonymous: !!isAnonymous })
+  await notifyTeam('user-signed-up', { username, displayName, email, isAnonymous: !!isAnonymous })
 })
 
 export const updateAlgoliaOnUserCreate = onDocumentCreated('users/{documentId}', async (event) => {

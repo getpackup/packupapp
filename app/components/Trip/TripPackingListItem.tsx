@@ -111,19 +111,12 @@ const TripPackingListItem = ({
         onOpenChange={setShowAccountGate}
         message="Create an account to build your shopping list across all your trips."
       />
-      <div className="flex items-center justify-between">
-        <div className="flex min-w-0 items-center gap-4">
+      <div className="flex items-center justify-between gap-2">
+        <div>
           {isMultiSelecting ? (
             <>
-              <Checkbox
-                checked={isSelected}
-                onClick={handleSelection}
-                id={item.id}
-              />
-              <span
-                className="cursor-pointer select-none"
-                onClick={handleSelection}
-              >
+              <Checkbox checked={isSelected} onClick={handleSelection} id={item.id} />
+              <span className="cursor-pointer select-none" onClick={handleSelection}>
                 {item.name}
               </span>
             </>
@@ -156,32 +149,36 @@ const TripPackingListItem = ({
                   <Circle className="text-muted-foreground/80 hover:text-muted-foreground h-6 w-6" />
                 )}
               </animated.div>
-              <span
-                className={cn('truncate select-none', item.isPacked && 'text-muted-foreground')}
-              >
-                {item.name}
-              </span>
-              {item.weight && (
-                <span className="text-muted-foreground text-xs">
-                  {item.weight}
-                  {item.weightUnit ?? 'g'}
-                </span>
-              )}
-              {item.quantity && item.quantity !== 1 && (
-                <Badge
-                  className="h-5 min-w-5 rounded-full font-mono tabular-nums"
-                  variant="outline"
-                >
-                  <X className="h-3 w-3" /> {item.quantity}
-                </Badge>
-              )}
             </>
           )}
         </div>
+
+        <div className="flex w-full min-w-0 items-center gap-2">
+          <span
+            className={cn(
+              'min-w-0 shrink truncate select-none',
+              item.isPacked && 'text-muted-foreground'
+            )}
+          >
+            <span className="text-left whitespace-nowrap">{item.name}</span>
+          </span>
+          {item.weight && (
+            <Badge className="h-5 min-w-5 rounded-full font-mono tabular-nums" variant="outline">
+              {item.weight}
+              {item.weightUnit ?? 'g'}
+            </Badge>
+          )}
+          {item.quantity && item.quantity !== 1 && (
+            <Badge className="h-5 min-w-5 rounded-full font-mono tabular-nums" variant="outline">
+              <X className="h-3 w-3" /> {item.quantity}
+            </Badge>
+          )}
+          <TagPills item={item} />
+        </div>
+
         <div className="flex min-w-0 items-center gap-2">
           {!isMultiSelecting && (
             <>
-              <TagPills item={item} />
               {isGroup && (
                 <Popover>
                   <PopoverTrigger asChild>

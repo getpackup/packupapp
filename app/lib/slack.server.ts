@@ -47,6 +47,7 @@ export type NotifyTeamPayloads = {
     displayName: string
     email: string
     isAnonymous: boolean
+    username: string
   }
   'trip-created': {
     tripName: string
@@ -158,8 +159,8 @@ function userSignedUpBlocks(p: NotifyTeamPayloads['user-signed-up']): unknown[] 
       type: 'section',
       fields: [
         { type: 'mrkdwn', text: `*Name*\n${esc(p.displayName)}` },
-        { type: 'mrkdwn', text: `*Email*\n${esc(p.email)}` },
-        { type: 'mrkdwn', text: `*Type*\n${p.isAnonymous ? 'Anonymous' : 'Registered'}` },
+        { type: 'mrkdwn', text: `*Username*\n${esc(p.username)}` },
+        { type: 'mrkdwn', text: `*Email*\n${p.isAnonymous ? 'Anonymous' : esc(p.email)}` },
       ],
     },
   ]

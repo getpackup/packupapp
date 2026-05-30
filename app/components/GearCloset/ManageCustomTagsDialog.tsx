@@ -68,7 +68,7 @@ function ColorPickerDropdown({
           )}
         >
           <span className={cn('h-4 w-4 rounded-full', colorClasses[value])} />
-          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+          <ChevronDown className="text-muted-foreground h-3 w-3" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-3" align="start">
@@ -77,11 +77,16 @@ function ColorPickerDropdown({
             <button
               key={color}
               type="button"
-              onClick={() => { onChange(color); setOpen(false) }}
+              onClick={() => {
+                onChange(color)
+                setOpen(false)
+              }}
               className={cn(
                 'h-6 w-6 rounded-full transition-all',
                 colorClasses[color],
-                value === color ? 'ring-2 ring-offset-2 ring-offset-background ring-foreground' : 'hover:scale-110'
+                value === color
+                  ? 'ring-offset-background ring-foreground ring-2 ring-offset-2'
+                  : 'hover:scale-110'
               )}
             />
           ))}
@@ -194,13 +199,19 @@ function ManageCustomTagsDialog({ userId, children }: ManageCustomTagsDialogProp
   }
 
   return (
-    <Dialog onOpenChange={() => { setEditingTag(null); setError('') }}>
+    <Dialog
+      onOpenChange={() => {
+        setEditingTag(null)
+        setError('')
+      }}
+    >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-125">
         <DialogHeader>
           <DialogTitle>Custom tags</DialogTitle>
           <DialogDescription>
-            Create your own tags with custom colors. These appear alongside predefined tags in tag pickers.
+            Create your own tags with custom colors. These appear alongside predefined tags in tag
+            pickers.
           </DialogDescription>
         </DialogHeader>
 
@@ -214,8 +225,16 @@ function ManageCustomTagsDialog({ userId, children }: ManageCustomTagsDialogProp
                       <ColorPickerDropdown value={editColor} onChange={setEditColor} />
                       <Input
                         value={editName}
-                        onChange={(e) => { setEditName(e.target.value); setError('') }}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleUpdate() } }}
+                        onChange={(e) => {
+                          setEditName(e.target.value)
+                          setError('')
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            handleUpdate()
+                          }
+                        }}
                         placeholder="Tag name"
                         autoFocus
                       />
@@ -223,7 +242,14 @@ function ManageCustomTagsDialog({ userId, children }: ManageCustomTagsDialogProp
                     <div className="flex items-center justify-between">
                       {error && <p className="text-destructive text-xs">{error}</p>}
                       <div className="ml-auto flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => { setEditingTag(null); setError('') }}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingTag(null)
+                            setError('')
+                          }}
+                        >
                           Cancel
                         </Button>
                         <Button size="sm" onClick={handleUpdate}>
@@ -267,18 +293,37 @@ function ManageCustomTagsDialog({ userId, children }: ManageCustomTagsDialogProp
 
           {!editingTag && (
             <div className="space-y-2 rounded-md border p-3">
-              <div className="flex items-center gap-2">
+              <div className="flex items-start gap-2">
                 <ColorPickerDropdown value={newColor} onChange={setNewColor} />
-                <Input
-                  value={newName}
-                  onChange={(e) => { setNewName(e.target.value); setError('') }}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCreate() } }}
-                  placeholder="New tag name..."
-                />
+                <div className="w-full">
+                  <Input
+                    value={newName}
+                    onChange={(e) => {
+                      setNewName(e.target.value)
+                      if (e.target.value.trim().length > 25) {
+                        setError('Tag name must be 25 characters or less')
+                      } else {
+                        setError('')
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleCreate()
+                      }
+                    }}
+                    placeholder="New tag name..."
+                  />
+                  {error && <p className="text-destructive mt-1 text-xs">{error}</p>}
+                </div>
               </div>
               <div className="flex items-center justify-between">
-                {error && <p className="text-destructive text-xs">{error}</p>}
-                <Button size="sm" className="ml-auto" onClick={handleCreate} disabled={!newName.trim()}>
+                <Button
+                  size="sm"
+                  className="ml-auto"
+                  onClick={handleCreate}
+                  disabled={!newName.trim() || error !== ''}
+                >
                   Add tag
                 </Button>
               </div>

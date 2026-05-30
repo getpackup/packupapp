@@ -224,7 +224,12 @@ const TripPackingListCategory = ({
                   e.stopPropagation()
                 }
               }}
-              className="focus-visible:border-ring focus-visible:ring-ring/50 mx-2 flex w-full justify-between border-b pb-2 transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50"
+              className={cn(
+                'focus-visible:border-ring focus-visible:ring-ring/50 mx-2 flex w-full justify-between transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50',
+                {
+                  'border-b pb-2': accordionOpen,
+                }
+              )}
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.target !== e.currentTarget) return
@@ -449,63 +454,67 @@ const TripPackingListCategory = ({
                   </div>
                 ) : (
                   <>
-                    <AddPackingListDialog
-                      categoryName={categoryName}
-                      onItemCreated={handleItemCreated}
-                    >
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon-sm">
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent className="flex items-center gap-2">
-                            Add item to {categoryName}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </AddPackingListDialog>
+                    {accordionOpen && (
+                      <>
+                        <AddPackingListDialog
+                          categoryName={categoryName}
+                          onItemCreated={handleItemCreated}
+                        >
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon-sm">
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="flex items-center gap-2">
+                                Add item to {categoryName}
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </AddPackingListDialog>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon-sm" className="mr-1">
-                          <Ellipsis className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setAccordionOpen(true)
-                            setIsMultiSelecting(true)
-                          }}
-                        >
-                          <CopyCheck />
-                          Multi-select items
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            markAllPacked()
-                          }}
-                        >
-                          <ListChecks />
-                          Mark all as {areAllPacked ? 'unpacked' : 'packed'}
-                        </DropdownMenuItem>
-                        {!isGroup && (
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              deleteAllItems()
-                            }}
-                          >
-                            <Trash2 />
-                            Delete all in {categoryName}
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon-sm" className="mr-1">
+                              <Ellipsis className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setAccordionOpen(true)
+                                setIsMultiSelecting(true)
+                              }}
+                            >
+                              <CopyCheck />
+                              Multi-select items
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                markAllPacked()
+                              }}
+                            >
+                              <ListChecks />
+                              Mark all as {areAllPacked ? 'unpacked' : 'packed'}
+                            </DropdownMenuItem>
+                            {!isGroup && (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  deleteAllItems()
+                                }}
+                              >
+                                <Trash2 />
+                                Delete all in {categoryName}
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </>
+                    )}
                   </>
                 )}
               </div>
