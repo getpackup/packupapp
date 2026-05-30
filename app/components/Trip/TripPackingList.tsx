@@ -29,8 +29,8 @@ import { Input } from '../ui/input'
 import { Progress } from '../ui/progress'
 import { ScrollArea, ScrollBar } from '../ui/scroll-area'
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group'
-import AddPackingListDialog from './AddPackingListDialog'
 import AddFromGearClosetDialog from './AddFromGearClosetDialog'
+import AddPackingListDialog from './AddPackingListDialog'
 import TripPackingListCategory from './TripPackingListCategory'
 
 type TripPackingListProps = {

@@ -1,7 +1,8 @@
 import { activityKeyToLabel, filterGearByActivities } from '~/lib/gearFilterUtils'
-import { gearListOtherConsiderations } from './gearListItemEnum'
 import type { ActivityTypes, GearClosetItem, GearItem } from '~/types/GearItem'
 import type { PackingListItem } from '~/types/PackingListItem'
+
+import { gearListOtherConsiderations } from './gearListItemEnum'
 
 const otherConsiderationKeySet = new Set(gearListOtherConsiderations.map((item) => item.name))
 
