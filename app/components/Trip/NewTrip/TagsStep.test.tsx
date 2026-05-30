@@ -27,12 +27,24 @@ import { useGearClosetQuery } from '~/services/gear'
 import { useUserByIdQuery } from '~/services/users'
 import TagsStep from './TagsStep'
 
-function Wrapper({ defaultTags = [] }: { defaultTags?: string[] }) {
-  const form = useForm({ defaultValues: { tags: defaultTags } })
+function Wrapper({
+  defaultTags = [],
+  defaultPersonalTags = [],
+  showValues = false,
+}: {
+  defaultTags?: string[]
+  defaultPersonalTags?: string[]
+  showValues?: boolean
+}) {
+  const form = useForm({ defaultValues: { tags: defaultTags, personalTags: defaultPersonalTags } })
+  const tags = form.watch('tags') ?? []
+  const personalTags = form.watch('personalTags') ?? []
   return (
     <MemoryRouter>
       <FormProvider {...form}>
         <TagsStep form={form as any} />
+        {showValues && <div data-testid="tags-value">{JSON.stringify(tags)}</div>}
+        {showValues && <div data-testid="personal-tags-value">{JSON.stringify(personalTags)}</div>}
       </FormProvider>
     </MemoryRouter>
   )
@@ -121,6 +133,35 @@ describe('TagsStep', () => {
       render(<Wrapper />)
       expect(screen.getByText('Frequently Used')).toBeInTheDocument()
       expect(screen.queryByText('deleted-custom')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('tag field routing', () => {
+    it('selecting an Other Considerations checkbox updates personalTags, not tags', async () => {
+      const user = userEvent.setup()
+      render(<Wrapper showValues />)
+      await user.click(screen.getByRole('checkbox', { name: /photography/i }))
+      expect(screen.getByTestId('personal-tags-value').textContent).toContain('photography')
+      expect(screen.getByTestId('tags-value').textContent).not.toContain('photography')
+    })
+
+    it('selecting an Activity checkbox updates tags, not personalTags', async () => {
+      const user = userEvent.setup()
+      render(<Wrapper showValues />)
+      await user.click(screen.getByRole('checkbox', { name: /^hiking$/i }))
+      expect(screen.getByTestId('tags-value').textContent).toContain('hiking')
+      expect(screen.getByTestId('personal-tags-value').textContent).not.toContain('hiking')
+    })
+
+    it('custom gear closet tag checkbox updates personalTags, not tags', async () => {
+      vi.mocked(useGearClosetQuery).mockReturnValue({
+        data: { customTags: [{ name: 'work' }] },
+      } as any)
+      const user = userEvent.setup()
+      render(<Wrapper showValues />)
+      await user.click(screen.getByRole('checkbox', { name: /^work$/i }))
+      expect(screen.getByTestId('personal-tags-value').textContent).toContain('work')
+      expect(screen.getByTestId('tags-value').textContent).not.toContain('work')
     })
   })
 })

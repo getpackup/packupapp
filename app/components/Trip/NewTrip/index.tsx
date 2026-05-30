@@ -73,6 +73,7 @@ const NewTripForm = ({}: NewTripFormProps) => {
       headerImage: undefined,
       name: '',
       tags: [],
+      personalTags: [],
     },
   })
 
@@ -86,22 +87,24 @@ const NewTripForm = ({}: NewTripFormProps) => {
       const endDate = Timestamp.fromDate(endOfDay(values.endDate))
       const tripLength = differenceInCalendarDays(values.endDate, values.startDate) + 1
 
-      const allTags = values.tags ?? []
+      const sharedTagKeys = values.tags ?? []
+      const personalTagValues = values.personalTags ?? []
       const predefinedKeySet = new Set<string>(allGearListItems.map((i) => i.name))
-      const activityKeys = allTags.filter((t): t is keyof ActivityTypes => predefinedKeySet.has(t))
-      const customTagValues = allTags.filter((t) => !predefinedKeySet.has(t))
-      const tagLabels = [
-        ...activityKeys
-          .map((key) => activityKeyToLabel(key))
-          .filter((label): label is string => !!label),
-        ...customTagValues,
-      ]
+
+      const tagLabels = sharedTagKeys
+        .map((key) => activityKeyToLabel(key as keyof ActivityTypes))
+        .filter((label): label is string => !!label)
+
+      const allTagValues = [...sharedTagKeys, ...personalTagValues]
+      const activityKeys = allTagValues.filter((t): t is keyof ActivityTypes => predefinedKeySet.has(t))
+      const customTagNames = personalTagValues.filter((t) => !predefinedKeySet.has(t))
 
       const tripMembersMap: Record<string, any> = {
         [user.uid]: {
           uid: user.uid,
           status: TripMemberStatus.Owner,
           invitedAt: Timestamp.now(),
+          ...(personalTagValues.length > 0 ? { personalTags: personalTagValues } : {}),
         },
       }
 
@@ -134,17 +137,17 @@ const NewTripForm = ({}: NewTripFormProps) => {
         tripMembers: tripMembersMap,
       })
 
-      if (allTags.length > 0) {
-        incrementTagCounts({ tags: allTags })
+      if (allTagValues.length > 0) {
+        incrementTagCounts({ tags: allTagValues })
       }
 
-      if (activityKeys.length > 0 || customTagValues.length > 0) {
+      if (activityKeys.length > 0 || customTagNames.length > 0) {
         try {
           const result = await generatePackingList({
             tripId: trip.tripId,
             activityKeys,
             userId: user.uid,
-            customTagNames: customTagValues,
+            customTagNames,
           })
           if (result.length > 0) {
             toast.success(`Trip created with ${result.length} packing list items`)

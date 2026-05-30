@@ -26,13 +26,16 @@ type TagsStepProps = {
 }
 
 const tagGroups = [
-  { label: 'Activities', items: gearListActivities },
-  { label: 'Accommodations', items: gearListAccommodations },
-  { label: 'Camp Kitchen', items: gearListCampKitchen },
-  { label: 'Other Considerations', items: gearListOtherConsiderations },
+  { label: 'Activities', items: gearListActivities, field: 'tags' as const },
+  { label: 'Accommodations', items: gearListAccommodations, field: 'tags' as const },
+  { label: 'Camp Kitchen', items: gearListCampKitchen, field: 'tags' as const },
+  { label: 'Other Considerations', items: gearListOtherConsiderations, field: 'personalTags' as const },
 ]
 
 const predefinedLabelMap = new Map<string, string>(allGearListItems.map((i) => [i.name, i.label]))
+const predefinedPersonalTagKeySet = new Set<string>(
+  tagGroups.filter((g) => g.field === 'personalTags').flatMap((g) => g.items.map((i) => i.name))
+)
 
 const TagCheckbox = ({
   tagKey,
@@ -58,43 +61,59 @@ const TagsStep = ({ form }: TagsStepProps) => {
   const { data: userData } = useUserByIdQuery({ userId })
   const customTags = closet?.customTags ?? []
   const tags = form.watch('tags') ?? []
+  const personalTags = form.watch('personalTags') ?? []
   const [showAll, setShowAll] = useState(false)
 
   const frequentTagKeys = getFrequentTags(userData?.tagCounts, customTags, FREQUENT_TAGS_CAP)
   const hasFrequentTags = frequentTagKeys.length > 0
 
-  const toggleTag = (key: string) => {
-    const current = form.getValues('tags') ?? []
+  const toggleTag = (field: 'tags' | 'personalTags', key: string) => {
+    const current = (form.getValues(field) ?? []) as string[]
     const next = current.includes(key) ? current.filter((t) => t !== key) : [...current, key]
-    form.setValue('tags', next, { shouldDirty: true })
+    form.setValue(field, next, { shouldDirty: true })
   }
+
+  const toggleSharedTag = (key: string) => toggleTag('tags', key)
+  const togglePersonalTag = (key: string) => toggleTag('personalTags', key)
+
+  const toggleFrequentTag = (key: string) => {
+    const isPersonal = predefinedPersonalTagKeySet.has(key) || !predefinedLabelMap.has(key)
+    if (isPersonal) togglePersonalTag(key)
+    else toggleSharedTag(key)
+  }
+
+  const allSelectedTags = [...tags, ...personalTags]
 
   const allFullListKeys = new Set([
     ...tagGroups.flatMap((g) => g.items.map((i) => i.name)),
     ...customTags.map((ct) => ct.name),
   ])
-  const selectedInFullList = tags.filter(
+  const selectedInFullList = allSelectedTags.filter(
     (t) => allFullListKeys.has(t) && !frequentTagKeys.includes(t)
   ).length
 
   const fullList = (
     <div className="space-y-6">
-      {tagGroups.map((group) => (
-        <div key={group.label}>
-          <h4 className="mb-1 text-sm font-bold tracking-wider uppercase">{group.label}</h4>
-          <div className="grid grid-cols-2 gap-2">
-            {group.items.map((item) => (
-              <TagCheckbox
-                key={item.name}
-                tagKey={item.name}
-                label={item.label}
-                checked={tags.includes(item.name)}
-                onToggle={toggleTag}
-              />
-            ))}
+      {tagGroups.map((group) => {
+        const groupTags = group.field === 'tags' ? tags : personalTags
+        const onToggle = group.field === 'tags' ? toggleSharedTag : togglePersonalTag
+        return (
+          <div key={group.label}>
+            <h4 className="mb-1 text-sm font-bold tracking-wider uppercase">{group.label}</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {group.items.map((item) => (
+                <TagCheckbox
+                  key={item.name}
+                  tagKey={item.name}
+                  label={item.label}
+                  checked={groupTags.includes(item.name)}
+                  onToggle={onToggle}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
       {customTags.length > 0 && (
         <div>
           <h4 className="mb-1 text-sm font-bold tracking-wider uppercase">My Custom Tags</h4>
@@ -104,8 +123,8 @@ const TagsStep = ({ form }: TagsStepProps) => {
                 key={ct.name}
                 tagKey={ct.name}
                 label={ct.name}
-                checked={tags.includes(ct.name)}
-                onToggle={toggleTag}
+                checked={personalTags.includes(ct.name)}
+                onToggle={togglePersonalTag}
               />
             ))}
           </div>
@@ -133,8 +152,8 @@ const TagsStep = ({ form }: TagsStepProps) => {
                       key={key}
                       tagKey={key}
                       label={predefinedLabelMap.get(key) ?? key}
-                      checked={tags.includes(key)}
-                      onToggle={toggleTag}
+                      checked={allSelectedTags.includes(key)}
+                      onToggle={toggleFrequentTag}
                     />
                   ))}
                 </div>
@@ -143,7 +162,6 @@ const TagsStep = ({ form }: TagsStepProps) => {
                 variant="outline"
                 type="button"
                 className="w-full"
-                // className="text-muted-foreground hover:text-foreground text-sm font-medium"
                 onClick={() => setShowAll(!showAll)}
               >
                 {showAll

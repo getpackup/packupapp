@@ -18,4 +18,5 @@ export const newTripFormSchema = z.object({
     .max(100, { message: 'Name must be less than 100 characters' }),
   headerImage: z.string().optional(),
   tags: z.array(z.string()).optional(),
+  personalTags: z.array(z.string()).optional(),
 })
