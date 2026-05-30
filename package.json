@@ -81,7 +81,7 @@
     "zustand": "^5.0.7"
   },
   "devDependencies": {
-    "@ai-hero/sandcastle": "^0.5.10",
+    "@ai-hero/sandcastle": "^0.6.6",
     "@effect/cluster": "^0.58.2",
     "@effect/experimental": "^0.60.0",
     "@effect/rpc": "^0.75.1",

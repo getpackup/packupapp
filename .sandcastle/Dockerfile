@@ -1,5 +1,8 @@
 FROM node:22-bookworm
 
+ENV COREPACK_HOME=/usr/local/share/corepack
+RUN corepack enable && corepack prepare pnpm@10.25.0 --activate
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
   git \
@@ -14,9 +17,6 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
   | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
   && apt-get update && apt-get install -y gh \
   && rm -rf /var/lib/apt/lists/*
-
-# Install pnpm globally so it's available to all users
-RUN npm install -g pnpm@10.25.0
 
 # Build-args for UID/GID alignment: sandcastle docker build-image
 # defaults these to the host user's UID/GID so image-built files
@@ -35,7 +35,6 @@ RUN curl -fsSL https://claude.ai/install.sh | bash
 ENV PATH="/home/agent/.local/bin:$PATH"
 
 WORKDIR /home/agent
-ENV CLAUDE_CONFIG_DIR=/home/agent/.claude
 
 # In worktree sandbox mode, Sandcastle bind-mounts the git worktree at /home/agent/workspace
 # and overrides the working directory to /home/agent/workspace at container start.
