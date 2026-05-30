@@ -19,7 +19,7 @@ import type { ActivityTypes } from '~/types/GearItem'
 
 import ResponsiveDialogContainer from '../ResponsiveDialogContainer'
 
-type GeneratePackingListDialogProps = {
+type AddFromGearClosetDialogProps = {
   tripId: string
   existingTags?: string[]
   children: React.ReactNode
@@ -32,11 +32,11 @@ const activityGroups = [
   { label: 'Other Considerations', items: gearListOtherConsiderations },
 ]
 
-function GeneratePackingListDialog({
+function AddFromGearClosetDialog({
   tripId,
   existingTags = [],
   children,
-}: GeneratePackingListDialogProps) {
+}: AddFromGearClosetDialogProps) {
   const { user } = useAuth()
   const { mutateAsync: generatePackingList, isPending } = useGeneratePackingList()
   const { data: gearCloset } = useGearClosetQuery({
@@ -117,8 +117,8 @@ function GeneratePackingListDialog({
     <ResponsiveDialogContainer
       open={open}
       onOpenChange={handleOpenChange}
-      title="Add gear by tag"
-      description="Select tags to add packing list items from your gear closet."
+      title="Add from Gear Closet"
+      description="Select tags to add items from your Gear Closet. You can run this again at any time to add more items."
       footerAction={
         <Button
           onClick={handleGenerate}
@@ -184,4 +184,4 @@ function GeneratePackingListDialog({
   )
 }
 
-export default GeneratePackingListDialog
+export default AddFromGearClosetDialog
