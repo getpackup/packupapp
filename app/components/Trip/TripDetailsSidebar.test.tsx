@@ -4,11 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const fakeTs = (d: Date) => ({ seconds: Math.floor(d.getTime() / 1000), nanoseconds: 0 }) as any
 
-vi.mock('firebase/firestore', () => ({
-  limit: vi.fn(),
-  where: vi.fn(),
-}))
-
 vi.mock('~/contexts/auth/useAuth', () => {
   const fn = vi.fn(() => ({
     user: { uid: 'u1', username: 'testuser', email: 'test@test.com', isAnonymous: false },

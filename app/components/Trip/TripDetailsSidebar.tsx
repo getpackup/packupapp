@@ -123,30 +123,28 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
     label: ct.name,
   }))
 
-  const onlyActivityTags = trip
-    ? trip.tags.filter((item) => gearListActivities.some((tag) => item === tag.label))
-    : []
+  const onlyActivityTags = trip.tags.filter((item) =>
+    gearListActivities.some((tag) => item === tag.label)
+  )
 
-  const onlyAccommodationOrCampKitchenTags = trip
-    ? trip.tags.filter(
-        (item) =>
-          gearListAccommodations.some((tag) => item === tag.label) ||
-          gearListCampKitchen.some((tag) => item === tag.label)
-      )
-    : []
+  const onlyAccommodationOrCampKitchenTags = trip.tags.filter(
+    (item) =>
+      gearListAccommodations.some((tag) => item === tag.label) ||
+      gearListCampKitchen.some((tag) => item === tag.label)
+  )
 
   const saveOtherConsiderations = async (selectedLabels: string[]) => {
     const nonOcPersonalTags = currentPersonalTags.filter((t) => !ocKeySet.has(t))
     const newOcKeys = selectedLabels
       .map((label) => activityLabelToKey(label))
       .filter((k): k is keyof ActivityTypes => !!k)
+    const previousOcKeys = currentPersonalTags.filter((t) => ocKeySet.has(t))
+    const newlyAdded = newOcKeys.filter((k) => !previousOcKeys.includes(k))
     const updatedPersonalTags = [...nonOcPersonalTags, ...newOcKeys]
     const currentMember = trip.tripMembers[userId]
     await updateTripAsync({
       data: { [`tripMembers.${userId}`]: { ...currentMember, personalTags: updatedPersonalTags } } as any,
     })
-    const previousOcKeys = currentPersonalTags.filter((t) => ocKeySet.has(t))
-    const newlyAdded = newOcKeys.filter((k) => !previousOcKeys.includes(k))
     if (newlyAdded.length > 0) {
       const result = await generatePackingList({
         tripId: trip.tripId,
@@ -160,13 +158,13 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
 
   const saveCustomTags = async (selectedLabels: string[]) => {
     const nonCustomPersonalTags = currentPersonalTags.filter((t) => !customTagNames.has(t))
+    const previousCustom = currentPersonalTags.filter((t) => customTagNames.has(t))
+    const newlyAdded = selectedLabels.filter((t) => !previousCustom.includes(t))
     const updatedPersonalTags = [...nonCustomPersonalTags, ...selectedLabels]
     const currentMember = trip.tripMembers[userId]
     await updateTripAsync({
       data: { [`tripMembers.${userId}`]: { ...currentMember, personalTags: updatedPersonalTags } } as any,
     })
-    const previousCustom = currentPersonalTags.filter((t) => customTagNames.has(t))
-    const newlyAdded = selectedLabels.filter((t) => !previousCustom.includes(t))
     if (newlyAdded.length > 0) {
       const result = await generatePackingList({
         tripId: trip.tripId,
@@ -471,7 +469,12 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           </SidebarItem>
           {customTagDefs.length > 0 && (
             <>
-              <EditTripTags tags={onlyCustomTags} options={customTagOptions} name="Custom Tags" onSave={saveCustomTags}>
+              <EditTripTags
+                tags={onlyCustomTags}
+                options={customTagOptions}
+                name="Custom Tags"
+                onSave={saveCustomTags}
+              >
                 <SubHeading>
                   Custom Tags{' '}
                   <EllipsisButtonWrapper>
