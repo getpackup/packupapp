@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { Timestamp } from 'firebase/firestore'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -28,12 +29,16 @@ vi.mock('~/lib/useHasUnreadChat', () => ({
 }))
 
 vi.mock('~/services/trips', () => ({
-  useUpdateTrip: vi.fn(() => ({ mutateAsync: vi.fn() })),
+  useUpdateTrip: vi.fn(() => ({ mutateAsync: vi.fn().mockResolvedValue(undefined) })),
   useTripMembersQuery: vi.fn(() => ({ data: [] })),
 }))
 
 vi.mock('~/services/chat', () => ({
   useCreateChatMessage: vi.fn(() => ({ mutateAsync: vi.fn() })),
+}))
+
+vi.mock('sonner', () => ({
+  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }))
 
 vi.mock('~/lib/use-screen-size', () => ({
@@ -42,6 +47,7 @@ vi.mock('~/lib/use-screen-size', () => ({
 
 import { useAuth } from '~/contexts/auth/useAuth'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
+import { useUpdateTrip } from '~/services/trips'
 import type { Trip } from '~/types/Trip'
 import { TripMemberStatus } from '~/types/TripMember'
 import TripCard from './TripCard'
@@ -118,6 +124,27 @@ describe('TripCard', () => {
     it('passes tripId to useHasUnreadChat', () => {
       renderTripCard({ tripId: 'trip-xyz' })
       expect(mockUseHasUnreadChat).toHaveBeenCalledWith('trip-xyz')
+    })
+  })
+
+  describe('invitation acceptance', () => {
+    it('navigates to /trips/:id?add-gear=open when accepting', async () => {
+      const user = userEvent.setup()
+      vi.mocked(useUpdateTrip).mockReturnValue({
+        mutateAsync: vi.fn().mockResolvedValue(undefined),
+      } as any)
+
+      renderTripCard(
+        {
+          tripId: 't1',
+          tripMembers: { u1: { uid: 'u1', status: TripMemberStatus.Pending, invitedAt: ts } },
+        },
+        true
+      )
+
+      await user.click(screen.getByRole('button', { name: /accept/i }))
+
+      expect(mockNavigate).toHaveBeenCalledWith('/trips/t1?add-gear=open')
     })
   })
 })

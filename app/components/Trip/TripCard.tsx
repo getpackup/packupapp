@@ -108,8 +108,7 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
         await sendTripMemberStatusMessage(status)
         if (status === TripMemberStatus.Accepted) {
           toast.success(`Excellent! Let's start thinking about what you'll need to bring next 🤙`)
-          // TODO: add generator page or modal to help users get started with packing list after accepting the invitation
-          navigate(`/trips/${trip.tripId}/generator`)
+          navigate(`/trips/${trip.tripId}?add-gear=open`)
         }
         if (status === TripMemberStatus.Declined) {
           toast.success(`Bummer... You have successfully declined to the trip invitation.`)

@@ -1,5 +1,5 @@
 import { ListPlus, Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '~/components/ui/button'
@@ -22,7 +22,9 @@ import ResponsiveDialogContainer from '../ResponsiveDialogContainer'
 type AddFromGearClosetDialogProps = {
   tripId: string
   existingTags?: string[]
-  children: React.ReactNode
+  children?: React.ReactNode
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 const activityGroups = [
@@ -32,10 +34,20 @@ const activityGroups = [
   { label: 'Other Considerations', items: gearListOtherConsiderations },
 ]
 
+function buildSelections(existingTags: string[]) {
+  const keys = existingTags
+    .map((label) => activityLabelToKey(label))
+    .filter((key): key is keyof ActivityTypes => !!key)
+  const customTags = existingTags.filter((label) => !activityLabelToKey(label))
+  return { keys, customTags }
+}
+
 function AddFromGearClosetDialog({
   tripId,
   existingTags = [],
   children,
+  open: controlledOpen,
+  onOpenChange: onControlledOpenChange,
 }: AddFromGearClosetDialogProps) {
   const { user } = useAuth()
   const { mutateAsync: generatePackingList, isPending } = useGeneratePackingList()
@@ -43,32 +55,37 @@ function AddFromGearClosetDialog({
     userId: user?.uid ?? '',
     queryOptions: { enabled: !!user?.uid },
   })
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+
+  const isControlled = controlledOpen !== undefined
+  const isOpen = isControlled ? controlledOpen : internalOpen
 
   const customTags = gearCloset?.customTags ?? []
 
-  const preSelectedKeys = existingTags
-    .map((label) => activityLabelToKey(label))
-    .filter((key): key is keyof ActivityTypes => !!key)
+  const [selectedKeys, setSelectedKeys] = useState<Set<keyof ActivityTypes>>(new Set())
+  const [selectedCustomTags, setSelectedCustomTags] = useState<Set<string>>(new Set())
 
-  const preSelectedCustomTags = existingTags.filter((label) => !activityLabelToKey(label))
-
-  const [selectedKeys, setSelectedKeys] = useState<Set<keyof ActivityTypes>>(
-    new Set(preSelectedKeys)
-  )
-  const [selectedCustomTags, setSelectedCustomTags] = useState<Set<string>>(
-    new Set(preSelectedCustomTags)
-  )
+  // Reset selections when controlled open transitions to true
+  useEffect(() => {
+    if (controlledOpen === true) {
+      const { keys, customTags: ct } = buildSelections(existingTags)
+      setSelectedKeys(new Set(keys))
+      setSelectedCustomTags(new Set(ct))
+    }
+    // intentionally omit existingTags — we snapshot on open, not on every tag change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [controlledOpen])
 
   const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen)
-    if (newOpen) {
-      const keys = existingTags
-        .map((label) => activityLabelToKey(label))
-        .filter((key): key is keyof ActivityTypes => !!key)
-      setSelectedKeys(new Set(keys))
-      setSelectedCustomTags(new Set(existingTags.filter((label) => !activityLabelToKey(label))))
+    if (!isControlled) {
+      setInternalOpen(newOpen)
+      if (newOpen) {
+        const { keys, customTags: ct } = buildSelections(existingTags)
+        setSelectedKeys(new Set(keys))
+        setSelectedCustomTags(new Set(ct))
+      }
     }
+    onControlledOpenChange?.(newOpen)
   }
 
   const toggleKey = (key: keyof ActivityTypes) => {
@@ -110,12 +127,12 @@ function AddFromGearClosetDialog({
     } else {
       toast.info('No new items to add — everything is already on your list')
     }
-    setOpen(false)
+    handleOpenChange(false)
   }
 
   return (
     <ResponsiveDialogContainer
-      open={open}
+      open={isOpen}
       onOpenChange={handleOpenChange}
       title="Add from Gear Closet"
       description="Select tags to add items from your Gear Closet. You can run this again at any time to add more items."
