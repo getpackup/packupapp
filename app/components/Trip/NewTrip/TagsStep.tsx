@@ -26,13 +26,14 @@ type TagsStepProps = {
 }
 
 const tagGroups = [
-  { label: 'Activities', items: gearListActivities },
-  { label: 'Accommodations', items: gearListAccommodations },
-  { label: 'Camp Kitchen', items: gearListCampKitchen },
-  { label: 'Other Considerations', items: gearListOtherConsiderations },
+  { label: 'Activities', items: gearListActivities, field: 'tags' as const },
+  { label: 'Accommodations', items: gearListAccommodations, field: 'tags' as const },
+  { label: 'Camp Kitchen', items: gearListCampKitchen, field: 'tags' as const },
+  { label: 'Other Considerations', items: gearListOtherConsiderations, field: 'personalTags' as const },
 ]
 
 const predefinedLabelMap = new Map<string, string>(allGearListItems.map((i) => [i.name, i.label]))
+const ocKeySet = new Set<string>(gearListOtherConsiderations.map((i) => i.name))
 
 const TagCheckbox = ({
   tagKey,
@@ -58,22 +59,37 @@ const TagsStep = ({ form }: TagsStepProps) => {
   const { data: userData } = useUserByIdQuery({ userId })
   const customTags = closet?.customTags ?? []
   const tags = form.watch('tags') ?? []
+  const personalTags = form.watch('personalTags') ?? []
   const [showAll, setShowAll] = useState(false)
 
   const frequentTagKeys = getFrequentTags(userData?.tagCounts, customTags, FREQUENT_TAGS_CAP)
   const hasFrequentTags = frequentTagKeys.length > 0
 
-  const toggleTag = (key: string) => {
+  const toggleSharedTag = (key: string) => {
     const current = form.getValues('tags') ?? []
     const next = current.includes(key) ? current.filter((t) => t !== key) : [...current, key]
     form.setValue('tags', next, { shouldDirty: true })
   }
 
+  const togglePersonalTag = (key: string) => {
+    const current = form.getValues('personalTags') ?? []
+    const next = current.includes(key) ? current.filter((t) => t !== key) : [...current, key]
+    form.setValue('personalTags', next, { shouldDirty: true })
+  }
+
+  const toggleFrequentTag = (key: string) => {
+    const isPersonal = ocKeySet.has(key) || !predefinedLabelMap.has(key)
+    if (isPersonal) togglePersonalTag(key)
+    else toggleSharedTag(key)
+  }
+
+  const allSelectedTags = [...tags, ...personalTags]
+
   const allFullListKeys = new Set([
     ...tagGroups.flatMap((g) => g.items.map((i) => i.name)),
     ...customTags.map((ct) => ct.name),
   ])
-  const selectedInFullList = tags.filter(
+  const selectedInFullList = allSelectedTags.filter(
     (t) => allFullListKeys.has(t) && !frequentTagKeys.includes(t)
   ).length
 
@@ -88,8 +104,12 @@ const TagsStep = ({ form }: TagsStepProps) => {
                 key={item.name}
                 tagKey={item.name}
                 label={item.label}
-                checked={tags.includes(item.name)}
-                onToggle={toggleTag}
+                checked={
+                  group.field === 'tags'
+                    ? tags.includes(item.name)
+                    : personalTags.includes(item.name)
+                }
+                onToggle={group.field === 'tags' ? toggleSharedTag : togglePersonalTag}
               />
             ))}
           </div>
@@ -104,8 +124,8 @@ const TagsStep = ({ form }: TagsStepProps) => {
                 key={ct.name}
                 tagKey={ct.name}
                 label={ct.name}
-                checked={tags.includes(ct.name)}
-                onToggle={toggleTag}
+                checked={personalTags.includes(ct.name)}
+                onToggle={togglePersonalTag}
               />
             ))}
           </div>
@@ -133,8 +153,8 @@ const TagsStep = ({ form }: TagsStepProps) => {
                       key={key}
                       tagKey={key}
                       label={predefinedLabelMap.get(key) ?? key}
-                      checked={tags.includes(key)}
-                      onToggle={toggleTag}
+                      checked={allSelectedTags.includes(key)}
+                      onToggle={toggleFrequentTag}
                     />
                   ))}
                 </div>
