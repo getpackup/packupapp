@@ -42,7 +42,12 @@ type TripPackingListProps = {
   onAddGearOpenChange?: (open: boolean) => void
 }
 
-const TripPackingList = ({ tripId, users, isAddGearOpen, onAddGearOpenChange }: TripPackingListProps) => {
+const TripPackingList = ({
+  tripId,
+  users,
+  isAddGearOpen,
+  onAddGearOpenChange,
+}: TripPackingListProps) => {
   const { user } = useAuth()
   const colorMap = useCustomTagColorMap(user?.uid ?? '')
   const queryClient = useQueryClient()
@@ -56,6 +61,7 @@ const TripPackingList = ({ tripId, users, isAddGearOpen, onAddGearOpenChange }: 
     )
     return [...shared, ...personalLabels]
   }, [trip?.tags, trip?.tripMembers, user?.uid])
+
   const checkboxSounds = useCheckboxSounds()
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const { data: packingList, isLoading } = useTripPackingListQuery({

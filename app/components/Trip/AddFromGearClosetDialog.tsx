@@ -35,11 +35,17 @@ const activityGroups = [
 ]
 
 function buildSelections(existingTags: string[]) {
-  const keys = existingTags
-    .map((label) => activityLabelToKey(label))
-    .filter((key): key is keyof ActivityTypes => !!key)
-  const customTags = existingTags.filter((label) => !activityLabelToKey(label))
-  return { keys, customTags }
+  const keys: (keyof ActivityTypes)[] = []
+  const customTagNames: string[] = []
+  for (const label of existingTags) {
+    const key = activityLabelToKey(label)
+    if (key) {
+      keys.push(key)
+    } else {
+      customTagNames.push(label)
+    }
+  }
+  return { keys, customTagNames }
 }
 
 function AddFromGearClosetDialog({
@@ -68,9 +74,9 @@ function AddFromGearClosetDialog({
   // Reset selections when controlled open transitions to true
   useEffect(() => {
     if (controlledOpen === true) {
-      const { keys, customTags: ct } = buildSelections(existingTags)
+      const { keys, customTagNames } = buildSelections(existingTags)
       setSelectedKeys(new Set(keys))
-      setSelectedCustomTags(new Set(ct))
+      setSelectedCustomTags(new Set(customTagNames))
     }
     // intentionally omit existingTags — we snapshot on open, not on every tag change
   }, [controlledOpen])
@@ -79,9 +85,9 @@ function AddFromGearClosetDialog({
     if (!isControlled) {
       setInternalOpen(newOpen)
       if (newOpen) {
-        const { keys, customTags: ct } = buildSelections(existingTags)
+        const { keys, customTagNames } = buildSelections(existingTags)
         setSelectedKeys(new Set(keys))
-        setSelectedCustomTags(new Set(ct))
+        setSelectedCustomTags(new Set(customTagNames))
       }
     }
     onControlledOpenChange?.(newOpen)
