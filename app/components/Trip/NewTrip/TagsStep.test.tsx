@@ -27,18 +27,15 @@ import { useGearClosetQuery } from '~/services/gear'
 import { useUserByIdQuery } from '~/services/users'
 import TagsStep from './TagsStep'
 
-function Wrapper({ defaultTags = [], defaultPersonalTags = [] }: { defaultTags?: string[]; defaultPersonalTags?: string[] }) {
-  const form = useForm({ defaultValues: { tags: defaultTags, personalTags: defaultPersonalTags } })
-  return (
-    <MemoryRouter>
-      <FormProvider {...form}>
-        <TagsStep form={form as any} />
-      </FormProvider>
-    </MemoryRouter>
-  )
-}
-
-function WrapperWithValues({ defaultTags = [], defaultPersonalTags = [] }: { defaultTags?: string[]; defaultPersonalTags?: string[] }) {
+function Wrapper({
+  defaultTags = [],
+  defaultPersonalTags = [],
+  showValues = false,
+}: {
+  defaultTags?: string[]
+  defaultPersonalTags?: string[]
+  showValues?: boolean
+}) {
   const form = useForm({ defaultValues: { tags: defaultTags, personalTags: defaultPersonalTags } })
   const tags = form.watch('tags') ?? []
   const personalTags = form.watch('personalTags') ?? []
@@ -46,8 +43,8 @@ function WrapperWithValues({ defaultTags = [], defaultPersonalTags = [] }: { def
     <MemoryRouter>
       <FormProvider {...form}>
         <TagsStep form={form as any} />
-        <div data-testid="tags-value">{JSON.stringify(tags)}</div>
-        <div data-testid="personal-tags-value">{JSON.stringify(personalTags)}</div>
+        {showValues && <div data-testid="tags-value">{JSON.stringify(tags)}</div>}
+        {showValues && <div data-testid="personal-tags-value">{JSON.stringify(personalTags)}</div>}
       </FormProvider>
     </MemoryRouter>
   )
@@ -142,7 +139,7 @@ describe('TagsStep', () => {
   describe('tag field routing', () => {
     it('selecting an Other Considerations checkbox updates personalTags, not tags', async () => {
       const user = userEvent.setup()
-      render(<WrapperWithValues />)
+      render(<Wrapper showValues />)
       await user.click(screen.getByRole('checkbox', { name: /photography/i }))
       expect(screen.getByTestId('personal-tags-value').textContent).toContain('photography')
       expect(screen.getByTestId('tags-value').textContent).not.toContain('photography')
@@ -150,7 +147,7 @@ describe('TagsStep', () => {
 
     it('selecting an Activity checkbox updates tags, not personalTags', async () => {
       const user = userEvent.setup()
-      render(<WrapperWithValues />)
+      render(<Wrapper showValues />)
       await user.click(screen.getByRole('checkbox', { name: /^hiking$/i }))
       expect(screen.getByTestId('tags-value').textContent).toContain('hiking')
       expect(screen.getByTestId('personal-tags-value').textContent).not.toContain('hiking')
@@ -161,7 +158,7 @@ describe('TagsStep', () => {
         data: { customTags: [{ name: 'work' }] },
       } as any)
       const user = userEvent.setup()
-      render(<WrapperWithValues />)
+      render(<Wrapper showValues />)
       await user.click(screen.getByRole('checkbox', { name: /^work$/i }))
       expect(screen.getByTestId('personal-tags-value').textContent).toContain('work')
       expect(screen.getByTestId('tags-value').textContent).not.toContain('work')

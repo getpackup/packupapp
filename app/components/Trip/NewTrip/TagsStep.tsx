@@ -67,14 +67,14 @@ const TagsStep = ({ form }: TagsStepProps) => {
   const frequentTagKeys = getFrequentTags(userData?.tagCounts, customTags, FREQUENT_TAGS_CAP)
   const hasFrequentTags = frequentTagKeys.length > 0
 
-  const makeToggleTag = (field: 'tags' | 'personalTags') => (key: string) => {
+  const toggleTag = (field: 'tags' | 'personalTags', key: string) => {
     const current = (form.getValues(field) ?? []) as string[]
     const next = current.includes(key) ? current.filter((t) => t !== key) : [...current, key]
     form.setValue(field, next, { shouldDirty: true })
   }
 
-  const toggleSharedTag = makeToggleTag('tags')
-  const togglePersonalTag = makeToggleTag('personalTags')
+  const toggleSharedTag = (key: string) => toggleTag('tags', key)
+  const togglePersonalTag = (key: string) => toggleTag('personalTags', key)
 
   const toggleFrequentTag = (key: string) => {
     const isPersonal = predefinedPersonalTagKeySet.has(key) || !predefinedLabelMap.has(key)
@@ -94,26 +94,26 @@ const TagsStep = ({ form }: TagsStepProps) => {
 
   const fullList = (
     <div className="space-y-6">
-      {tagGroups.map((group) => (
-        <div key={group.label}>
-          <h4 className="mb-1 text-sm font-bold tracking-wider uppercase">{group.label}</h4>
-          <div className="grid grid-cols-2 gap-2">
-            {group.items.map((item) => (
-              <TagCheckbox
-                key={item.name}
-                tagKey={item.name}
-                label={item.label}
-                checked={
-                  group.field === 'tags'
-                    ? tags.includes(item.name)
-                    : personalTags.includes(item.name)
-                }
-                onToggle={group.field === 'tags' ? toggleSharedTag : togglePersonalTag}
-              />
-            ))}
+      {tagGroups.map((group) => {
+        const groupTags = group.field === 'tags' ? tags : personalTags
+        const onToggle = group.field === 'tags' ? toggleSharedTag : togglePersonalTag
+        return (
+          <div key={group.label}>
+            <h4 className="mb-1 text-sm font-bold tracking-wider uppercase">{group.label}</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {group.items.map((item) => (
+                <TagCheckbox
+                  key={item.name}
+                  tagKey={item.name}
+                  label={item.label}
+                  checked={groupTags.includes(item.name)}
+                  onToggle={onToggle}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
       {customTags.length > 0 && (
         <div>
           <h4 className="mb-1 text-sm font-bold tracking-wider uppercase">My Custom Tags</h4>
