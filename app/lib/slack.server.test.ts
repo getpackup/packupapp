@@ -9,8 +9,7 @@ vi.mock('~/firebase/admin', () => ({ getFirebaseAdmin: vi.fn() }))
 
 import { configureTeamNotifications, notifyTeam } from './slack.server'
 
-const okResponse = () =>
-  new Response(JSON.stringify({ ok: true }), { status: 200 })
+const okResponse = () => new Response(JSON.stringify({ ok: true }), { status: 200 })
 
 const mockAdd = vi.fn().mockResolvedValue(undefined)
 const mockDb = { collection: vi.fn().mockReturnValue({ add: mockAdd }) } as unknown as Firestore
@@ -68,6 +67,7 @@ describe('notifyTeam', () => {
         displayName: 'Carol',
         email: 'carol@test.com',
         isAnonymous: false,
+        username: 'carol',
       })
       expect(JSON.parse(mockFetch.mock.calls[0][1].body).channel).toBe('#subscriptions')
     })
@@ -125,6 +125,7 @@ describe('notifyTeam', () => {
         displayName: '—',
         email: '—',
         isAnonymous: true,
+        username: '',
       })
       expect(JSON.parse(mockFetch.mock.calls[0][1].body).text).toBe(
         'New :packup: user signup (Anonymous)!'
@@ -136,6 +137,7 @@ describe('notifyTeam', () => {
         displayName: 'Carol',
         email: 'carol@test.com',
         isAnonymous: false,
+        username: 'carol',
       })
       expect(JSON.parse(mockFetch.mock.calls[0][1].body).text).toBe(
         'New :packup: user signup from Carol!'
@@ -296,6 +298,7 @@ describe('notifyTeam', () => {
           displayName: 'Alice',
           email: 'alice@test.com',
           isAnonymous: false,
+          username: 'alice',
         })
       ).resolves.toBeUndefined()
     })
@@ -306,6 +309,7 @@ describe('notifyTeam', () => {
         displayName: 'Alice',
         email: 'alice@test.com',
         isAnonymous: false,
+        username: 'alice',
       })
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('user-signed-up'),
@@ -321,6 +325,7 @@ describe('notifyTeam', () => {
         displayName: 'Alice',
         email: 'alice@test.com',
         isAnonymous: false,
+        username: 'alice',
       })
       expect(onError).toHaveBeenCalledWith(expect.any(Error))
     })
@@ -331,6 +336,7 @@ describe('notifyTeam', () => {
         displayName: 'Alice',
         email: 'alice@test.com',
         isAnonymous: false,
+        username: 'alice',
       })
       expect(mockDb.collection).toHaveBeenCalledWith('teamNotificationFailures')
       expect(mockAdd).toHaveBeenCalledWith(
@@ -351,6 +357,7 @@ describe('notifyTeam', () => {
           displayName: 'Alice',
           email: 'alice@test.com',
           isAnonymous: false,
+          username: 'alice',
         })
       ).resolves.toBeUndefined()
     })
@@ -364,6 +371,7 @@ describe('notifyTeam', () => {
         displayName: 'Alice',
         email: 'alice@test.com',
         isAnonymous: false,
+        username: 'alice',
       })
       expect(onError).toHaveBeenCalledWith(expect.any(Error))
     })
@@ -374,6 +382,7 @@ describe('notifyTeam', () => {
         displayName: 'Alice',
         email: 'alice@test.com',
         isAnonymous: false,
+        username: 'alice',
       })
       expect(mockAdd).toHaveBeenCalled()
     })
@@ -385,6 +394,7 @@ describe('notifyTeam', () => {
         displayName: 'Alice',
         email: 'alice@test.com',
         isAnonymous: false,
+        username: 'alice',
       })
       expect(mockFetch.mock.calls[0][0]).toBe('https://slack.com/api/chat.postMessage')
     })
@@ -394,6 +404,7 @@ describe('notifyTeam', () => {
         displayName: 'Alice',
         email: 'alice@test.com',
         isAnonymous: false,
+        username: 'alice',
       })
       expect(mockFetch.mock.calls[0][1].headers['Authorization']).toBe('Bearer xoxb-test-token')
     })
@@ -406,6 +417,7 @@ describe('notifyTeam', () => {
         displayName: 'Alice',
         email: 'alice@test.com',
         isAnonymous: false,
+        username: 'alice',
       })
       expect(mockAdd).toHaveBeenCalledWith(
         expect.objectContaining({ error: 'Slack API error: channel_not_found' })
@@ -418,6 +430,7 @@ describe('notifyTeam', () => {
         displayName: 'Alice',
         email: 'alice@test.com',
         isAnonymous: false,
+        username: 'alice',
       })
       expect(mockFetch).not.toHaveBeenCalled()
       expect(mockAdd).toHaveBeenCalledWith(

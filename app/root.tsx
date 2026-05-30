@@ -22,7 +22,6 @@ import { Toaster } from '~/components/ui/sonner'
 
 import type { Route } from './+types/root'
 import { CookieBanner } from './components/CookieBanner'
-import { TooltipProvider } from './components/ui/tooltip'
 import { gdprConsent, themePreferenceCookie } from './cookies.server'
 import { trackPageLeave } from './lib/analytics'
 import { getBodyClassNames } from './lib/getBodyClassNames'
@@ -140,11 +139,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className={bodyClassNames}>
         <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster position="bottom-right" richColors />
-            {children}
-            {loaderData.showCookieBanner && <CookieBanner />}
-          </TooltipProvider>
+          <Toaster position="bottom-right" richColors />
+          {children}
+          {loaderData.showCookieBanner && <CookieBanner />}
         </QueryClientProvider>
         <ScrollRestoration />
         <Scripts />
