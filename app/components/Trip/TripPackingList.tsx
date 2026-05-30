@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import useAuth from '~/contexts/auth/useAuth'
 import { usePackingListState } from '~/contexts/globalState'
+import { activityKeyToLabel } from '~/lib/gearFilterUtils'
 import { getItemTags } from '~/lib/getItemTags'
 import { getTagDotClass } from '~/lib/tagColors'
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
@@ -12,6 +13,7 @@ import { useCustomTagColorMap } from '~/lib/useCustomTagColorMap'
 import { cn } from '~/lib/utils'
 import { tripKeys } from '~/services/tripKeys'
 import { useTripPackingListQuery } from '~/services/trips'
+import type { ActivityTypes } from '~/types/GearItem'
 import type { Trip } from '~/types/Trip'
 import type { User } from '~/types/User'
 
@@ -36,13 +38,30 @@ import TripPackingListCategory from './TripPackingListCategory'
 type TripPackingListProps = {
   tripId: string
   users?: User[]
+  isAddGearOpen?: boolean
+  onAddGearOpenChange?: (open: boolean) => void
 }
 
-const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
+const TripPackingList = ({
+  tripId,
+  users,
+  isAddGearOpen,
+  onAddGearOpenChange,
+}: TripPackingListProps) => {
   const { user } = useAuth()
   const colorMap = useCustomTagColorMap(user?.uid ?? '')
   const queryClient = useQueryClient()
   const trip = queryClient.getQueryData<Trip>(tripKeys.byId(tripId))
+
+  const existingTags = useMemo(() => {
+    const shared = trip?.tags ?? []
+    const personal = user?.uid ? (trip?.tripMembers?.[user.uid]?.personalTags ?? []) : []
+    const personalLabels = personal.map(
+      (tag) => activityKeyToLabel(tag as keyof ActivityTypes) ?? tag
+    )
+    return [...shared, ...personalLabels]
+  }, [trip?.tags, trip?.tripMembers, user?.uid])
+
   const checkboxSounds = useCheckboxSounds()
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const { data: packingList, isLoading } = useTripPackingListQuery({
@@ -165,6 +184,14 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
 
   return (
     <>
+      {onAddGearOpenChange && (
+        <AddFromGearClosetDialog
+          tripId={tripId}
+          existingTags={existingTags}
+          open={isAddGearOpen ?? false}
+          onOpenChange={onAddGearOpenChange}
+        />
+      )}
       <div className="flex items-center justify-between gap-4">
         <div className="mb-4 w-full text-center">
           <span className="text-muted-foreground text-sm">{packedPercent}% packed</span>
@@ -172,7 +199,7 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
         </div>
         {(packingList?.length ?? 0) > 0 && (
           <div className="mb-0 flex justify-end gap-2">
-            <AddFromGearClosetDialog tripId={tripId} existingTags={trip?.tags}>
+            <AddFromGearClosetDialog tripId={tripId} existingTags={existingTags}>
               <Button variant="outline" size="sm" className="h-8 gap-1.5">
                 <Tag className="h-3.5 w-3.5" />
                 Add from Gear Closet
@@ -283,7 +310,7 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
                   Get started by generating a packing list or adding items manually
                 </EmptyDescription>
                 <EmptyContent className="flex-row justify-center gap-2">
-                  <AddFromGearClosetDialog tripId={tripId} existingTags={trip?.tags}>
+                  <AddFromGearClosetDialog tripId={tripId} existingTags={existingTags}>
                     <Button>
                       <Wand2 className="h-4 w-4" />
                       Add from Gear Closet
@@ -334,7 +361,7 @@ const TripPackingList = ({ tripId, users }: TripPackingListProps) => {
                   Get started by generating a packing list or adding items manually
                 </EmptyDescription>
                 <EmptyContent className="flex-row justify-center gap-2">
-                  <AddFromGearClosetDialog tripId={tripId} existingTags={trip?.tags}>
+                  <AddFromGearClosetDialog tripId={tripId} existingTags={existingTags}>
                     <Button>
                       <Wand2 className="h-4 w-4" />
                       Add from Gear Closet

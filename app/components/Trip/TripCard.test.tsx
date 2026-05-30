@@ -1,7 +1,14 @@
 import { render, screen } from '@testing-library/react'
-import { Timestamp } from 'firebase/firestore'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const fakeTs = (d: Date) => ({ seconds: Math.floor(d.getTime() / 1000), nanoseconds: 0 }) as any
+
+vi.mock('firebase/firestore', () => ({
+  limit: vi.fn(),
+  where: vi.fn(),
+}))
 
 const mockNavigate = vi.fn()
 vi.mock('react-router', async () => {
@@ -28,12 +35,20 @@ vi.mock('~/lib/useHasUnreadChat', () => ({
 }))
 
 vi.mock('~/services/trips', () => ({
-  useUpdateTrip: vi.fn(() => ({ mutateAsync: vi.fn() })),
+  useUpdateTrip: vi.fn(() => ({ mutateAsync: vi.fn().mockResolvedValue(undefined) })),
   useTripMembersQuery: vi.fn(() => ({ data: [] })),
 }))
 
 vi.mock('~/services/chat', () => ({
   useCreateChatMessage: vi.fn(() => ({ mutateAsync: vi.fn() })),
+}))
+
+vi.mock('~/lib/chat', () => ({
+  createSystemMessage: vi.fn(() => ({ content: 'mocked', type: 'system' })),
+}))
+
+vi.mock('sonner', () => ({
+  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }))
 
 vi.mock('~/lib/use-screen-size', () => ({
@@ -42,11 +57,12 @@ vi.mock('~/lib/use-screen-size', () => ({
 
 import { useAuth } from '~/contexts/auth/useAuth'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
+import { useUpdateTrip } from '~/services/trips'
 import type { Trip } from '~/types/Trip'
 import { TripMemberStatus } from '~/types/TripMember'
 import TripCard from './TripCard'
 
-const ts = Timestamp.fromDate(new Date('2026-06-01'))
+const ts = fakeTs(new Date('2026-06-01'))
 
 function makeTrip(overrides: Partial<Trip> = {}): Trip {
   return {
@@ -55,7 +71,7 @@ function makeTrip(overrides: Partial<Trip> = {}): Trip {
     name: 'Backcountry Trip',
     description: '',
     startDate: ts,
-    endDate: Timestamp.fromDate(new Date('2026-06-05')),
+    endDate: fakeTs(new Date('2026-06-05')),
     lat: 0,
     lng: 0,
     owner: 'u1',
@@ -118,6 +134,27 @@ describe('TripCard', () => {
     it('passes tripId to useHasUnreadChat', () => {
       renderTripCard({ tripId: 'trip-xyz' })
       expect(mockUseHasUnreadChat).toHaveBeenCalledWith('trip-xyz')
+    })
+  })
+
+  describe('invitation acceptance', () => {
+    it('navigates to /trips/:id?add-gear=open when accepting', async () => {
+      const user = userEvent.setup()
+      vi.mocked(useUpdateTrip).mockReturnValue({
+        mutateAsync: vi.fn().mockResolvedValue(undefined),
+      } as any)
+
+      renderTripCard(
+        {
+          tripId: 't1',
+          tripMembers: { u1: { uid: 'u1', status: TripMemberStatus.Pending, invitedAt: ts } },
+        },
+        true
+      )
+
+      await user.click(screen.getByRole('button', { name: /accept/i }))
+
+      expect(mockNavigate).toHaveBeenCalledWith('/trips/t1?add-gear=open')
     })
   })
 })

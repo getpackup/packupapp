@@ -29,12 +29,27 @@ export default function TripDetails({ params }: Route.ComponentProps) {
   const isAnonymous = useIsAnonymous()
   const { isMediumBreakpoint } = useScreenSize()
   const [isChatOpen, setIsChatOpen] = useState(() => searchParams.get('chat') === 'open')
+  const [isAddGearOpen, setIsAddGearOpen] = useState(() => searchParams.get('add-gear') === 'open')
 
   useEffect(() => {
     if (searchParams.get('chat') === 'open') {
       setIsChatOpen(true)
     }
   }, [searchParams])
+
+  useEffect(() => {
+    if (searchParams.get('add-gear') === 'open') {
+      setIsAddGearOpen(true)
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          next.delete('add-gear')
+          return next
+        },
+        { replace: true }
+      )
+    }
+  }, [searchParams, setSearchParams])
 
   const handleChatOpenChange = useCallback(
     (isOpen: boolean) => {
@@ -123,7 +138,12 @@ export default function TripDetails({ params }: Route.ComponentProps) {
                   secondary="Sign up free — your session isn't saved yet."
                 />
               )}
-              <TripPackingList tripId={id} users={users} />
+              <TripPackingList
+                tripId={id}
+                users={users}
+                isAddGearOpen={isAddGearOpen}
+                onAddGearOpenChange={setIsAddGearOpen}
+              />
             </div>
             <div className="bg-sidebar border-sidebar-border hidden w-1/3 overflow-y-auto border-l md:block">
               <TripDetailsSidebar trip={trip} users={users} />
