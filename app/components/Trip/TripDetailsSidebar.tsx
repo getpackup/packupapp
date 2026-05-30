@@ -8,9 +8,11 @@ import {
   UserPlus,
 } from 'lucide-react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 import useAuth from '~/contexts/auth/useAuth'
 import { formattedDate, formattedDateRange } from '~/lib/date'
+import { activityKeyToLabel, activityLabelToKey } from '~/lib/gearFilterUtils'
 import {
   gearListAccommodations,
   gearListActivities,
@@ -21,6 +23,8 @@ import { getTagDotClass } from '~/lib/tagColors'
 import { useCustomTagColorMap } from '~/lib/useCustomTagColorMap'
 import { cn } from '~/lib/utils'
 import { useGearClosetQuery } from '~/services/gear'
+import { useGeneratePackingList, useUpdateTrip } from '~/services/trips'
+import type { ActivityTypes } from '~/types/GearItem'
 import type { Trip } from '~/types/Trip'
 import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
@@ -97,11 +101,22 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
   const colorMap = useCustomTagColorMap(userId)
   const customTagNames = new Set(customTagDefs.map((ct) => ct.name))
 
+  const { mutateAsync: updateTripAsync } = useUpdateTrip(trip.tripId)
+  const { mutateAsync: generatePackingList } = useGeneratePackingList()
+
   const removeMemberFromTrip = async (memberId: string) => {
     console.log('removing member', memberId)
   }
 
-  const onlyCustomTags = trip ? trip.tags.filter((tag) => customTagNames.has(tag)) : []
+  const ocKeySet = new Set<string>(gearListOtherConsiderations.map((o) => o.name))
+  const currentPersonalTags = trip.tripMembers[userId]?.personalTags ?? []
+
+  const onlyOtherConsiderationsTags = currentPersonalTags
+    .filter((tag) => ocKeySet.has(tag))
+    .map((key) => activityKeyToLabel(key as keyof ActivityTypes))
+    .filter((label): label is string => !!label)
+
+  const onlyCustomTags = currentPersonalTags.filter((tag) => customTagNames.has(tag))
 
   const customTagOptions = customTagDefs.map((ct) => ({
     name: ct.name,
@@ -120,9 +135,48 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
       )
     : []
 
-  const onlyOtherConsiderationsTags = trip
-    ? trip.tags.filter((item) => gearListOtherConsiderations.some((tag) => item === tag.label))
-    : []
+  const saveOtherConsiderations = async (selectedLabels: string[]) => {
+    const nonOcPersonalTags = currentPersonalTags.filter((t) => !ocKeySet.has(t))
+    const newOcKeys = selectedLabels
+      .map((label) => activityLabelToKey(label))
+      .filter((k): k is keyof ActivityTypes => !!k)
+    const updatedPersonalTags = [...nonOcPersonalTags, ...newOcKeys]
+    const currentMember = trip.tripMembers[userId]
+    await updateTripAsync({
+      data: { [`tripMembers.${userId}`]: { ...currentMember, personalTags: updatedPersonalTags } } as any,
+    })
+    const previousOcKeys = currentPersonalTags.filter((t) => ocKeySet.has(t))
+    const newlyAdded = newOcKeys.filter((k) => !previousOcKeys.includes(k))
+    if (newlyAdded.length > 0) {
+      const result = await generatePackingList({
+        tripId: trip.tripId,
+        activityKeys: newlyAdded,
+        userId,
+        customTagNames: [],
+      })
+      if (result.length > 0) toast.success(`Added ${result.length} items to your packing list`)
+    }
+  }
+
+  const saveCustomTags = async (selectedLabels: string[]) => {
+    const nonCustomPersonalTags = currentPersonalTags.filter((t) => !customTagNames.has(t))
+    const updatedPersonalTags = [...nonCustomPersonalTags, ...selectedLabels]
+    const currentMember = trip.tripMembers[userId]
+    await updateTripAsync({
+      data: { [`tripMembers.${userId}`]: { ...currentMember, personalTags: updatedPersonalTags } } as any,
+    })
+    const previousCustom = currentPersonalTags.filter((t) => customTagNames.has(t))
+    const newlyAdded = selectedLabels.filter((t) => !previousCustom.includes(t))
+    if (newlyAdded.length > 0) {
+      const result = await generatePackingList({
+        tripId: trip.tripId,
+        activityKeys: [],
+        userId,
+        customTagNames: newlyAdded,
+      })
+      if (result.length > 0) toast.success(`Added ${result.length} items to your packing list`)
+    }
+  }
 
   return (
     <>
@@ -381,6 +435,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
             tags={onlyOtherConsiderationsTags}
             options={gearListOtherConsiderations}
             name="Other Considerations"
+            onSave={saveOtherConsiderations}
           >
             <SubHeading>
               Other Considerations{' '}
@@ -416,7 +471,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           </SidebarItem>
           {customTagDefs.length > 0 && (
             <>
-              <EditTripTags tags={onlyCustomTags} options={customTagOptions} name="Custom Tags">
+              <EditTripTags tags={onlyCustomTags} options={customTagOptions} name="Custom Tags" onSave={saveCustomTags}>
                 <SubHeading>
                   Custom Tags{' '}
                   <EllipsisButtonWrapper>

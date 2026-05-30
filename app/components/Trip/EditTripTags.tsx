@@ -38,11 +38,13 @@ export function EditTripTags({
   tags,
   options,
   children,
+  onSave,
 }: {
   name: string
   tags: string[]
   options: { name: string; label: string }[]
   children: React.ReactNode
+  onSave?: (selectedLabels: string[]) => Promise<void>
 }) {
   const { id } = useParams()
   const { user } = useAuth()
@@ -63,15 +65,27 @@ export function EditTripTags({
   })
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const updatedTagsFromThisGroup = formKeys.filter(
+      (key: string) => values[key as keyof typeof values]
+    )
+
+    if (onSave) {
+      try {
+        await onSave(updatedTagsFromThisGroup)
+        setOpen(false)
+      } catch (error) {
+        toast.error(`Error updating trip ${name} tags: ` + (error as Error).message)
+        console.error(`Error updating trip ${name} tags:`, error)
+      }
+      return
+    }
+
     if (!id || !user?.uid) return
 
     const previousTripData = queryClient.getQueryData<Trip>(tripKeys.byId(id))
     const previousTags = previousTripData?.tags ?? []
     const tagsFromOtherGroups = previousTags.filter(
       (tag) => !formKeys.includes(tag)
-    )
-    const updatedTagsFromThisGroup = formKeys.filter(
-      (key: string) => values[key as keyof typeof values]
     )
     const updatedTags = [...tagsFromOtherGroups, ...updatedTagsFromThisGroup]
 
