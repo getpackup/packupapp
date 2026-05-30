@@ -33,7 +33,9 @@ const tagGroups = [
 ]
 
 const predefinedLabelMap = new Map<string, string>(allGearListItems.map((i) => [i.name, i.label]))
-const ocKeySet = new Set<string>(gearListOtherConsiderations.map((i) => i.name))
+const predefinedPersonalTagKeySet = new Set<string>(
+  tagGroups.filter((g) => g.field === 'personalTags').flatMap((g) => g.items.map((i) => i.name))
+)
 
 const TagCheckbox = ({
   tagKey,
@@ -65,20 +67,17 @@ const TagsStep = ({ form }: TagsStepProps) => {
   const frequentTagKeys = getFrequentTags(userData?.tagCounts, customTags, FREQUENT_TAGS_CAP)
   const hasFrequentTags = frequentTagKeys.length > 0
 
-  const toggleSharedTag = (key: string) => {
-    const current = form.getValues('tags') ?? []
+  const makeToggleTag = (field: 'tags' | 'personalTags') => (key: string) => {
+    const current = (form.getValues(field) ?? []) as string[]
     const next = current.includes(key) ? current.filter((t) => t !== key) : [...current, key]
-    form.setValue('tags', next, { shouldDirty: true })
+    form.setValue(field, next, { shouldDirty: true })
   }
 
-  const togglePersonalTag = (key: string) => {
-    const current = form.getValues('personalTags') ?? []
-    const next = current.includes(key) ? current.filter((t) => t !== key) : [...current, key]
-    form.setValue('personalTags', next, { shouldDirty: true })
-  }
+  const toggleSharedTag = makeToggleTag('tags')
+  const togglePersonalTag = makeToggleTag('personalTags')
 
   const toggleFrequentTag = (key: string) => {
-    const isPersonal = ocKeySet.has(key) || !predefinedLabelMap.has(key)
+    const isPersonal = predefinedPersonalTagKeySet.has(key) || !predefinedLabelMap.has(key)
     if (isPersonal) togglePersonalTag(key)
     else toggleSharedTag(key)
   }
@@ -163,7 +162,6 @@ const TagsStep = ({ form }: TagsStepProps) => {
                 variant="outline"
                 type="button"
                 className="w-full"
-                // className="text-muted-foreground hover:text-foreground text-sm font-medium"
                 onClick={() => setShowAll(!showAll)}
               >
                 {showAll
