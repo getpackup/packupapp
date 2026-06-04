@@ -1,9 +1,7 @@
+# Packup
+
 [![Lint, Test, & Typecheck](https://github.com/getpackup/packupapp/actions/workflows/ci.yml/badge.svg)](https://github.com/getpackup/packupapp/actions/workflows/ci.yml)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/82ebae32-db80-41c9-86b6-7c2e80c97ec9/deploy-status)](https://app.netlify.com/projects/newpackupapp/deploys)
-
-
-
-# Packup
 
 A collaborative trip packing app where users plan gear lists together, assign items to people, and track what needs to be bought before a trip.
 
@@ -47,7 +45,6 @@ Emails can be previewed using the command:
 pnpm email:dev
 ```
 
-
 ## Building for Production
 
 Create a production build:
@@ -57,6 +54,7 @@ pnpm build
 ```
 
 ## Deployment
+
 Deployed to Netlify via pushes to the `main` branch at [https://new.packupapp.com/](https://new.packupapp.com/).
 
 ---
