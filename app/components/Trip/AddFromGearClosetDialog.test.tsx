@@ -15,6 +15,10 @@ vi.mock('~/services/trips', () => ({
   useGeneratePackingList: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
 }))
 
+vi.mock('~/services/users', () => ({
+  useUserByIdQuery: vi.fn(() => ({ data: undefined })),
+}))
+
 vi.mock('~/lib/use-screen-size', () => ({
   useScreenSize: vi.fn(() => ({ isMediumBreakpoint: true })),
 }))

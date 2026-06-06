@@ -1,5 +1,5 @@
-import { ListPlus, Loader2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { ChevronDown, ChevronUp, ListPlus, Loader2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '~/components/ui/button'
@@ -8,13 +8,17 @@ import { ScrollArea } from '~/components/ui/scroll-area'
 import useAuth from '~/contexts/auth/useAuth'
 import { activityLabelToKey } from '~/lib/gearFilterUtils'
 import {
+  allGearListItems,
   gearListAccommodations,
   gearListActivities,
   gearListCampKitchen,
+  gearListKeys,
   gearListOtherConsiderations,
 } from '~/lib/gearListItemEnum'
+import { FREQUENT_TAGS_CAP, getFrequentTags } from '~/lib/getFrequentTags'
 import { useGearClosetQuery } from '~/services/gear'
 import { useGeneratePackingList } from '~/services/trips'
+import { useUserByIdQuery } from '~/services/users'
 import type { ActivityTypes } from '~/types/GearItem'
 
 import ResponsiveDialogContainer from '../ResponsiveDialogContainer'
@@ -33,6 +37,9 @@ const activityGroups = [
   { label: 'Camp Kitchen', items: gearListCampKitchen },
   { label: 'Other Considerations', items: gearListOtherConsiderations },
 ]
+
+const predefinedLabelMap = new Map<string, string>(allGearListItems.map((i) => [i.name, i.label]))
+const predefinedKeySet = new Set<string>(gearListKeys)
 
 function buildSelections(existingTags: string[]) {
   const keys: (keyof ActivityTypes)[] = []
@@ -61,7 +68,9 @@ function AddFromGearClosetDialog({
     userId: user?.uid ?? '',
     queryOptions: { enabled: !!user?.uid },
   })
+  const { data: userData } = useUserByIdQuery({ userId: user?.uid ?? '' })
   const [internalOpen, setInternalOpen] = useState(false)
+  const [showAll, setShowAll] = useState(false)
 
   const isControlled = controlledOpen !== undefined
   const isOpen = isControlled ? controlledOpen : internalOpen
@@ -77,6 +86,7 @@ function AddFromGearClosetDialog({
       const { keys, customTagNames } = buildSelections(existingTags)
       setSelectedKeys(new Set(keys))
       setSelectedCustomTags(new Set(customTagNames))
+      setShowAll(false)
     }
     // intentionally omit existingTags — we snapshot on open, not on every tag change
   }, [controlledOpen])
@@ -88,6 +98,7 @@ function AddFromGearClosetDialog({
         const { keys, customTagNames } = buildSelections(existingTags)
         setSelectedKeys(new Set(keys))
         setSelectedCustomTags(new Set(customTagNames))
+        setShowAll(false)
       }
     }
     onControlledOpenChange?.(newOpen)
@@ -117,6 +128,51 @@ function AddFromGearClosetDialog({
     })
   }
 
+  const toggleSuggestedTag = (key: string) => {
+    if (predefinedKeySet.has(key)) {
+      toggleKey(key as keyof ActivityTypes)
+    } else {
+      toggleCustomTag(key)
+    }
+  }
+
+  // Snapshot existing tag keys once; stable as long as existingTags prop is stable
+  const existingTagKeySet = useMemo(() => {
+    const { keys, customTagNames } = buildSelections(existingTags)
+    return new Set<string>([...keys, ...customTagNames])
+  }, [existingTags])
+
+  const frequentTagKeys = getFrequentTags(userData?.tagCounts, customTags, FREQUENT_TAGS_CAP)
+
+  const suggestedKeys = useMemo(() => {
+    const existing = Array.from(existingTagKeySet)
+    const frequentNotExisting = frequentTagKeys
+      .filter((k) => !existingTagKeySet.has(k))
+      .slice(0, FREQUENT_TAGS_CAP)
+    return [...existing, ...frequentNotExisting]
+  }, [existingTagKeySet, frequentTagKeys])
+
+  const hasSuggested = suggestedKeys.length > 0
+
+  const allSelected = useMemo(
+    () => new Set<string>([...selectedKeys, ...selectedCustomTags]),
+    [selectedKeys, selectedCustomTags]
+  )
+
+  const allFullListKeys = useMemo(
+    () =>
+      new Set<string>([
+        ...activityGroups.flatMap((g) => g.items.map((i) => i.name)),
+        ...customTags.map((ct) => ct.name),
+      ]),
+    [customTags]
+  )
+
+  const selectedInFullList = useMemo(
+    () => [...allSelected].filter((k) => allFullListKeys.has(k) && !suggestedKeys.includes(k)).length,
+    [allSelected, allFullListKeys, suggestedKeys]
+  )
+
   const handleGenerate = async () => {
     if (!user?.uid || (selectedKeys.size === 0 && selectedCustomTags.size === 0)) return
 
@@ -134,6 +190,53 @@ function AddFromGearClosetDialog({
     }
     handleOpenChange(false)
   }
+
+  const fullList = (
+    <div className="space-y-6">
+      {activityGroups.map((group) => (
+        <div key={group.label}>
+          <h4 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
+            {group.label}
+          </h4>
+          <div className="grid grid-cols-2 gap-2">
+            {group.items.map((item) => (
+              <label
+                key={item.name}
+                className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+              >
+                <Checkbox
+                  checked={selectedKeys.has(item.name)}
+                  onCheckedChange={() => toggleKey(item.name)}
+                />
+                {item.label}
+              </label>
+            ))}
+          </div>
+        </div>
+      ))}
+      {customTags.length > 0 && (
+        <div>
+          <h4 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
+            Custom Tags
+          </h4>
+          <div className="grid grid-cols-2 gap-2">
+            {customTags.map((tag) => (
+              <label
+                key={tag.name}
+                className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
+              >
+                <Checkbox
+                  checked={selectedCustomTags.has(tag.name)}
+                  onCheckedChange={() => toggleCustomTag(tag.name)}
+                />
+                {tag.name}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 
   return (
     <ResponsiveDialogContainer
@@ -157,50 +260,45 @@ function AddFromGearClosetDialog({
       trigger={children}
     >
       <ScrollArea className="max-h-100 overflow-y-auto pr-3">
-        <div className="space-y-6">
-          {activityGroups.map((group) => (
-            <div key={group.label}>
-              <h4 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
-                {group.label}
-              </h4>
-              <div className="grid grid-cols-2 gap-2">
-                {group.items.map((item) => (
-                  <label
-                    key={item.name}
-                    className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
-                  >
-                    <Checkbox
-                      checked={selectedKeys.has(item.name)}
-                      onCheckedChange={() => toggleKey(item.name)}
-                    />
-                    {item.label}
-                  </label>
-                ))}
-              </div>
-            </div>
-          ))}
-          {customTags.length > 0 && (
+        {hasSuggested ? (
+          <div className="space-y-4">
             <div>
               <h4 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
-                Custom Tags
+                Suggested
               </h4>
               <div className="grid grid-cols-2 gap-2">
-                {customTags.map((tag) => (
+                {suggestedKeys.map((key) => (
                   <label
-                    key={tag.name}
+                    key={key}
                     className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
                   >
                     <Checkbox
-                      checked={selectedCustomTags.has(tag.name)}
-                      onCheckedChange={() => toggleCustomTag(tag.name)}
+                      checked={allSelected.has(key)}
+                      onCheckedChange={() => toggleSuggestedTag(key)}
                     />
-                    {tag.name}
+                    {predefinedLabelMap.get(key) ?? key}
                   </label>
                 ))}
               </div>
             </div>
-          )}
-        </div>
+            <Button
+              variant="outline"
+              type="button"
+              className="w-full"
+              onClick={() => setShowAll(!showAll)}
+            >
+              {showAll
+                ? 'See Less'
+                : selectedInFullList > 0
+                  ? `See All Tags (${selectedInFullList} selected)`
+                  : 'See All Tags'}
+              {showAll ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+            {showAll && fullList}
+          </div>
+        ) : (
+          fullList
+        )}
       </ScrollArea>
     </ResponsiveDialogContainer>
   )
