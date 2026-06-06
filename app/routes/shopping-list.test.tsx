@@ -12,6 +12,7 @@ vi.mock('~/contexts/auth/useAuth', () => ({
 
 vi.mock('~/services/shoppingList', () => ({
   useShoppingListQuery: vi.fn(() => ({ data: [], isLoading: false })),
+  useCreateShoppingListItem: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
 }))
 
 vi.mock('~/services/trips', () => ({
@@ -58,5 +59,17 @@ describe('ShoppingList route', () => {
     expect(
       screen.queryByText('Create an account to see everything you need to buy before your trips.')
     ).not.toBeInTheDocument()
+  })
+
+  it('shows Add item button for registered users', () => {
+    vi.mocked(useIsAnonymous).mockReturnValue(false)
+    renderRoute()
+    expect(screen.getByRole('button', { name: /add item/i })).toBeInTheDocument()
+  })
+
+  it('does not show Add item button for anonymous users', () => {
+    vi.mocked(useIsAnonymous).mockReturnValue(true)
+    renderRoute()
+    expect(screen.queryByRole('button', { name: /add item/i })).not.toBeInTheDocument()
   })
 })

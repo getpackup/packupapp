@@ -1,11 +1,13 @@
 import { where } from 'firebase/firestore'
-import { ShoppingCart } from 'lucide-react'
+import { Plus, ShoppingCart } from 'lucide-react'
 import { useMemo } from 'react'
 
 import FullPageSpinner from '~/components/FullPageSpinner'
 import PageContent from '~/components/PageContent'
 import PageHeader from '~/components/PageHeader'
+import AddShoppingListItemDialog from '~/components/ShoppingList/AddShoppingListItemDialog'
 import ShoppingListCategory from '~/components/ShoppingList/ShoppingListCategory'
+import { Button } from '~/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '~/components/ui/empty'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { UpgradeAccountGate } from '~/components/UpgradeAccountGate'
@@ -125,7 +127,21 @@ export default function ShoppingList() {
 
   return (
     <>
-      <PageHeader crumbs={[{ label: 'Shopping List', href: '/shopping-list' }]} />
+      <PageHeader
+        crumbs={[{ label: 'Shopping List', href: '/shopping-list' }]}
+        actions={
+          !isAnonymous ? (
+            <AddShoppingListItemDialog
+              trigger={
+                <Button size="sm">
+                  <Plus className="h-4 w-4" />
+                  Add item
+                </Button>
+              }
+            />
+          ) : undefined
+        }
+      />
       <PageContent>
         {isAnonymous ? (
           <UpgradeAccountGate message="Create an account to see everything you need to buy before your trips.">

@@ -126,7 +126,7 @@ A per-trip dashboard showing aggregate pack weight derived from Gear Closet item
 _Avoid_: Pack weight, weight calculator, weight dashboard
 
 **Custom Tag**:
-A user-defined tag created in the Gear Closet that extends the built-in tag vocabulary (activities, accommodations, camp kitchen, other considerations). Used to group personal gear items under a label the app doesn't natively provide — e.g. "Work", "Hunting". Surfaces as a Personal Tag on trips; never shown to other Trip Members. Creating Custom Tags is a Pro Plan feature. Adding custom gear *items* to the Gear Closet (without a custom tag) is free.
+A user-defined tag created in the Gear Closet that extends the built-in tag vocabulary (activities, accommodations, camp kitchen, other considerations). Used to group personal gear items under a label the app doesn't natively provide — e.g. "Work", "Hunting". Surfaces as a Personal Tag on trips; never shown to other Trip Members. Creating Custom Tags is a Pro Plan feature. Adding custom gear _items_ to the Gear Closet (without a custom tag) is free.
 _Avoid_: Custom category, user tag, personal tag (Personal Tag is the broader term; Custom Tag is the specific authored extension)
 
 **Trip Settings**:
@@ -202,21 +202,19 @@ _Avoid_: Contact, emergency person
 
 > **Dev:** "Can an Anonymous User see Group Items on a trip?"
 > **Domain expert:** "Yes — they can view and edit the packing list. They just can't invite Trip Members or Claim items on behalf of others, because those features are behind an Account Gate."
-
+>
 > **Dev:** "If I archive a trip, do its Shopping List items disappear?"
 > **Domain expert:** "Yes — Archived Trips are hidden from the UI entirely, so their Shopping List items should not surface either."
-
+>
 > **Dev:** "Is 'deleting' a trip reversible?"
 > **Domain expert:** "Yes — Delete sets `archived: true`. Nothing is hard-deleted. But the UI has no way to unarchive yet."
-
-## Example dialogue
-
+>
 > **Dev:** "If a Pending member opts out of the Safety Itinerary, do they still appear in other members' emails?"
 > **Domain expert:** "Yes — they're listed in all emails for SAR headcount purposes. Their opt-out only controls whether they personally receive the email."
-
+>
 > **Dev:** "Can an Owner leave a trip?"
 > **Domain expert:** "No — Leave Trip is only available to non-owner members. The owner can only delete the trip."
-
+>
 > **Dev:** "If someone leaves a trip after the Safety Itinerary was already sent, does anything happen?"
 > **Domain expert:** "No — the email is a point-in-time snapshot sent the day before. Status changes after that don't affect it."
 
