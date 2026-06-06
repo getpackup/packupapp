@@ -45,6 +45,7 @@ type TripPackingListCategoryProps = {
   items: PackingListItem[]
   isGroup?: boolean
   sounds?: ReturnType<typeof useCheckboxSounds>
+  tripTags?: string[]
 }
 
 const TripPackingListCategory = ({
@@ -52,6 +53,7 @@ const TripPackingListCategory = ({
   items,
   isGroup,
   sounds,
+  tripTags,
 }: TripPackingListCategoryProps) => {
   const [isMultiSelecting, setIsMultiSelecting] = useState(false)
   const [selectedItems, setSelectedItems] = useState<string[]>([])
@@ -459,6 +461,7 @@ const TripPackingListCategory = ({
                         <AddPackingListDialog
                           categoryName={categoryName}
                           onItemCreated={handleItemCreated}
+                          tripTags={tripTags}
                         >
                           <div onClick={(e) => e.stopPropagation()}>
                             <Tooltip>

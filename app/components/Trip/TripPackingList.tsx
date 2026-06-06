@@ -205,7 +205,7 @@ const TripPackingList = ({
                 Add from Gear Closet
               </Button>
             </AddFromGearClosetDialog>
-            <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}}>
+            <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}} tripTags={existingTags}>
               <Button variant="default" size="sm" className="h-8 gap-1.5">
                 <Plus className="h-3.5 w-3.5" />
                 Add item
@@ -296,6 +296,7 @@ const TripPackingList = ({
               items={sharedItems}
               isGroup
               sounds={checkboxSounds}
+              tripTags={existingTags}
             />
           )}
 
@@ -316,7 +317,7 @@ const TripPackingList = ({
                       Add from Gear Closet
                     </Button>
                   </AddFromGearClosetDialog>
-                  <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}}>
+                  <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}} tripTags={existingTags}>
                     <Button variant="outline">Add an item</Button>
                   </AddPackingListDialog>
                 </EmptyContent>
@@ -367,7 +368,7 @@ const TripPackingList = ({
                       Add from Gear Closet
                     </Button>
                   </AddFromGearClosetDialog>
-                  <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}}>
+                  <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}} tripTags={existingTags}>
                     <Button variant="outline">Add an item</Button>
                   </AddPackingListDialog>
                 </EmptyContent>
@@ -378,6 +379,7 @@ const TripPackingList = ({
               categoryName="Personal items"
               items={sortedPersonalItems}
               sounds={checkboxSounds}
+              tripTags={existingTags}
             />
           )}
         </div>

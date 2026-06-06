@@ -38,12 +38,14 @@ type AddPackingListDialogProps = {
   categoryName: string
   onItemCreated?: (itemId: string) => void
   children: React.ReactNode
+  tripTags?: string[]
 }
 
 function AddPackingListDialog({
   categoryName,
   onItemCreated,
   children,
+  tripTags,
 }: AddPackingListDialogProps) {
   const { id } = useParams()
   const { user } = useAuth()
@@ -104,7 +106,11 @@ function AddPackingListDialog({
     if (selectedGearItem) {
       itemData.gearItemId = selectedGearItem.id
       itemData.gearSource = selectedGearItem.source
-      const itemTags = selectedGearItem.tags
+      const tripTagSet = new Set(tripTags ?? [])
+      const itemTags =
+        tripTags !== undefined
+          ? selectedGearItem.tags.filter((t) => tripTagSet.has(t))
+          : selectedGearItem.tags
       if (itemTags.length > 0) itemData.tags = itemTags
       if (selectedGearItem.weight) itemData.weight = selectedGearItem.weight
       if (selectedGearItem.weightUnit) itemData.weightUnit = selectedGearItem.weightUnit

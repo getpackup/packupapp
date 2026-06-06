@@ -40,6 +40,10 @@ _Avoid_: Gear library, gear templates, inventory
 The action of batch-adding packing list items by selecting tags that filter against the user's Gear Closet. Items tagged with multiple selected tags are deduplicated. Repeatable — can be used at any time to add more items, not just on initial setup. Pre-selects the trip's shared tags plus the member's Personal Tags on open.
 _Avoid_: Generate packing list, generate gear list (implies one-shot; this is repeatable)
 
+**Packing List Item Tags**:
+The `tags` field on a Packing List Item records which of the trip's active tags caused the item to be included — not all tags the item carries in the Gear Closet. Tags are filtered at write time to the intersection of the item's Gear Closet tags and the trip's current tags (Trip Tags + the member's Personal Tags). An item added manually via "Add Gear Item" uses this same intersection rather than writing all Gear Closet tags. Items with no matching intersection carry no tags and group by `category` instead.
+_Avoid_: All gear closet tags, full item tags
+
 **Trip Tags**:
 The tags stored on the Trip document (`trip.tags`) representing shared trip facts: activities (Hiking, Paddling, etc.), accommodations (Tent, Hostel, etc.), and camp kitchen style (Car Camping, Backcountry, etc.). Visible to all Trip Members on the Trip Card and in the sidebar. Do not include Other Considerations or custom Gear Closet tags — those are Personal Tags.
 _Avoid_: Tags (too generic — distinguish from Personal Tags)
@@ -100,8 +104,30 @@ A UI pattern that blocks Anonymous Users from accessing a feature, prompting the
 _Avoid_: Upgrade gate (implies paid tier), login wall
 
 **Plan Gate** _(planned)_:
-A UI pattern that blocks registered free users from paid-plan features. Not yet implemented.
+A UI pattern that blocks registered free users from paid-plan features. Not yet implemented. The trip owner's plan determines which Plan Gates apply to their trips; members' own plans do not affect the trip. When a Pro user downgrades to Free, existing data is preserved and always readable — gates only fire on write actions going forward (adding members, creating tags, sending chat messages).
+
+Visual treatment: inline lock (disabled state + padlock icon + tooltip) for most gated actions. Trip Chat is a special case — the full Chat UI is shown to Free users but the message input is disabled and an in-context upgrade prompt replaces the empty state. A persistent but unobtrusive "Upgrade to Pro" entry point lives in the sidebar and Settings page; no interruptive modals for Plan Gates (contrast with Account Gate, which may be more interruptive since it requires creating an account).
 _Avoid_: Paywall (too blunt), premium gate
+
+**Free Plan**:
+The default plan for all registered users. Allows unlimited trips but caps Trip Members at 3 total per trip (owner + 2 others). The owner's plan determines the cap — members' plans are irrelevant to the limit. Shopping List, Weather, Friends, Safety Itinerary, and Emergency Contacts are all included on the Free Plan.
+_Avoid_: Free tier, basic plan, starter plan
+
+**Pro Plan** _(planned)_:
+A paid subscription plan for registered users. Removes the Trip Member cap (owner + unlimited members) and unlocks: Trip Chat, Custom Tags. Planned future Pro features (not v1): Trip Templates, Weight Tracking (with charts), Print/Export of packing list.
+_Avoid_: Premium, paid tier, upgrade
+
+**Trip Template** _(planned, Pro)_:
+A saved packing configuration — tags and gear selections — that can be applied to a new Trip to pre-populate it. Created from an existing Trip or built directly. Reduces setup time for repeat trip types (e.g. "My standard backpacking setup").
+_Avoid_: Saved list, preset, gear template
+
+**Weight Tracking** _(planned, Pro)_:
+A per-trip dashboard showing aggregate pack weight derived from Gear Closet item weights. Includes per-category breakdowns and a configurable weight budget. Surfaces as charts for gram-counting power users.
+_Avoid_: Pack weight, weight calculator, weight dashboard
+
+**Custom Tag**:
+A user-defined tag created in the Gear Closet that extends the built-in tag vocabulary (activities, accommodations, camp kitchen, other considerations). Used to group personal gear items under a label the app doesn't natively provide — e.g. "Work", "Hunting". Surfaces as a Personal Tag on trips; never shown to other Trip Members. Creating Custom Tags is a Pro Plan feature. Adding custom gear *items* to the Gear Closet (without a custom tag) is free.
+_Avoid_: Custom category, user tag, personal tag (Personal Tag is the broader term; Custom Tag is the specific authored extension)
 
 **Trip Settings**:
 A modal accessible from the trip sidebar that consolidates per-trip actions: Delete Trip (owner only), Leave Trip (non-owner members), and the per-member Safety Itinerary opt-out toggle. Distinct from the inline detail-editing controls already in the sidebar.
