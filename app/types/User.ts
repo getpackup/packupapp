@@ -21,6 +21,7 @@ export type User = {
   website?: string
   lastUpdated?: Timestamp
   createdAt?: Timestamp
+  usernameLastUpdated?: Timestamp
   fcmTokens?: string[]
   tagCounts?: Record<string, number>
   preferences?: {

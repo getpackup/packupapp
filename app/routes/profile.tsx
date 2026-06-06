@@ -1,12 +1,12 @@
 import 'react-easy-crop/react-easy-crop.css'
 
-import { format, formatDistanceStrict } from 'date-fns'
+import { addDays, format, formatDistanceStrict } from 'date-fns'
 import { updateProfile } from 'firebase/auth'
-import { where } from 'firebase/firestore'
+import { Timestamp, where } from 'firebase/firestore'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
-import { Camera, Lock, Pencil } from 'lucide-react'
+import { BadgeCheck, Camera, Loader2, Lock, Pencil } from 'lucide-react'
 import { UserPlus } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Cropper from 'react-easy-crop'
 import { toast } from 'sonner'
 
@@ -119,6 +119,12 @@ export default function Profile() {
   const [photoURL, setPhotoURL] = useState(user?.photoURL ?? '')
   const [isUploadingImage, setIsUploadingImage] = useState(false)
 
+  const [username, setUsername] = useState(user?.username ?? '')
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
+  const [isHydrated, setIsHydrated] = useState(false)
+  const [algoliaService, setAlgoliaService] = useState<any>(null)
+  const usernameDebounceRef = useRef<number | null>(null)
+
   const [profileHeaderImage, setProfileHeaderImage] = useState(user?.profileHeaderImage ?? '')
   const [isUploadingHeaderImage, setIsUploadingHeaderImage] = useState(false)
 
@@ -143,6 +149,48 @@ export default function Profile() {
 
   const completion = user ? Math.round(calculateProfileCompletion(user)) : 0
 
+  const nextUsernameChangeDate = useMemo(() => {
+    if (!user?.usernameLastUpdated) return null
+    return addDays(user.usernameLastUpdated.toDate(), 30)
+  }, [user?.usernameLastUpdated])
+  const canChangeUsername = !nextUsernameChangeDate || new Date() >= nextUsernameChangeDate
+
+  useEffect(() => { setIsHydrated(true) }, [])
+  useEffect(() => {
+    if (!isHydrated) return
+    import('~/services/algoliaSearch')
+      .then(({ algoliaSearch }) => setAlgoliaService(algoliaSearch))
+      .catch(() => {})
+  }, [isHydrated])
+
+  const checkUsernameAvailability = useCallback(async (value: string) => {
+    if (!isHydrated || !algoliaService || value === user?.username) {
+      setUsernameStatus('idle')
+      return
+    }
+    if (value.length < 3) {
+      setUsernameStatus('idle')
+      return
+    }
+    setUsernameStatus('checking')
+    try {
+      const response = await algoliaService.search([{ indexName: 'Users', query: value }])
+      const firstResultUsername = response.results[0]?.hits[0]?.username?.toLowerCase()
+      setUsernameStatus(firstResultUsername === value ? 'taken' : 'available')
+    } catch {
+      setUsernameStatus('idle')
+    }
+  }, [isHydrated, algoliaService, user?.username])
+
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '')
+    setUsername(value)
+    if (usernameDebounceRef.current) window.clearTimeout(usernameDebounceRef.current)
+    usernameDebounceRef.current = window.setTimeout(() => {
+      checkUsernameAvailability(value)
+    }, 500)
+  }
+
   const handleStartEdit = () => {
     setDisplayName(user?.displayName ?? '')
     setBio(user?.bio ?? '')
@@ -152,6 +200,8 @@ export default function Profile() {
     setLocationPredictions([])
     setPhotoURL(user?.photoURL ?? '')
     setProfileHeaderImage(user?.profileHeaderImage ?? '')
+    setUsername(user?.username ?? '')
+    setUsernameStatus('idle')
     setIsEditing(true)
   }
 
@@ -164,22 +214,29 @@ export default function Profile() {
     setLocationPredictions([])
     setPhotoURL(user?.photoURL ?? '')
     setProfileHeaderImage(user?.profileHeaderImage ?? '')
+    setUsername(user?.username ?? '')
+    setUsernameStatus('idle')
     setIsEditing(false)
   }
 
   const handleSave = async () => {
     if (!user) return
 
-    await updateUser({
-      data: {
-        displayName,
-        bio,
-        location,
-        photoURL,
-        profileHeaderImage,
-        website,
-      },
-    })
+    const updateData: Parameters<typeof updateUser>[0]['data'] = {
+      displayName,
+      bio,
+      location,
+      photoURL,
+      profileHeaderImage,
+      website,
+    }
+
+    if (username !== user.username) {
+      updateData.username = username
+      updateData.usernameLastUpdated = Timestamp.now()
+    }
+
+    await updateUser({ data: updateData })
 
     if (firebaseAuth.currentUser) {
       await updateProfile(firebaseAuth.currentUser, { displayName })
@@ -480,7 +537,11 @@ export default function Profile() {
                         <Button
                           size="sm"
                           onClick={handleSave}
-                          disabled={isPending || isUploadingImage}
+                          disabled={
+                            isPending ||
+                            isUploadingImage ||
+                            (username !== (user?.username ?? '') && usernameStatus !== 'available')
+                          }
                         >
                           {isPending ? 'Saving…' : 'Save'}
                         </Button>
@@ -518,6 +579,50 @@ export default function Profile() {
                   />
                 ) : (
                   <span className="text-sm">{user.displayName || '—'}</span>
+                )}
+
+                <span className="text-muted-foreground text-sm">Username</span>
+                {isEditing ? (
+                  canChangeUsername ? (
+                    <div className="space-y-1">
+                      <Input
+                        value={username}
+                        onChange={handleUsernameChange}
+                        placeholder="yourusername"
+                        maxLength={30}
+                      />
+                      {usernameStatus === 'checking' && (
+                        <p className="text-muted-foreground flex items-center gap-1 text-xs">
+                          <Loader2 className="size-3.5 animate-spin" /> Checking…
+                        </p>
+                      )}
+                      {usernameStatus === 'available' && (
+                        <p className="text-success flex items-center gap-1 text-xs">
+                          <BadgeCheck className="size-3.5" /> Available
+                        </p>
+                      )}
+                      {usernameStatus === 'taken' && (
+                        <p className="text-destructive flex items-center gap-1 text-xs">
+                          Username is already taken
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm">@{user.username}</span>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Lock className="text-muted-foreground size-3.5" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          You can change your username again on{' '}
+                          {format(nextUsernameChangeDate!, 'MMMM do, yyyy')}
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  )
+                ) : (
+                  <span className="text-sm">@{user.username || '—'}</span>
                 )}
 
                 <span className="text-muted-foreground text-sm">Email</span>
