@@ -27,7 +27,7 @@ export function useShoppingListView({
   activeStores: string[]
 }): ShoppingListViewItem[] {
   return useMemo(() => {
-    const tripMap = new Map(trips.map((t) => [t.id, t]))
+    const tripMap = new Map(trips.map((t) => [t.tripId, t]))
 
     let filtered = items.filter((item) => {
       if (purchaseState === 'unpurchased') return !item.isPurchased
