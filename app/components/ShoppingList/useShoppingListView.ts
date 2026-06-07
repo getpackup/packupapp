@@ -30,8 +30,8 @@ export function useShoppingListView({
     const tripMap = new Map(trips.map((t) => [t.id, t]))
 
     let filtered = items.filter((item) => {
-      if (purchaseState === 'unpurchased' && item.isPurchased) return false
-      if (purchaseState === 'purchased' && !item.isPurchased) return false
+      if (purchaseState === 'unpurchased') return !item.isPurchased
+      if (purchaseState === 'purchased') return item.isPurchased
       return true
     })
 
@@ -52,23 +52,22 @@ export function useShoppingListView({
       const aPriority = PRIORITY_ORDER[a.item.priority] ?? 3
       const bPriority = PRIORITY_ORDER[b.item.priority] ?? 3
 
-      if (sortBy === 'trip') {
-        if (aStart !== bStart) return aStart - bStart
-        return aPriority - bPriority
+      switch (sortBy) {
+        case 'trip':
+          if (aStart !== bStart) return aStart - bStart
+          return aPriority - bPriority
+        case 'priority':
+          if (aPriority !== bPriority) return aPriority - bPriority
+          return aStart - bStart
+        case 'store': {
+          const aStore = a.item.store
+          const bStore = b.item.store
+          if (aStore === bStore) return aStart - bStart
+          if (aStore === null) return 1
+          if (bStore === null) return -1
+          return aStore.localeCompare(bStore)
+        }
       }
-
-      if (sortBy === 'priority') {
-        if (aPriority !== bPriority) return aPriority - bPriority
-        return aStart - bStart
-      }
-
-      // sortBy === 'store'
-      const aStore = a.item.store
-      const bStore = b.item.store
-      if (aStore === bStore) return aStart - bStart
-      if (aStore === null) return 1
-      if (bStore === null) return -1
-      return aStore.localeCompare(bStore)
     })
 
     return enriched
