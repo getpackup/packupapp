@@ -28,11 +28,10 @@ import {
   EmptyTitle,
 } from '../ui/empty'
 import { Input } from '../ui/input'
-import { Progress } from '../ui/progress'
 import { ScrollArea, ScrollBar } from '../ui/scroll-area'
-import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group'
 import AddFromGearClosetDialog from './AddFromGearClosetDialog'
 import AddPackingListDialog from './AddPackingListDialog'
+import PackingListToolbar from './PackingListToolbar'
 import TripPackingListCategory from './TripPackingListCategory'
 
 type TripPackingListProps = {
@@ -192,68 +191,46 @@ const TripPackingList = ({
           onOpenChange={onAddGearOpenChange}
         />
       )}
-      <div className="flex items-center justify-between gap-4">
-        <div className="mb-4 w-full text-center">
-          <span className="text-muted-foreground text-sm">{packedPercent}% packed</span>
-          <Progress value={packedPercent} aria-label="Packing progress" />
+      <PackingListToolbar
+        packedPercent={packedPercent}
+        filterValue={activePackingListFilter}
+        onFilterChange={setActivePackingListFilter}
+      />
+      {(packingList?.length ?? 0) > 0 && (
+        <div className="mb-2 flex justify-end gap-2">
+          <AddFromGearClosetDialog tripId={tripId} existingTags={existingTags}>
+            <Button variant="outline" size="sm" className="h-8 gap-1.5">
+              <Tag className="h-3.5 w-3.5" />
+              Add from Gear Closet
+            </Button>
+          </AddFromGearClosetDialog>
+          <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}} tripTags={existingTags}>
+            <Button variant="default" size="sm" className="h-8 gap-1.5">
+              <Plus className="h-3.5 w-3.5" />
+              Add item
+            </Button>
+          </AddPackingListDialog>
         </div>
-        {(packingList?.length ?? 0) > 0 && (
-          <div className="mb-0 flex justify-end gap-2">
-            <AddFromGearClosetDialog tripId={tripId} existingTags={existingTags}>
-              <Button variant="outline" size="sm" className="h-8 gap-1.5">
-                <Tag className="h-3.5 w-3.5" />
-                Add from Gear Closet
-              </Button>
-            </AddFromGearClosetDialog>
-            <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}} tripTags={existingTags}>
-              <Button variant="default" size="sm" className="h-8 gap-1.5">
-                <Plus className="h-3.5 w-3.5" />
-                Add item
-              </Button>
-            </AddPackingListDialog>
-          </div>
-        )}
-      </div>
+      )}
 
-      <div className="mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div className="mb-2 flex items-center gap-2">
         <Input
           placeholder="Search items..."
           className="h-8 w-full md:max-w-xs"
           value={packingListSearchValue}
           onChange={(e) => setPackingListSearchValue(e.target.value)}
         />
-        <div className="flex items-center gap-2">
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-1 text-xs"
-              onClick={clearAllFilters}
-            >
-              <X className="h-3.5 w-3.5" />
-              Clear
-            </Button>
-          )}
-          <ToggleGroup
-            type="single"
-            variant="outline"
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
             size="sm"
-            value={activePackingListFilter}
-            onValueChange={(val) => {
-              if (val) setActivePackingListFilter(val as 'All' | 'Packed' | 'Unpacked')
-            }}
+            className="h-8 gap-1 text-xs"
+            onClick={clearAllFilters}
           >
-            <ToggleGroupItem value="All" aria-label="Toggle all" className="px-4">
-              All
-            </ToggleGroupItem>
-            <ToggleGroupItem value="Packed" aria-label="Toggle packed" className="px-4">
-              Packed
-            </ToggleGroupItem>
-            <ToggleGroupItem value="Unpacked" aria-label="Toggle unpacked" className="px-4">
-              Unpacked
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
+            <X className="h-3.5 w-3.5" />
+            Clear
+          </Button>
+        )}
       </div>
 
       {allTags.length > 0 && (
