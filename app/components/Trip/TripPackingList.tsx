@@ -28,11 +28,10 @@ import {
   EmptyTitle,
 } from '../ui/empty'
 import { Input } from '../ui/input'
-import { Progress } from '../ui/progress'
 import { ScrollArea, ScrollBar } from '../ui/scroll-area'
-import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group'
 import AddFromGearClosetDialog from './AddFromGearClosetDialog'
 import AddPackingListDialog from './AddPackingListDialog'
+import PackingListToolbar from './PackingListToolbar'
 import TripPackingListCategory from './TripPackingListCategory'
 
 type TripPackingListProps = {
@@ -182,6 +181,69 @@ const TripPackingList = ({
       ? Number(((packedItemsLength / allVisibleItems.length) * 100).toFixed(0))
       : 0
 
+  const renderPersonalItems = () => {
+    const hasItems = (packingList?.length ?? 0) > 0
+
+    if (hasItems && (sortedPersonalItems?.length ?? 0) === 0 && hasActiveFilters) {
+      let description = 'No items match the selected tags'
+      if (packingListSearchValue) {
+        description = `No items match “${packingListSearchValue}”`
+      } else if (activePackingListFilter === 'Packed') {
+        description = 'No items have been packed yet'
+      } else if (activePackingListFilter === 'Unpacked') {
+        description = 'All items have been packed'
+      }
+
+      return (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <ListIcon />
+            </EmptyMedia>
+            <EmptyTitle>No matching items</EmptyTitle>
+            <EmptyDescription>{description}</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )
+    }
+
+    if (hasItems && (personalItems?.length ?? 0) === 0 && !hasActiveFilters) {
+      return (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <ListIcon />
+            </EmptyMedia>
+            <EmptyTitle>No items yet</EmptyTitle>
+            <EmptyDescription>
+              Get started by generating a packing list or adding items manually
+            </EmptyDescription>
+            <EmptyContent className="flex-row justify-center gap-2">
+              <AddFromGearClosetDialog tripId={tripId} existingTags={existingTags}>
+                <Button>
+                  <Wand2 className="h-4 w-4" />
+                  Add from Gear Closet
+                </Button>
+              </AddFromGearClosetDialog>
+              <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}} tripTags={existingTags}>
+                <Button variant="outline">Add an item</Button>
+              </AddPackingListDialog>
+            </EmptyContent>
+          </EmptyHeader>
+        </Empty>
+      )
+    }
+
+    return (
+      <TripPackingListCategory
+        categoryName="Personal items"
+        items={sortedPersonalItems}
+        sounds={checkboxSounds}
+        tripTags={existingTags}
+      />
+    )
+  }
+
   return (
     <>
       {onAddGearOpenChange && (
@@ -192,68 +254,46 @@ const TripPackingList = ({
           onOpenChange={onAddGearOpenChange}
         />
       )}
-      <div className="flex items-center justify-between gap-4">
-        <div className="mb-4 w-full text-center">
-          <span className="text-muted-foreground text-sm">{packedPercent}% packed</span>
-          <Progress value={packedPercent} aria-label="Packing progress" />
+      <PackingListToolbar
+        packedPercent={packedPercent}
+        filterValue={activePackingListFilter}
+        onFilterChange={setActivePackingListFilter}
+      />
+      {(packingList?.length ?? 0) > 0 && (
+        <div className="mb-2 flex justify-end gap-2">
+          <AddFromGearClosetDialog tripId={tripId} existingTags={existingTags}>
+            <Button variant="outline" size="sm" className="h-8 gap-1.5">
+              <Tag className="h-3.5 w-3.5" />
+              Add from Gear Closet
+            </Button>
+          </AddFromGearClosetDialog>
+          <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}} tripTags={existingTags}>
+            <Button variant="default" size="sm" className="h-8 gap-1.5">
+              <Plus className="h-3.5 w-3.5" />
+              Add item
+            </Button>
+          </AddPackingListDialog>
         </div>
-        {(packingList?.length ?? 0) > 0 && (
-          <div className="mb-0 flex justify-end gap-2">
-            <AddFromGearClosetDialog tripId={tripId} existingTags={existingTags}>
-              <Button variant="outline" size="sm" className="h-8 gap-1.5">
-                <Tag className="h-3.5 w-3.5" />
-                Add from Gear Closet
-              </Button>
-            </AddFromGearClosetDialog>
-            <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}} tripTags={existingTags}>
-              <Button variant="default" size="sm" className="h-8 gap-1.5">
-                <Plus className="h-3.5 w-3.5" />
-                Add item
-              </Button>
-            </AddPackingListDialog>
-          </div>
-        )}
-      </div>
+      )}
 
-      <div className="mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div className="mb-2 flex items-center gap-2">
         <Input
           placeholder="Search items..."
           className="h-8 w-full md:max-w-xs"
           value={packingListSearchValue}
           onChange={(e) => setPackingListSearchValue(e.target.value)}
         />
-        <div className="flex items-center gap-2">
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-1 text-xs"
-              onClick={clearAllFilters}
-            >
-              <X className="h-3.5 w-3.5" />
-              Clear
-            </Button>
-          )}
-          <ToggleGroup
-            type="single"
-            variant="outline"
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
             size="sm"
-            value={activePackingListFilter}
-            onValueChange={(val) => {
-              if (val) setActivePackingListFilter(val as 'All' | 'Packed' | 'Unpacked')
-            }}
+            className="h-8 gap-1 text-xs"
+            onClick={clearAllFilters}
           >
-            <ToggleGroupItem value="All" aria-label="Toggle all" className="px-4">
-              All
-            </ToggleGroupItem>
-            <ToggleGroupItem value="Packed" aria-label="Toggle packed" className="px-4">
-              Packed
-            </ToggleGroupItem>
-            <ToggleGroupItem value="Unpacked" aria-label="Toggle unpacked" className="px-4">
-              Unpacked
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
+            <X className="h-3.5 w-3.5" />
+            Clear
+          </Button>
+        )}
       </div>
 
       {allTags.length > 0 && (
@@ -325,63 +365,7 @@ const TripPackingList = ({
             </Empty>
           )}
 
-          {(packingList?.length ?? 0) > 0 &&
-          sortedPersonalItems?.length === 0 &&
-          (packingListSearchValue ||
-            selectedTags.length > 0 ||
-            activePackingListFilter !== 'All') ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <ListIcon />
-                </EmptyMedia>
-                <EmptyTitle>No matching items</EmptyTitle>
-                <EmptyDescription>
-                  {packingListSearchValue
-                    ? `No items match \u201c${packingListSearchValue}\u201d`
-                    : activePackingListFilter === 'Packed'
-                      ? 'No items have been packed yet'
-                      : activePackingListFilter === 'Unpacked'
-                        ? 'All items have been packed'
-                        : 'No items match the selected tags'}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          ) : (packingList?.length ?? 0) > 0 &&
-            personalItems?.length === 0 &&
-            !packingListSearchValue &&
-            selectedTags.length === 0 &&
-            activePackingListFilter === 'All' ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <ListIcon />
-                </EmptyMedia>
-                <EmptyTitle>No items yet</EmptyTitle>
-                <EmptyDescription>
-                  Get started by generating a packing list or adding items manually
-                </EmptyDescription>
-                <EmptyContent className="flex-row justify-center gap-2">
-                  <AddFromGearClosetDialog tripId={tripId} existingTags={existingTags}>
-                    <Button>
-                      <Wand2 className="h-4 w-4" />
-                      Add from Gear Closet
-                    </Button>
-                  </AddFromGearClosetDialog>
-                  <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}} tripTags={existingTags}>
-                    <Button variant="outline">Add an item</Button>
-                  </AddPackingListDialog>
-                </EmptyContent>
-              </EmptyHeader>
-            </Empty>
-          ) : (
-            <TripPackingListCategory
-              categoryName="Personal items"
-              items={sortedPersonalItems}
-              sounds={checkboxSounds}
-              tripTags={existingTags}
-            />
-          )}
+          {renderPersonalItems()}
         </div>
       )}
     </>
