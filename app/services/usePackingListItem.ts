@@ -3,6 +3,7 @@ import { limit, Timestamp, where } from 'firebase/firestore'
 import { useMemo, useState } from 'react'
 
 import useAuth from '~/contexts/auth/useAuth'
+import { AnalyticsEvent, getPlatform, trackBrowserEvent } from '~/lib/analytics'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { useCreateShoppingListItem } from '~/services/shoppingList'
 import { tripKeys } from '~/services/tripKeys'
@@ -36,7 +37,17 @@ export function usePackingListItem(item: PackingListItem, tripId: string) {
 
   const togglePacked = () => {
     if (!item.id) return
-    updatePackingListItemAsync({ data: { id: item.id, isPacked: !item.isPacked } })
+    const packing = !item.isPacked
+    updatePackingListItemAsync({ data: { id: item.id, isPacked: packing } })
+    if (packing && user?.uid) {
+      trackBrowserEvent(AnalyticsEvent.PackingListItemPacked, user.uid, {
+        source: 'browser',
+        platform: getPlatform(),
+        trip_id: tripId,
+        item_id: item.id,
+        is_group_item: item.packedBy[0]?.isShared ?? false,
+      })
+    }
   }
 
   const handleQuantityChange = (change: number) => {

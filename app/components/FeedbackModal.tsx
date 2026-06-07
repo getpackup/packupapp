@@ -58,6 +58,7 @@ export function FeedbackModal() {
     formData.set('emotion', data.emotion)
     formData.set('category', data.category)
     formData.set('isAnonymous', String(isAnonymous))
+    if (user?.uid) formData.set('userId', user.uid)
     if (isAnonymous && data.email) formData.set('email', data.email)
     if (!isAnonymous && user) {
       if (user.displayName) formData.set('userDisplayName', user.displayName)

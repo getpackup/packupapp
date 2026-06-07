@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { animated, useSpring } from 'react-spring'
 
 import { useSoundsState } from '~/contexts/globalState'
+import { AnalyticsEvent, getPlatform, trackBrowserEvent } from '~/lib/analytics'
 import { formatMoneyWithCommas } from '~/lib/money'
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { cn } from '~/lib/utils'
@@ -79,6 +80,15 @@ const ShoppingListItem = ({
         purchasedAt: newIsPurchased ? Timestamp.now() : null,
       },
     })
+
+    if (newIsPurchased) {
+      trackBrowserEvent(AnalyticsEvent.ShoppingListItemChecked, item.userId, {
+        source: 'browser',
+        platform: getPlatform(),
+        trip_id: item.tripId,
+        item_id: item.id,
+      })
+    }
   }
 
   const handleQuantityChange = (change: number) => {

@@ -5,11 +5,13 @@ import { type ActionFunction } from 'react-router'
 
 import FriendRequestEmail from '~/emails/friend-request'
 import { getFirebaseAdmin } from '~/firebase/admin'
+import { AnalyticsEvent, trackNodeEvent } from '~/lib/analytics'
 import getObjectFromFormData from '~/lib/getObjectFromFormData'
 
 interface SendFriendRequestBody {
   recipientEmail: string
   recipientUid: string
+  requesterUid: string
   requesterDisplayName: string
   requesterUsername: string
 }
@@ -24,7 +26,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   try {
     const formData = await request.formData()
-    const { recipientEmail, recipientUid, requesterDisplayName, requesterUsername } =
+    const { recipientEmail, recipientUid, requesterUid, requesterDisplayName, requesterUsername } =
       getObjectFromFormData<SendFriendRequestBody>(formData)
 
     if (!recipientEmail || !requesterUsername) {
@@ -70,6 +72,13 @@ export const action: ActionFunction = async ({ request }) => {
     }
 
     await sgMail.send(msg)
+
+    if (requesterUid && recipientUid) {
+      trackNodeEvent(AnalyticsEvent.FriendRequestSent, requesterUid, {
+        source: 'server',
+        recipient_user_id: recipientUid,
+      })
+    }
 
     return new Response(JSON.stringify({ success: true, message: 'Friend request email sent' }), {
       status: 200,

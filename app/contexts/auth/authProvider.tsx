@@ -74,13 +74,13 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     if (currentUser) {
       setUser(currentUser)
       if (!firebaseUser?.isAnonymous) {
-        identify(
-          currentUser.email,
-          currentUser.uid,
-          currentUser.displayName,
-          currentUser.createdAt?.toDate().toISOString() ?? '',
-          currentUser?.username
-        )
+        identify({
+          email: currentUser.email,
+          userId: currentUser.uid,
+          displayName: currentUser.displayName,
+          createdAt: currentUser.createdAt?.toDate().toISOString() ?? '',
+          username: currentUser.username,
+        })
         registerFcmToken(currentUser.uid)
       }
     }

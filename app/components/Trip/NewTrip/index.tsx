@@ -11,6 +11,7 @@ import { z } from 'zod'
 
 import { Button } from '~/components/ui/button'
 import useAuth from '~/contexts/auth/useAuth'
+import { AnalyticsEvent, getPlatform, trackBrowserEvent } from '~/lib/analytics'
 import { activityKeyToLabel } from '~/lib/gearFilterUtils'
 import { allGearListItems } from '~/lib/gearListItemEnum'
 import { useSendFriendRequest } from '~/services/friends'
@@ -137,6 +138,25 @@ const NewTripForm = ({}: NewTripFormProps) => {
         tripMembers: tripMembersMap,
       })
 
+      trackBrowserEvent(AnalyticsEvent.TripCreated, user.uid, {
+        source: 'browser',
+        platform: getPlatform(),
+        trip_id: trip.tripId,
+        tag_count: allTagValues.length,
+        member_count: tripMembers.length,
+      })
+
+      for (const member of tripMembers) {
+        if (member.uid === user.uid) continue
+        trackBrowserEvent(AnalyticsEvent.TripMemberInvited, user.uid, {
+          source: 'browser',
+          platform: getPlatform(),
+          trip_id: trip.tripId,
+          invitee_user_id: member.uid,
+          is_friend: !member.sendFriendRequest,
+        })
+      }
+
       if (allTagValues.length > 0) {
         incrementTagCounts({ tags: allTagValues })
       }
@@ -174,6 +194,7 @@ const NewTripForm = ({}: NewTripFormProps) => {
               const formData = new FormData()
               formData.append('recipientEmail', member.email)
               formData.append('recipientUid', member.uid)
+              formData.append('requesterUid', user.uid)
               formData.append('requesterDisplayName', user.displayName ?? '')
               formData.append('requesterUsername', user.username)
               fetch('/resource/send-friend-request', { method: 'POST', body: formData }).catch(

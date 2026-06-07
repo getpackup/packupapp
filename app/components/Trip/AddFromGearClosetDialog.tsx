@@ -6,6 +6,7 @@ import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
 import { ScrollArea } from '~/components/ui/scroll-area'
 import useAuth from '~/contexts/auth/useAuth'
+import { AnalyticsEvent, getPlatform, trackBrowserEvent } from '~/lib/analytics'
 import { activityLabelToKey } from '~/lib/gearFilterUtils'
 import {
   allGearListItems,
@@ -188,6 +189,17 @@ function AddFromGearClosetDialog({
     } else {
       toast.info('No new items to add — everything is already on your list')
     }
+
+    if (user?.uid) {
+      trackBrowserEvent(AnalyticsEvent.AddFromGearClosetCompleted, user.uid, {
+        source: 'browser',
+        platform: getPlatform(),
+        trip_id: tripId,
+        items_added: result.length,
+        tag_count: selectedKeys.size + selectedCustomTags.size,
+      })
+    }
+
     handleOpenChange(false)
   }
 

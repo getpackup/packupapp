@@ -89,6 +89,7 @@ export default function AccountDelete() {
     formData.set('better-alternative', String(data['better-alternative'] ?? false))
     formData.set('other-reason', String(data['other-reason'] ?? false))
     if (user) {
+      if (user.uid) formData.set('userId', user.uid)
       if (user.displayName) formData.set('userDisplayName', user.displayName)
       if (user.username) formData.set('userUsername', user.username)
       if (user.email) formData.set('userEmail', user.email)

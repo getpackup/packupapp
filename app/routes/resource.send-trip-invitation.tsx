@@ -3,10 +3,15 @@ import sgMail from '@sendgrid/mail'
 import { type ActionFunction } from 'react-router'
 
 import InviteToTripEmail from '~/emails/invite-to-trip'
+import { AnalyticsEvent, trackNodeEvent } from '~/lib/analytics'
 import getObjectFromFormData from '~/lib/getObjectFromFormData'
 
 interface SendTripInvitationBody {
   invitedBy: string
+  inviterUid: string
+  inviteeUid: string
+  tripId: string
+  isFriend: string
   email: string
   greetingName: string
   tripName: string
@@ -26,7 +31,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   try {
     const formData = await request.formData()
-    const { invitedBy, email, greetingName, tripName, where, why, when, tags } =
+    const { invitedBy, inviterUid, inviteeUid, tripId, isFriend, email, greetingName, tripName, where, why, when, tags } =
       getObjectFromFormData<SendTripInvitationBody>(formData)
 
     if (!greetingName || !invitedBy || !email || !tripName || !where || !when) {
@@ -65,6 +70,15 @@ export const action: ActionFunction = async ({ request }) => {
     }
 
     await sgMail.send(msg)
+
+    if (inviterUid && inviteeUid && tripId) {
+      trackNodeEvent(AnalyticsEvent.TripMemberInvited, inviterUid, {
+        source: 'server',
+        trip_id: tripId,
+        invitee_user_id: inviteeUid,
+        is_friend: isFriend === 'true',
+      })
+    }
 
     return new Response(JSON.stringify({ success: true, message: 'Invitation email sent' }), {
       status: 200,

@@ -38,6 +38,14 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
   }
 })
 
+vi.mock('../lib/analytics', () => ({
+  trackBrowserEvent: vi.fn(),
+  getPlatform: vi.fn(() => 'web'),
+  AnalyticsEvent: {
+    PackingListItemPacked: 'packing_list_item_packed',
+  },
+}))
+
 vi.mock('firebase/firestore', async () => {
   const actual = await vi.importActual<typeof import('firebase/firestore')>('firebase/firestore')
   return {

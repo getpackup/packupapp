@@ -1,5 +1,6 @@
 import { type ActionFunction } from 'react-router'
 
+import { AnalyticsEvent, trackNodeEvent } from '~/lib/analytics'
 import getObjectFromFormData from '~/lib/getObjectFromFormData'
 import { notifyTeam } from '~/lib/slack.server'
 
@@ -8,6 +9,7 @@ interface SendFeedbackBody {
   emotion: string
   category: string
   isAnonymous: string
+  userId?: string
   email?: string
   userDisplayName?: string
   userUsername?: string
@@ -25,12 +27,19 @@ export const action: ActionFunction = async ({ request }) => {
 
   const formData = await request.formData()
   const fields = getObjectFromFormData<SendFeedbackBody>(formData)
-  const { message, emotion, category } = fields
+  const { message, emotion, category, userId } = fields
 
   if (!message || !emotion || !category) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  if (userId) {
+    trackNodeEvent(AnalyticsEvent.FeedbackSubmitted, userId, {
+      source: 'server',
+      feedback_type: category,
     })
   }
 

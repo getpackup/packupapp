@@ -72,6 +72,10 @@ export function AddTripMember({ trip, tripMembers }: { trip: Trip; tripMembers: 
       fetcher.submit(
         {
           invitedBy: user.username,
+          inviterUid: user.uid,
+          inviteeUid: selectedUser.uid,
+          tripId: trip.tripId,
+          isFriend: String(friendUids.includes(selectedUser.uid)),
           email: selectedUser.email,
           greetingName: selectedUser.username || '',
           tripName: trip.name,
@@ -94,6 +98,7 @@ export function AddTripMember({ trip, tripMembers }: { trip: Trip; tripMembers: 
           const formData = new FormData()
           formData.append('recipientEmail', selectedUser.email)
           formData.append('recipientUid', selectedUser.uid)
+          formData.append('requesterUid', user.uid)
           formData.append('requesterDisplayName', user.displayName ?? '')
           formData.append('requesterUsername', user.username)
           fetch('/resource/send-friend-request', { method: 'POST', body: formData }).catch(() => {})

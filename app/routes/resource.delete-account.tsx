@@ -1,10 +1,12 @@
 import { type ActionFunction } from 'react-router'
 
+import { AnalyticsEvent, trackNodeEvent } from '~/lib/analytics'
 import getObjectFromFormData from '~/lib/getObjectFromFormData'
 import { notifyTeam } from '~/lib/slack.server'
 
 interface DeleteAccountBody {
   message?: string
+  userId?: string
   'privacy-concerns'?: string
   'not-useful'?: string
   'better-alternative'?: string
@@ -35,6 +37,12 @@ export const action: ActionFunction = async ({ request }) => {
   const reasons = Object.keys(REASON_LABELS)
     .filter((key) => fields[key as keyof DeleteAccountBody] === 'true')
     .map((k) => REASON_LABELS[k])
+
+  if (fields.userId) {
+    trackNodeEvent(AnalyticsEvent.AccountDeleted, fields.userId, {
+      source: 'server',
+    })
+  }
 
   await notifyTeam('account-deleted', {
     displayName: fields.userDisplayName,
