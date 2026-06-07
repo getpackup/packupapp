@@ -88,37 +88,35 @@ export default function ShoppingList() {
         ) : (
           <div className="mx-auto w-full max-w-4xl">
             {(isLoadingTrips || isLoading) && <FullPageSpinner what="shopping list" />}
-            {!isLoading && !isLoadingTrips && (
-              <>
-                {flatList.length > 0 ? (
-                  <div className="space-y-1">
-                    {flatList.map(({ item, trip }) => (
-                      <ShoppingListItem
-                        key={item.id}
-                        item={item}
-                        trip={trip}
-                        isMultiSelecting={false}
-                        isSelected={false}
-                        onItemSelection={() => {}}
-                        sounds={checkboxSounds}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <Empty>
-                    <EmptyHeader>
-                      <EmptyMedia variant="icon">
-                        <ShoppingCart />
-                      </EmptyMedia>
-                      <EmptyTitle>Your shopping list is empty</EmptyTitle>
-                      <EmptyDescription>
-                        You have no current shopping list items to display
-                      </EmptyDescription>
-                    </EmptyHeader>
-                  </Empty>
-                )}
-              </>
-            )}
+            {!isLoading && !isLoadingTrips &&
+              (flatList.length > 0 ? (
+                <div className="space-y-1">
+                  {flatList.map(({ item, trip }) => (
+                    <ShoppingListItem
+                      key={item.id}
+                      item={item}
+                      trip={trip}
+                      isMultiSelecting={false}
+                      isSelected={false}
+                      onItemSelection={() => {}}
+                      sounds={checkboxSounds}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <ShoppingCart />
+                    </EmptyMedia>
+                    <EmptyTitle>Your shopping list is empty</EmptyTitle>
+                    <EmptyDescription>
+                      You have no current shopping list items to display
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              ))
+            }
           </div>
         )}
       </PageContent>

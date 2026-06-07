@@ -207,7 +207,7 @@ const ShoppingListItem = ({
             tripId={trip.tripId}
             tripName={trip.name}
             startDate={trip.startDate.toMillis()}
-            isPast={isBeforeToday(trip.endDate.seconds * 1000)}
+            isPast={isBeforeToday(trip.endDate.toMillis())}
           />
         )}
 
