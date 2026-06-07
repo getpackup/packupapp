@@ -1,0 +1,216 @@
+import { describe, expect, it, vi, beforeEach } from 'vitest'
+
+const { mockUpdate, mockDoc, mockConstructEvent, mockCustomersRetrieve, mockNotifyTeam } = vi.hoisted(() => {
+  const mockUpdate = vi.fn()
+  return {
+    mockUpdate,
+    mockDoc: vi.fn(() => ({ update: mockUpdate })),
+    mockConstructEvent: vi.fn(),
+    mockCustomersRetrieve: vi.fn(),
+    mockNotifyTeam: vi.fn(),
+  }
+})
+
+vi.mock('stripe', () => ({
+  default: function MockStripe() {
+    return {
+      webhooks: { constructEvent: mockConstructEvent },
+      customers: { retrieve: mockCustomersRetrieve },
+    }
+  },
+}))
+
+vi.mock('firebase-admin/app', () => ({
+  getApps: vi.fn(() => ['existing-app']),
+  initializeApp: vi.fn(),
+  cert: vi.fn(),
+}))
+
+vi.mock('firebase-admin/firestore', () => ({
+  getFirestore: vi.fn(() => ({
+    collection: vi.fn(() => ({ doc: mockDoc })),
+  })),
+}))
+
+vi.mock('~/lib/slack.server', () => ({ notifyTeam: mockNotifyTeam }))
+
+import { action, loader } from './resource.stripe-webhook'
+
+function buildRequest(body = '{}') {
+  return new Request('http://localhost:5173/resource/stripe-webhook', {
+    method: 'POST',
+    headers: { 'stripe-signature': 'test-sig' },
+    body,
+  })
+}
+
+function makeCheckoutSessionEvent(overrides: Record<string, unknown> = {}) {
+  return {
+    type: 'checkout.session.completed',
+    data: {
+      object: { mode: 'subscription', client_reference_id: 'user-uid-123', ...overrides },
+    },
+  }
+}
+
+function makeSubscriptionEvent(type: string, status: string, customerId = 'cus_test') {
+  return {
+    type,
+    data: { object: { status, customer: customerId } },
+  }
+}
+
+describe('resource.stripe-webhook', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    process.env.STRIPE_SECRET_KEY = 'sk_test'
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test'
+    mockCustomersRetrieve.mockResolvedValue({ metadata: { uid: 'user-uid-from-meta' } })
+    mockNotifyTeam.mockResolvedValue(undefined)
+  })
+
+  describe('action', () => {
+    it('returns 405 for non-POST', async () => {
+      const req = new Request('http://localhost:5173/resource/stripe-webhook', { method: 'GET' })
+      const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+      expect(res.status).toBe(405)
+    })
+
+    it('returns 500 when Stripe env vars missing', async () => {
+      delete process.env.STRIPE_SECRET_KEY
+      const req = buildRequest()
+      const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+      expect(res.status).toBe(500)
+    })
+
+    it('returns 400 when stripe-signature header missing', async () => {
+      const req = new Request('http://localhost:5173/resource/stripe-webhook', {
+        method: 'POST',
+        body: '{}',
+      })
+      const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+      expect(res.status).toBe(400)
+    })
+
+    it('returns 400 when signature verification fails', async () => {
+      mockConstructEvent.mockImplementation(() => {
+        throw new Error('Bad signature')
+      })
+      const req = buildRequest()
+      const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+      expect(res.status).toBe(400)
+    })
+
+    describe('checkout.session.completed (subscription mode)', () => {
+      it('writes plan: pro to the correct user document', async () => {
+        mockConstructEvent.mockReturnValue(makeCheckoutSessionEvent())
+        const req = buildRequest()
+        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+        expect(res.status).toBe(200)
+        expect(mockDoc).toHaveBeenCalledWith('user-uid-123')
+        expect(mockUpdate).toHaveBeenCalledWith({ plan: 'pro' })
+      })
+
+      it('skips Firestore write and returns 200 when client_reference_id missing', async () => {
+        mockConstructEvent.mockReturnValue(
+          makeCheckoutSessionEvent({ client_reference_id: null })
+        )
+        const req = buildRequest()
+        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+        expect(res.status).toBe(200)
+        expect(mockUpdate).not.toHaveBeenCalled()
+      })
+
+      it('does not write plan for payment mode sessions', async () => {
+        mockConstructEvent.mockReturnValue({
+          type: 'checkout.session.completed',
+          data: {
+            object: {
+              mode: 'payment',
+              client_reference_id: 'user-uid-123',
+              amount_total: 1000,
+              currency: 'usd',
+              customer_email: 'user@example.com',
+              customer: 'cus_test',
+              id: 'cs_test',
+            },
+          },
+        })
+        const req = buildRequest()
+        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+        expect(res.status).toBe(200)
+        expect(mockUpdate).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('customer.subscription.deleted', () => {
+      it('writes plan: free to the correct user document', async () => {
+        mockConstructEvent.mockReturnValue(makeSubscriptionEvent('customer.subscription.deleted', 'canceled'))
+        const req = buildRequest()
+        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+        expect(res.status).toBe(200)
+        expect(mockCustomersRetrieve).toHaveBeenCalledWith('cus_test')
+        expect(mockDoc).toHaveBeenCalledWith('user-uid-from-meta')
+        expect(mockUpdate).toHaveBeenCalledWith({ plan: 'free' })
+      })
+
+      it('skips Firestore write and returns 200 when uid not in customer metadata', async () => {
+        mockCustomersRetrieve.mockResolvedValue({ metadata: {} })
+        mockConstructEvent.mockReturnValue(makeSubscriptionEvent('customer.subscription.deleted', 'canceled'))
+        const req = buildRequest()
+        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+        expect(res.status).toBe(200)
+        expect(mockUpdate).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('customer.subscription.updated', () => {
+      it('writes plan: pro when status is active', async () => {
+        mockConstructEvent.mockReturnValue(makeSubscriptionEvent('customer.subscription.updated', 'active'))
+        const req = buildRequest()
+        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+        expect(res.status).toBe(200)
+        expect(mockDoc).toHaveBeenCalledWith('user-uid-from-meta')
+        expect(mockUpdate).toHaveBeenCalledWith({ plan: 'pro' })
+      })
+
+      it('writes plan: free when status is canceled', async () => {
+        mockConstructEvent.mockReturnValue(makeSubscriptionEvent('customer.subscription.updated', 'canceled'))
+        const req = buildRequest()
+        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+        expect(res.status).toBe(200)
+        expect(mockUpdate).toHaveBeenCalledWith({ plan: 'free' })
+      })
+
+      it('writes plan: free when status is unpaid', async () => {
+        mockConstructEvent.mockReturnValue(makeSubscriptionEvent('customer.subscription.updated', 'unpaid'))
+        const req = buildRequest()
+        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+        expect(res.status).toBe(200)
+        expect(mockUpdate).toHaveBeenCalledWith({ plan: 'free' })
+      })
+
+      it('skips Firestore write for other statuses', async () => {
+        mockConstructEvent.mockReturnValue(makeSubscriptionEvent('customer.subscription.updated', 'trialing'))
+        const req = buildRequest()
+        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+        expect(res.status).toBe(200)
+        expect(mockUpdate).not.toHaveBeenCalled()
+      })
+    })
+
+    it('returns 200 for unhandled event types', async () => {
+      mockConstructEvent.mockReturnValue({ type: 'some.unknown.event', data: { object: {} } })
+      const req = buildRequest()
+      const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+      expect(res.status).toBe(200)
+    })
+  })
+
+  describe('loader', () => {
+    it('returns 404', async () => {
+      const res = (await loader()) as Response
+      expect(res.status).toBe(404)
+    })
+  })
+})

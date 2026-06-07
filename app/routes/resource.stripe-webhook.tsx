@@ -1,7 +1,22 @@
+import { getFirestore } from 'firebase-admin/firestore'
 import { type ActionFunction } from 'react-router'
 import Stripe from 'stripe'
 
+import { getFirebaseAdmin } from '~/firebase/admin'
 import { notifyTeam } from '~/lib/slack.server'
+import type { Plan } from '~/types/User'
+
+async function writeUserPlan(uid: string, plan: Plan) {
+  const app = getFirebaseAdmin()
+  const db = getFirestore(app)
+  await db.collection('users').doc(uid).update({ plan })
+}
+
+async function getUidFromCustomer(stripe: Stripe, customerId: string): Promise<string | null> {
+  const customer = await stripe.customers.retrieve(customerId)
+  if ('deleted' in customer && customer.deleted) return null
+  return (customer as Stripe.Customer).metadata?.uid ?? null
+}
 
 export const action: ActionFunction = async ({ request }) => {
   if (request.method !== 'POST') {
@@ -55,6 +70,13 @@ export const action: ActionFunction = async ({ request }) => {
           customer: session.customer_email ?? String(session.customer ?? '—'),
           sessionId: session.id,
         })
+      } else if (session.mode === 'subscription') {
+        const uid = session.client_reference_id
+        if (!uid) {
+          console.warn('checkout.session.completed: missing client_reference_id, skipping plan write')
+          break
+        }
+        await writeUserPlan(uid, 'pro')
       }
       break
     }
@@ -65,7 +87,12 @@ export const action: ActionFunction = async ({ request }) => {
     }
     case 'customer.subscription.deleted': {
       const subscription = event.data.object as Stripe.Subscription
-      console.log('Subscription deleted:', subscription.status)
+      const uid = await getUidFromCustomer(stripe, subscription.customer as string)
+      if (!uid) {
+        console.warn('customer.subscription.deleted: no uid in customer metadata, skipping plan write')
+        break
+      }
+      await writeUserPlan(uid, 'free')
       break
     }
     case 'customer.subscription.created': {
@@ -75,7 +102,16 @@ export const action: ActionFunction = async ({ request }) => {
     }
     case 'customer.subscription.updated': {
       const subscription = event.data.object as Stripe.Subscription
-      console.log('Subscription updated:', subscription.status)
+      const uid = await getUidFromCustomer(stripe, subscription.customer as string)
+      if (!uid) {
+        console.warn('customer.subscription.updated: no uid in customer metadata, skipping plan write')
+        break
+      }
+      if (subscription.status === 'active') {
+        await writeUserPlan(uid, 'pro')
+      } else if (subscription.status === 'canceled' || subscription.status === 'unpaid') {
+        await writeUserPlan(uid, 'free')
+      }
       break
     }
     case 'entitlements.active_entitlement_summary.updated': {
