@@ -53,7 +53,15 @@ function makeCheckoutSessionEvent(overrides: Record<string, unknown> = {}) {
   }
 }
 
-function makeSubscriptionEvent(type: string, status: string, customerId = 'cus_test') {
+function makeSubscriptionEvent({
+  type,
+  status,
+  customerId = 'cus_test',
+}: {
+  type: string
+  status: string
+  customerId?: string
+}) {
   return {
     type,
     data: { object: { status, customer: customerId } },
@@ -145,7 +153,7 @@ describe('resource.stripe-webhook', () => {
 
     describe('customer.subscription.deleted', () => {
       it('writes plan: free to the correct user document', async () => {
-        mockConstructEvent.mockReturnValue(makeSubscriptionEvent('customer.subscription.deleted', 'canceled'))
+        mockConstructEvent.mockReturnValue(makeSubscriptionEvent({ type: 'customer.subscription.deleted', status: 'canceled' }))
         const req = buildRequest()
         const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
         expect(res.status).toBe(200)
@@ -156,7 +164,7 @@ describe('resource.stripe-webhook', () => {
 
       it('skips Firestore write and returns 200 when uid not in customer metadata', async () => {
         mockCustomersRetrieve.mockResolvedValue({ metadata: {} })
-        mockConstructEvent.mockReturnValue(makeSubscriptionEvent('customer.subscription.deleted', 'canceled'))
+        mockConstructEvent.mockReturnValue(makeSubscriptionEvent({ type: 'customer.subscription.deleted', status: 'canceled' }))
         const req = buildRequest()
         const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
         expect(res.status).toBe(200)
@@ -166,7 +174,7 @@ describe('resource.stripe-webhook', () => {
 
     describe('customer.subscription.updated', () => {
       it('writes plan: pro when status is active', async () => {
-        mockConstructEvent.mockReturnValue(makeSubscriptionEvent('customer.subscription.updated', 'active'))
+        mockConstructEvent.mockReturnValue(makeSubscriptionEvent({ type: 'customer.subscription.updated', status: 'active' }))
         const req = buildRequest()
         const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
         expect(res.status).toBe(200)
@@ -175,7 +183,7 @@ describe('resource.stripe-webhook', () => {
       })
 
       it('writes plan: free when status is canceled', async () => {
-        mockConstructEvent.mockReturnValue(makeSubscriptionEvent('customer.subscription.updated', 'canceled'))
+        mockConstructEvent.mockReturnValue(makeSubscriptionEvent({ type: 'customer.subscription.updated', status: 'canceled' }))
         const req = buildRequest()
         const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
         expect(res.status).toBe(200)
@@ -183,7 +191,7 @@ describe('resource.stripe-webhook', () => {
       })
 
       it('writes plan: free when status is unpaid', async () => {
-        mockConstructEvent.mockReturnValue(makeSubscriptionEvent('customer.subscription.updated', 'unpaid'))
+        mockConstructEvent.mockReturnValue(makeSubscriptionEvent({ type: 'customer.subscription.updated', status: 'unpaid' }))
         const req = buildRequest()
         const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
         expect(res.status).toBe(200)
@@ -191,7 +199,7 @@ describe('resource.stripe-webhook', () => {
       })
 
       it('skips Firestore write for other statuses', async () => {
-        mockConstructEvent.mockReturnValue(makeSubscriptionEvent('customer.subscription.updated', 'trialing'))
+        mockConstructEvent.mockReturnValue(makeSubscriptionEvent({ type: 'customer.subscription.updated', status: 'trialing' }))
         const req = buildRequest()
         const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
         expect(res.status).toBe(200)
