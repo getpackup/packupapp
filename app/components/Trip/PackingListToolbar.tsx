@@ -1,7 +1,7 @@
 import { Progress } from '../ui/progress'
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group'
 
-type PackingListFilter = 'All' | 'Packed' | 'Unpacked'
+export type PackingListFilter = 'All' | 'Packed' | 'Unpacked'
 
 type PackingListToolbarProps = {
   packedPercent: number

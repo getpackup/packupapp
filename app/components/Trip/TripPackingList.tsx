@@ -181,6 +181,69 @@ const TripPackingList = ({
       ? Number(((packedItemsLength / allVisibleItems.length) * 100).toFixed(0))
       : 0
 
+  const renderPersonalItems = () => {
+    const hasItems = (packingList?.length ?? 0) > 0
+
+    if (hasItems && (sortedPersonalItems?.length ?? 0) === 0 && hasActiveFilters) {
+      let description = 'No items match the selected tags'
+      if (packingListSearchValue) {
+        description = `No items match “${packingListSearchValue}”`
+      } else if (activePackingListFilter === 'Packed') {
+        description = 'No items have been packed yet'
+      } else if (activePackingListFilter === 'Unpacked') {
+        description = 'All items have been packed'
+      }
+
+      return (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <ListIcon />
+            </EmptyMedia>
+            <EmptyTitle>No matching items</EmptyTitle>
+            <EmptyDescription>{description}</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )
+    }
+
+    if (hasItems && (personalItems?.length ?? 0) === 0 && !hasActiveFilters) {
+      return (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <ListIcon />
+            </EmptyMedia>
+            <EmptyTitle>No items yet</EmptyTitle>
+            <EmptyDescription>
+              Get started by generating a packing list or adding items manually
+            </EmptyDescription>
+            <EmptyContent className="flex-row justify-center gap-2">
+              <AddFromGearClosetDialog tripId={tripId} existingTags={existingTags}>
+                <Button>
+                  <Wand2 className="h-4 w-4" />
+                  Add from Gear Closet
+                </Button>
+              </AddFromGearClosetDialog>
+              <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}} tripTags={existingTags}>
+                <Button variant="outline">Add an item</Button>
+              </AddPackingListDialog>
+            </EmptyContent>
+          </EmptyHeader>
+        </Empty>
+      )
+    }
+
+    return (
+      <TripPackingListCategory
+        categoryName="Personal items"
+        items={sortedPersonalItems}
+        sounds={checkboxSounds}
+        tripTags={existingTags}
+      />
+    )
+  }
+
   return (
     <>
       {onAddGearOpenChange && (
@@ -302,63 +365,7 @@ const TripPackingList = ({
             </Empty>
           )}
 
-          {(packingList?.length ?? 0) > 0 &&
-          sortedPersonalItems?.length === 0 &&
-          (packingListSearchValue ||
-            selectedTags.length > 0 ||
-            activePackingListFilter !== 'All') ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <ListIcon />
-                </EmptyMedia>
-                <EmptyTitle>No matching items</EmptyTitle>
-                <EmptyDescription>
-                  {packingListSearchValue
-                    ? `No items match \u201c${packingListSearchValue}\u201d`
-                    : activePackingListFilter === 'Packed'
-                      ? 'No items have been packed yet'
-                      : activePackingListFilter === 'Unpacked'
-                        ? 'All items have been packed'
-                        : 'No items match the selected tags'}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          ) : (packingList?.length ?? 0) > 0 &&
-            personalItems?.length === 0 &&
-            !packingListSearchValue &&
-            selectedTags.length === 0 &&
-            activePackingListFilter === 'All' ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <ListIcon />
-                </EmptyMedia>
-                <EmptyTitle>No items yet</EmptyTitle>
-                <EmptyDescription>
-                  Get started by generating a packing list or adding items manually
-                </EmptyDescription>
-                <EmptyContent className="flex-row justify-center gap-2">
-                  <AddFromGearClosetDialog tripId={tripId} existingTags={existingTags}>
-                    <Button>
-                      <Wand2 className="h-4 w-4" />
-                      Add from Gear Closet
-                    </Button>
-                  </AddFromGearClosetDialog>
-                  <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}} tripTags={existingTags}>
-                    <Button variant="outline">Add an item</Button>
-                  </AddPackingListDialog>
-                </EmptyContent>
-              </EmptyHeader>
-            </Empty>
-          ) : (
-            <TripPackingListCategory
-              categoryName="Personal items"
-              items={sortedPersonalItems}
-              sounds={checkboxSounds}
-              tripTags={existingTags}
-            />
-          )}
+          {renderPersonalItems()}
         </div>
       )}
     </>
