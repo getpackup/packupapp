@@ -5,7 +5,7 @@
 **Do not** add comments explaining what code does — well-named identifiers do that.
 **Do** add a comment when the _why_ is non-obvious: a hidden constraint, a subtle invariant, a workaround for a specific bug, or behavior that would surprise a reader.
 
-If removing the comment wouldn't confuse a future reader, don't write it. Never write multi-paragraph docstrings or multi-line comment blocks.
+If removing the comment wouldn't confuse a future reader, don't write it.
 
 ## General Principles
 

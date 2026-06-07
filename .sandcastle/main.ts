@@ -39,7 +39,7 @@ const planSchema = z.object({
 
 // Maximum number of plan→execute→merge cycles before stopping.
 // Raise this if your backlog is large; lower it for a quick smoke-test run.
-const MAX_ITERATIONS = 10
+const MAX_ITERATIONS = 3
 
 // worktreeHooks: used by per-issue sandboxes (implementer/reviewer) that run in
 // git worktrees. pnpm install runs on the HOST so the store links survive after
