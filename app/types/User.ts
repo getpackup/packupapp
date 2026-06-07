@@ -4,12 +4,14 @@ import type { EmergencyContact } from './EmergencyContact'
 
 export type WeightUnitPreferenceType = 'g' | 'kg' | 'oz' | 'lb'
 
+export type Plan = 'free' | 'pro'
+
 export type User = {
   bio?: string
   displayName: string
   email: string
   isAnonymous?: boolean
-  plan?: 'free' | 'pro'
+  plan?: Plan
   emergencyContacts?: EmergencyContact[]
   isAdmin?: boolean
   location?: string

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { mockOnSnapshot, mockDoc, mockUseAuth } = vi.hoisted(() => ({
   mockOnSnapshot: vi.fn(),
@@ -42,10 +42,6 @@ describe('usePlan', () => {
       snapshotCallback = callback
       return vi.fn()
     })
-  })
-
-  afterEach(() => {
-    vi.restoreAllMocks()
   })
 
   it('returns isLoading true before subscription resolves', () => {

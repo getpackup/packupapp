@@ -3,9 +3,7 @@ import { useEffect, useState } from 'react'
 
 import { useAuth } from '~/contexts/auth/useAuth'
 import { firestoreDb } from '~/firebase/config'
-import type { User } from '~/types/User'
-
-type Plan = 'free' | 'pro'
+import type { Plan, User } from '~/types/User'
 
 type UsePlanResult = {
   plan: Plan
