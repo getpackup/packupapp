@@ -1,13 +1,10 @@
 import { AnalyticsBrowser } from '@segment/analytics-next'
 import { Analytics } from '@segment/analytics-node'
 
-export const analyticsBrowser = AnalyticsBrowser.load({
-  writeKey: import.meta.env.VITE_SEGMENT_API_KEY ?? process.env.VITE_SEGMENT_API_KEY ?? '',
-})
+const writeKey = import.meta.env.VITE_SEGMENT_API_KEY ?? process.env.VITE_SEGMENT_API_KEY ?? ''
 
-const analyticsNode = new Analytics({
-  writeKey: import.meta.env.VITE_SEGMENT_API_KEY ?? process.env.VITE_SEGMENT_API_KEY ?? '',
-})
+export const analyticsBrowser = writeKey ? AnalyticsBrowser.load({ writeKey }) : null
+const analyticsNode = writeKey ? new Analytics({ writeKey }) : null
 
 export const AnalyticsEvent = {
   UserSignedUp: 'user_signed_up',
@@ -79,7 +76,7 @@ export function identify({
   createdAt: string
   username: string
 }) {
-  analyticsBrowser.identify(email, {
+  analyticsBrowser?.identify(email, {
     userId,
     email,
     displayName,
@@ -89,7 +86,7 @@ export function identify({
 }
 
 export function trackPage(pageName: string, route: string, title: string) {
-  analyticsBrowser.page(pageName, {
+  analyticsBrowser?.page(pageName, {
     title: title,
     url: window.location.href,
     path: route,
@@ -103,7 +100,7 @@ export function trackPageLeave() {
   }
 
   function handlePageLeave() {
-    analyticsBrowser.track({ event: '$pageleave', type: 'track' })
+    analyticsBrowser?.track({ event: '$pageleave', type: 'track' })
   }
 
   const eventName = 'onpagehide' in window ? 'pagehide' : 'beforeunload'
@@ -117,7 +114,7 @@ export function trackBrowserEvent<E extends keyof EventPropertiesMap>(
   userId: string,
   properties: BaseProperties & EventPropertiesMap[E]
 ) {
-  return analyticsBrowser.track(event, {
+  return analyticsBrowser?.track(event, {
     type: 'track',
     userId,
     ...properties,
@@ -129,7 +126,7 @@ export function trackNodeEvent<E extends keyof EventPropertiesMap>(
   userId: string,
   properties: BaseProperties & EventPropertiesMap[E]
 ) {
-  return analyticsNode.track({
+  return analyticsNode?.track({
     event,
     userId,
     properties,

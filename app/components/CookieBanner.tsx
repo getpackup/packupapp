@@ -20,7 +20,7 @@ export const CookieBanner = () => {
         onClick: () => {
           toast.dismiss()
           submit(formData, { method: 'post' })
-          analyticsBrowser.track({
+          analyticsBrowser?.track({
             event: 'consent',
             properties: { consent: 'granted' },
             type: 'track',
