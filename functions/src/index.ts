@@ -14,6 +14,7 @@ import { configureTeamNotifications, notifyTeam } from '../../app/lib/slack.serv
 import { renderSafetyItineraryHtml } from './render-safety-itinerary-email'
 import { renderInviteToTripHtml } from './render-invite-to-trip-email'
 import { buildFirestoreDeps, processSafetyItineraries } from './safety-itinerary'
+import { buildEmailToUidDeps, createInMemoryRateLimitStore, processEmailToUidRequest } from './email-to-uid'
 import type { SafetyItineraryEmailPayload } from '../../app/types/SafetyItinerary'
 import type { User } from '../../app/types/User'
 import { formattedDateRange } from '../../app/lib/date'
@@ -431,3 +432,34 @@ export const getPublicUserInfo = onRequest({ cors: true }, async (req, res) => {
 
   res.status(200).send(userArray[0])
 })
+
+// Rate-limited to prevent email enumeration.
+const emailToUidRateLimitStore = createInMemoryRateLimitStore()
+
+export const lookupUidByEmail = onRequest(
+  {
+    cors: [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'https://getpackup.com',
+      'https://www.getpackup.com',
+    ],
+  },
+  async (req, res) => {
+    if (req.method !== 'POST') {
+      res.status(405).send('Method Not Allowed')
+      return
+    }
+
+    const email = req.body?.email
+    if (typeof email !== 'string' || !email.includes('@')) {
+      res.status(400).json({ error: 'Invalid email address' })
+      return
+    }
+
+    const ip = req.ip ?? 'unknown'
+    const deps = buildEmailToUidDeps(admin.firestore(), emailToUidRateLimitStore)
+    const { status, body } = await processEmailToUidRequest({ email, ip, deps })
+    res.status(status).json(body)
+  }
+)
