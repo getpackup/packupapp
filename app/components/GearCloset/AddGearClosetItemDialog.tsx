@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
-import { AnalyticsEvent, getPlatform, trackBrowserEvent } from '~/lib/analytics'
+import { AnalyticsEvent, trackBrowserEvent } from '~/lib/analytics'
 import { allPredefinedTags, gearListCategories } from '~/lib/gearListItemEnum'
 import { useCreateGearClosetItem, useGearClosetQuery } from '~/services/gear'
 import type { GearClosetItem } from '~/types/GearItem'
@@ -86,7 +86,6 @@ function AddGearClosetItemDialog({ userId, children }: AddGearClosetItemDialogPr
 
     trackBrowserEvent(AnalyticsEvent.GearClosetItemAdded, userId, {
       source: 'browser',
-      platform: getPlatform(),
       category: values.tags[0] ?? '',
       has_custom_tag: customTags.some((ct) => values.tags.includes(ct.name)),
     })

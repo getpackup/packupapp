@@ -17,7 +17,7 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 
 import { firebaseAuth, firestoreDb } from '~/firebase/config'
-import { AnalyticsEvent, getPlatform, trackBrowserEvent } from '~/lib/analytics'
+import { AnalyticsEvent, trackBrowserEvent } from '~/lib/analytics'
 import { generatePassword } from '~/lib/generatePassword'
 import useBoop from '~/lib/useBoop'
 import { cn } from '~/lib/utils'
@@ -210,7 +210,6 @@ export function SignupForm() {
 
           trackBrowserEvent(AnalyticsEvent.UserSignedUp, result.user.uid, {
             source: 'browser',
-            platform: getPlatform(),
             anonymous_converted: false,
           })
           sendSignInLinkToEmail(firebaseAuth, result.user.email, actionCodeSettings)
@@ -256,7 +255,6 @@ export function SignupForm() {
           }
           trackBrowserEvent(AnalyticsEvent.UserSignedUp, result.user.uid, {
             source: 'browser',
-            platform: getPlatform(),
             anonymous_converted: true,
           })
           sendSignInLinkToEmail(firebaseAuth, result.user.email, actionCodeSettings)

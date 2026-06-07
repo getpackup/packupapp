@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { animated, useSpring } from 'react-spring'
 
 import { useSoundsState } from '~/contexts/globalState'
-import { AnalyticsEvent, getPlatform, trackBrowserEvent } from '~/lib/analytics'
+import { AnalyticsEvent, trackBrowserEvent } from '~/lib/analytics'
 import { formatMoneyWithCommas } from '~/lib/money'
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { cn } from '~/lib/utils'
@@ -84,7 +84,6 @@ const ShoppingListItem = ({
     if (newIsPurchased) {
       trackBrowserEvent(AnalyticsEvent.ShoppingListItemChecked, item.userId, {
         source: 'browser',
-        platform: getPlatform(),
         trip_id: item.tripId,
         item_id: item.id,
       })

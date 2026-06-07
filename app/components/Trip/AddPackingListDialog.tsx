@@ -25,7 +25,7 @@ import {
 } from '~/components/ui/form'
 import { Input } from '~/components/ui/input'
 import useAuth from '~/contexts/auth/useAuth'
-import { AnalyticsEvent, getPlatform, trackBrowserEvent } from '~/lib/analytics'
+import { AnalyticsEvent, trackBrowserEvent } from '~/lib/analytics'
 import type { ClosetBrowseItem } from '~/lib/gearFilterUtils'
 import { useUserGearClosetItems } from '~/services/gear'
 import { useCreatePackingListItem } from '~/services/trips'
@@ -130,7 +130,6 @@ function AddPackingListDialog({
     if (user?.uid) {
       trackBrowserEvent(AnalyticsEvent.PackingListItemAdded, user.uid, {
         source: 'browser',
-        platform: getPlatform(),
         trip_id: id,
         is_group_item: false,
       })

@@ -15,7 +15,7 @@ import {
   SheetTrigger,
 } from '~/components/ui/sheet'
 import useAuth from '~/contexts/auth/useAuth'
-import { AnalyticsEvent, getPlatform, trackBrowserEvent } from '~/lib/analytics'
+import { AnalyticsEvent, trackBrowserEvent } from '~/lib/analytics'
 import { createChatMessage } from '~/lib/chat'
 import { requestPushPermission } from '~/lib/pushPermission'
 import { useHasUnreadChat } from '~/lib/useHasUnreadChat'
@@ -111,7 +111,6 @@ function ChatSheet({ trip, users, compact, open, onOpenChange }: ChatSheetProps)
       await sendMessage({ tripId: trip.tripId, data: newMessage })
       trackBrowserEvent(AnalyticsEvent.TripChatMessageSent, user.uid, {
         source: 'browser',
-        platform: getPlatform(),
         trip_id: trip.tripId,
         message_type: 'text',
       })

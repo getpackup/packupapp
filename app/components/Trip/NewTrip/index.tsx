@@ -11,7 +11,7 @@ import { z } from 'zod'
 
 import { Button } from '~/components/ui/button'
 import useAuth from '~/contexts/auth/useAuth'
-import { AnalyticsEvent, getPlatform, trackBrowserEvent } from '~/lib/analytics'
+import { AnalyticsEvent, trackBrowserEvent } from '~/lib/analytics'
 import { activityKeyToLabel } from '~/lib/gearFilterUtils'
 import { allGearListItems } from '~/lib/gearListItemEnum'
 import { useSendFriendRequest } from '~/services/friends'
@@ -140,7 +140,6 @@ const NewTripForm = ({}: NewTripFormProps) => {
 
       trackBrowserEvent(AnalyticsEvent.TripCreated, user.uid, {
         source: 'browser',
-        platform: getPlatform(),
         trip_id: trip.tripId,
         tag_count: allTagValues.length,
         member_count: tripMembers.length,
@@ -150,7 +149,6 @@ const NewTripForm = ({}: NewTripFormProps) => {
         if (member.uid === user.uid) continue
         trackBrowserEvent(AnalyticsEvent.TripMemberInvited, user.uid, {
           source: 'browser',
-          platform: getPlatform(),
           trip_id: trip.tripId,
           invitee_user_id: member.uid,
           is_friend: !member.sendFriendRequest,

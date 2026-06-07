@@ -29,7 +29,6 @@ type Platform = 'web' | 'pwa' | 'ios_pwa' | 'ios_app_store'
 
 type BaseProperties = {
   source: 'browser' | 'server'
-  platform?: Platform
 }
 
 type EventPropertiesMap = {
@@ -117,6 +116,7 @@ export function trackBrowserEvent<E extends keyof EventPropertiesMap>(
   return analyticsBrowser?.track(event, {
     type: 'track',
     userId,
+    platform: getPlatform(),
     ...properties,
   })
 }
