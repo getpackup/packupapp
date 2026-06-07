@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-router'
 import { onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth'
 import { Timestamp } from 'firebase/firestore'
 import { useEffect, useMemo, useState } from 'react'
@@ -60,6 +61,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(firebaseAuth, (user: FirebaseUser | null) => {
       setFirebaseUser(user)
+      Sentry.setUser(user ? { id: user.uid } : null)
       // Only show loading on first auth check, not on subsequent route changes
       if (!isInitialized) {
         setIsInitialized(true)

@@ -1,5 +1,6 @@
 import './app.css'
 
+import * as Sentry from '@sentry/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import {
@@ -163,9 +164,14 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     message = error.status === 404 ? '404' : 'Error'
     details =
       error.status === 404 ? 'The requested page could not be found.' : error.statusText || details
-  } else if (import.meta.env.DEV && error && error instanceof Error) {
-    details = error.message
-    stack = error.stack
+  } else {
+    if (error instanceof Error) {
+      Sentry.captureException(error)
+      if (import.meta.env.DEV) {
+        details = error.message
+        stack = error.stack
+      }
+    }
   }
 
   return (
