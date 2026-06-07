@@ -44,18 +44,29 @@ describe('ShoppingList route', () => {
     expect(screen.getByRole('link', { name: /create account/i })).toHaveAttribute('href', '/signup')
   })
 
-  it('does not show shopping list content for anonymous users', () => {
+  it('does not show tabs for anonymous users', () => {
     vi.mocked(useIsAnonymous).mockReturnValue(true)
     renderRoute()
     expect(screen.queryByText('Current')).not.toBeInTheDocument()
     expect(screen.queryByText('Past')).not.toBeInTheDocument()
   })
 
-  it('shows shopping list content for registered users', () => {
+  it('does not show tabs for registered users', () => {
     vi.mocked(useIsAnonymous).mockReturnValue(false)
     renderRoute()
-    expect(screen.getByText('Current')).toBeInTheDocument()
-    expect(screen.getByText('Past')).toBeInTheDocument()
+    expect(screen.queryByText('Current')).not.toBeInTheDocument()
+    expect(screen.queryByText('Past')).not.toBeInTheDocument()
+  })
+
+  it('shows empty state for registered users with no unpurchased items', () => {
+    vi.mocked(useIsAnonymous).mockReturnValue(false)
+    renderRoute()
+    expect(screen.getByText('Your shopping list is empty')).toBeInTheDocument()
+  })
+
+  it('does not show UpgradeAccountGate for registered users', () => {
+    vi.mocked(useIsAnonymous).mockReturnValue(false)
+    renderRoute()
     expect(
       screen.queryByText('Create an account to see everything you need to buy before your trips.')
     ).not.toBeInTheDocument()

@@ -5,11 +5,15 @@ import { animated, useSpring } from 'react-spring'
 
 import { useSoundsState } from '~/contexts/globalState'
 import { AnalyticsEvent, trackBrowserEvent } from '~/lib/analytics'
+import { isBeforeToday } from '~/lib/date'
 import { formatMoneyWithCommas } from '~/lib/money'
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { cn } from '~/lib/utils'
 import { useDeleteShoppingListItem, useUpdateShoppingListItem } from '~/services/shoppingList'
 import type { ShoppingListItemPriority, ShoppingListItemType } from '~/types/ShoppingListItemType'
+import type { Trip } from '~/types/Trip'
+
+import ShoppingListTripPill from './ShoppingListTripPill'
 
 import PriorityIcon from '../PriorityIcon'
 import { Badge } from '../ui/badge'
@@ -32,6 +36,7 @@ type ShoppingListItemProps = {
   isSelected: boolean
   onItemSelection: (itemId: string, isShiftClick: boolean, isCommandClick: boolean) => void
   sounds?: ReturnType<typeof useCheckboxSounds>
+  trip?: Trip
 }
 
 const ShoppingListItem = ({
@@ -40,6 +45,7 @@ const ShoppingListItem = ({
   isSelected,
   onItemSelection,
   sounds,
+  trip,
 }: ShoppingListItemProps) => {
   const { soundsEnabled } = useSoundsState()
 
@@ -124,7 +130,7 @@ const ShoppingListItem = ({
 
   return (
     <div className="text-sidebar-foreground hover:bg-sidebar-accent/40 rounded-lg px-3 py-2">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center gap-4">
         <div className="flex min-w-0 flex-1 items-center gap-4">
           {isMultiSelecting ? (
             <>
@@ -195,6 +201,15 @@ const ShoppingListItem = ({
             </>
           )}
         </div>
+
+        {trip && !isMultiSelecting && (
+          <ShoppingListTripPill
+            tripId={trip.tripId}
+            tripName={trip.name}
+            startDate={trip.startDate.toMillis()}
+            isPast={isBeforeToday(trip.endDate.seconds * 1000)}
+          />
+        )}
 
         <div className="flex shrink-0 items-center gap-2">
           {item.estimatedPrice && (
