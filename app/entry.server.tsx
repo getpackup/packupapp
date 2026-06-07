@@ -1,11 +1,12 @@
-import * as Sentry from '@sentry/react-router'
 import { PassThrough } from 'node:stream'
-import type { AppLoadContext, EntryContext } from 'react-router'
+
 import { createReadableStreamFromReadable } from '@react-router/node'
-import { ServerRouter } from 'react-router'
+import * as Sentry from '@sentry/react-router'
 import { isbot } from 'isbot'
 import type { RenderToPipeableStreamOptions } from 'react-dom/server'
 import { renderToPipeableStream } from 'react-dom/server'
+import type { EntryContext } from 'react-router'
+import { ServerRouter } from 'react-router'
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -24,11 +25,12 @@ function handleRequest(
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
-  routerContext: EntryContext,
-  loadContext: AppLoadContext
+  routerContext: EntryContext
 ) {
   if (request.method.toUpperCase() === 'HEAD') {
-    return Promise.resolve(new Response(null, { status: responseStatusCode, headers: responseHeaders }))
+    return Promise.resolve(
+      new Response(null, { status: responseStatusCode, headers: responseHeaders })
+    )
   }
 
   return new Promise((resolve, reject) => {

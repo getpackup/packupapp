@@ -1,6 +1,7 @@
+import * as Sentry from '@sentry/react-router'
 import { limit, where } from 'firebase/firestore'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { isRouteErrorResponse, useNavigate, useSearchParams } from 'react-router'
 
 import { AnonymousUserBanner } from '~/components/AnonymousUserBanner'
 import ChatSheet from '~/components/Chat/ChatSheet'
@@ -162,5 +163,23 @@ export default function TripDetails({ params }: Route.ComponentProps) {
         )}
       </PageContent>
     </>
+  )
+}
+
+export function ErrorBoundary({ error }: { error: unknown }) {
+  if (!isRouteErrorResponse(error) && error instanceof Error) {
+    Sentry.captureException(error)
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="text-center">
+        <h1 className="mb-4 text-2xl font-bold">Something went wrong</h1>
+        <p className="text-gray-600">This trip couldn&apos;t be loaded. Try refreshing the page.</p>
+        <a href="/trips" className="mt-4 inline-block text-blue-500 hover:underline">
+          Back to trips
+        </a>
+      </div>
+    </div>
   )
 }
