@@ -13,10 +13,13 @@ export interface EmailToUidDeps {
   rateLimitStore: RateLimitStore
 }
 
-export function createInMemoryRateLimitStore(
+export function createInMemoryRateLimitStore({
   maxRequests = RATE_LIMIT_MAX_REQUESTS,
-  windowMs = RATE_LIMIT_WINDOW_MS
-): RateLimitStore {
+  windowMs = RATE_LIMIT_WINDOW_MS,
+}: {
+  maxRequests?: number
+  windowMs?: number
+} = {}): RateLimitStore {
   const store = new Map<string, { count: number; windowStart: number }>()
 
   return {
@@ -39,11 +42,15 @@ export function createInMemoryRateLimitStore(
   }
 }
 
-export async function processEmailToUidRequest(
-  email: string,
-  ip: string,
+export async function processEmailToUidRequest({
+  email,
+  ip,
+  deps,
+}: {
+  email: string
+  ip: string
   deps: EmailToUidDeps
-): Promise<{ status: number; body: object }> {
+}): Promise<{ status: number; body: object }> {
   if (deps.rateLimitStore.isRateLimited(ip)) {
     return { status: 429, body: { error: 'Too many requests' } }
   }

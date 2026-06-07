@@ -433,12 +433,8 @@ export const getPublicUserInfo = onRequest({ cors: true }, async (req, res) => {
   res.status(200).send(userArray[0])
 })
 
-// ---------------------------------------------------------------------------
-// Email-to-UID lookup (pricing page checkout fallback)
 // Rate-limited to prevent email enumeration.
-// ---------------------------------------------------------------------------
-
-const _emailToUidRateLimitStore = createInMemoryRateLimitStore()
+const emailToUidRateLimitStore = createInMemoryRateLimitStore()
 
 export const lookupUidByEmail = onRequest(
   {
@@ -462,8 +458,8 @@ export const lookupUidByEmail = onRequest(
     }
 
     const ip = req.ip ?? 'unknown'
-    const deps = buildEmailToUidDeps(admin.firestore(), _emailToUidRateLimitStore)
-    const { status, body } = await processEmailToUidRequest(email, ip, deps)
+    const deps = buildEmailToUidDeps(admin.firestore(), emailToUidRateLimitStore)
+    const { status, body } = await processEmailToUidRequest({ email, ip, deps })
     res.status(status).json(body)
   }
 )
