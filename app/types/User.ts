@@ -9,6 +9,7 @@ export type User = {
   displayName: string
   email: string
   isAnonymous?: boolean
+  plan?: 'free' | 'pro'
   emergencyContacts?: EmergencyContact[]
   isAdmin?: boolean
   location?: string
