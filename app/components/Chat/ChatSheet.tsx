@@ -1,6 +1,6 @@
 import { formatDistanceToNow, isAfter, subSeconds } from 'date-fns'
 import { orderBy } from 'firebase/firestore'
-import { Dot, Lock, MessageCircleIcon, Reply, Send, UserPlus, XIcon } from 'lucide-react'
+import { Dot, Lock, MessageCircleIcon, Reply, UserPlus, XIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
 

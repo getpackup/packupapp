@@ -119,6 +119,7 @@ describe('ChatSheet', () => {
       user: { uid: 'u1', username: 'testuser', email: 'test@test.com', isAnonymous: false },
     } as any)
     vi.mocked(useIsAnonymous).mockReturnValue(false)
+    vi.mocked(usePlan).mockReturnValue({ plan: 'pro', isPro: true, isFree: false, isLoading: false })
   })
 
   describe('mark chat as read on open', () => {
@@ -220,54 +221,29 @@ describe('ChatSheet', () => {
   })
 
   describe('plan gating', () => {
-    it('Free user sees disabled message input', () => {
-      vi.mocked(usePlan).mockReturnValue({
-        plan: 'free',
-        isPro: false,
-        isFree: true,
-        isLoading: false,
+    describe('Free user', () => {
+      beforeEach(() => {
+        vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false })
+        renderComponent(baseTripProps, true)
       })
-      renderComponent(baseTripProps, true)
 
-      const textarea = screen.getByPlaceholderText(/upgrade to pro/i)
-      expect(textarea).toBeDisabled()
-    })
-
-    it('Free user sees upgrade prompt', () => {
-      vi.mocked(usePlan).mockReturnValue({
-        plan: 'free',
-        isPro: false,
-        isFree: true,
-        isLoading: false,
+      it('sees disabled message input', () => {
+        expect(screen.getByPlaceholderText(/upgrade to pro/i)).toBeDisabled()
       })
-      renderComponent(baseTripProps, true)
 
-      expect(screen.getByText(/upgrade to pro/i)).toBeInTheDocument()
-    })
-
-    it('Free user cannot click send (button disabled)', () => {
-      vi.mocked(usePlan).mockReturnValue({
-        plan: 'free',
-        isPro: false,
-        isFree: true,
-        isLoading: false,
+      it('sees upgrade prompt', () => {
+        expect(screen.getByText(/upgrade to pro/i)).toBeInTheDocument()
       })
-      renderComponent(baseTripProps, true)
 
-      expect(screen.getByRole('button', { name: /send/i })).toBeDisabled()
+      it('cannot click send (button disabled)', () => {
+        expect(screen.getByRole('button', { name: /send/i })).toBeDisabled()
+      })
     })
 
     it('Pro user sees enabled message input', () => {
-      vi.mocked(usePlan).mockReturnValue({
-        plan: 'pro',
-        isPro: true,
-        isFree: false,
-        isLoading: false,
-      })
       renderComponent(baseTripProps, true)
 
-      const textarea = screen.getByPlaceholderText(/type your message/i)
-      expect(textarea).not.toBeDisabled()
+      expect(screen.getByPlaceholderText(/type your message/i)).not.toBeDisabled()
     })
   })
 })
