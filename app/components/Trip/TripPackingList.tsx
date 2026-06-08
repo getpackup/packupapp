@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { orderBy } from 'firebase/firestore'
-import { ListIcon, Plus, Tag, Wand2, X } from 'lucide-react'
+import { ListIcon, Wand2, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import useAuth from '~/contexts/auth/useAuth'
@@ -63,6 +63,8 @@ const TripPackingList = ({
 
   const checkboxSounds = useCheckboxSounds()
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [isGearClosetOpen, setIsGearClosetOpen] = useState(false)
+  const [isAddItemOpen, setIsAddItemOpen] = useState(false)
   const { data: packingList, isLoading } = useTripPackingListQuery({
     tripId,
     constraints: [orderBy('name', 'asc')],
@@ -254,27 +256,27 @@ const TripPackingList = ({
           onOpenChange={onAddGearOpenChange}
         />
       )}
+      <AddFromGearClosetDialog
+        tripId={tripId}
+        existingTags={existingTags}
+        open={isGearClosetOpen}
+        onOpenChange={setIsGearClosetOpen}
+      />
+      <AddPackingListDialog
+        categoryName="Personal items"
+        onItemCreated={() => {}}
+        tripTags={existingTags}
+        open={isAddItemOpen}
+        onOpenChange={setIsAddItemOpen}
+      />
       <PackingListToolbar
         packedPercent={packedPercent}
         filterValue={activePackingListFilter}
         onFilterChange={setActivePackingListFilter}
+        showAddGear={(packingList?.length ?? 0) > 0}
+        onAddFromGearClosetClick={() => setIsGearClosetOpen(true)}
+        onAddItemClick={() => setIsAddItemOpen(true)}
       />
-      {(packingList?.length ?? 0) > 0 && (
-        <div className="mb-2 flex justify-end gap-2">
-          <AddFromGearClosetDialog tripId={tripId} existingTags={existingTags}>
-            <Button variant="outline" size="sm" className="h-8 gap-1.5">
-              <Tag className="h-3.5 w-3.5" />
-              Add from Gear Closet
-            </Button>
-          </AddFromGearClosetDialog>
-          <AddPackingListDialog categoryName="Personal items" onItemCreated={() => {}} tripTags={existingTags}>
-            <Button variant="default" size="sm" className="h-8 gap-1.5">
-              <Plus className="h-3.5 w-3.5" />
-              Add item
-            </Button>
-          </AddPackingListDialog>
-        </div>
-      )}
 
       <div className="mb-2 flex items-center gap-2">
         <Input

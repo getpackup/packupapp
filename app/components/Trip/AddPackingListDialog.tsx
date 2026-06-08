@@ -38,8 +38,10 @@ import { Checkbox } from '../ui/checkbox'
 type AddPackingListDialogProps = {
   categoryName: string
   onItemCreated?: (itemId: string) => void
-  children: React.ReactNode
+  children?: React.ReactNode
   tripTags?: string[]
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 function AddPackingListDialog({
@@ -47,6 +49,8 @@ function AddPackingListDialog({
   onItemCreated,
   children,
   tripTags,
+  open,
+  onOpenChange,
 }: AddPackingListDialogProps) {
   const { id } = useParams()
   const { user } = useAuth()
@@ -141,14 +145,16 @@ function AddPackingListDialog({
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
   }
 
-  const handleOpenChange = () => {
+  const handleOpenChange = (isOpen: boolean) => {
     form.reset()
     setSelectedGearItem(null)
     setShowClosetSearch(false)
+    onOpenChange?.(isOpen)
   }
 
   return (
     <ResponsiveDialogContainer
+      open={open}
       onOpenChange={handleOpenChange}
       title="Add gear item"
       description="Add a custom item to your gear closet."
