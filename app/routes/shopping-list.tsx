@@ -105,19 +105,19 @@ export default function ShoppingList() {
                   onActiveStoresChange={setActiveStores}
                 />
                 {flatList.length > 0 ? (
-                <div className="space-y-1">
-                  {flatList.map(({ item, trip }) => (
-                    <ShoppingListItem
-                      key={item.id}
-                      item={item}
-                      trip={trip}
-                      isMultiSelecting={false}
-                      isSelected={false}
-                      onItemSelection={() => {}}
-                      sounds={checkboxSounds}
-                    />
-                  ))}
-                </div>
+                  <div className="space-y-1">
+                    {flatList.map(({ item, trip }) => (
+                      <ShoppingListItem
+                        key={item.id}
+                        item={item}
+                        trip={trip}
+                        isMultiSelecting={false}
+                        isSelected={false}
+                        onItemSelection={() => {}}
+                        sounds={checkboxSounds}
+                      />
+                    ))}
+                  </div>
                 ) : (
                   <Empty>
                     <EmptyHeader>

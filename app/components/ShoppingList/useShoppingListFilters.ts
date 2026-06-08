@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react'
 
 import type { ShoppingListItemType } from '~/types/ShoppingListItemType'
 
-type PurchaseState = 'unpurchased' | 'purchased' | 'all'
-type SortBy = 'trip' | 'priority' | 'store'
+export type PurchaseState = 'unpurchased' | 'purchased' | 'all'
+export type SortBy = 'trip' | 'priority' | 'store'
 
 export function useShoppingListFilters(items: ShoppingListItemType[]) {
   const [purchaseState, setPurchaseState] = useState<PurchaseState>('unpurchased')
