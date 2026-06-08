@@ -1,7 +1,7 @@
 import { format } from 'date-fns'
-import { LogOut, UserMinus } from 'lucide-react'
+import { ExternalLink, Loader2, LogOut, UserMinus } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 
 import { ChatNotificationsToggle } from '~/components/ChatNotificationsToggle'
 import { EmergencyContacts } from '~/components/EmergencyContacts'
@@ -15,6 +15,8 @@ import { Button } from '~/components/ui/button'
 import WeightUnitPreference from '~/components/WeightUnitPreference'
 import { useAuth } from '~/contexts/auth/useAuth'
 import { firebaseAuth } from '~/firebase/config'
+import { useIsAnonymous } from '~/lib/useIsAnonymous'
+import { usePlan } from '~/lib/usePlan'
 
 import type { Route } from './+types/home'
 
@@ -42,10 +44,16 @@ function PreferenceRow({
   )
 }
 
+const PRICING_URL = 'https://getpackup.com/pricing'
+
 export default function Settings() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const isAnonymous = useIsAnonymous()
+  const { isPro, isFree, isLoading: isPlanLoading } = usePlan()
+  const [searchParams] = useSearchParams()
+  const isCheckoutReturn = searchParams.get('checkout') === 'success'
 
   async function handleLogoutAll() {
     if (!user?.uid) return
@@ -113,6 +121,50 @@ export default function Settings() {
         </section>
 
         <EmergencyContacts />
+
+        {!isAnonymous && (
+          <section>
+            <h2 className="mb-2 text-lg font-bold">Subscription</h2>
+            <div className="divide-border divide-y">
+              {isCheckoutReturn && isPlanLoading ? (
+                <PreferenceRow
+                  label="Processing upgrade"
+                  description="Your upgrade is processing. This may take a few moments."
+                >
+                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                </PreferenceRow>
+              ) : isPro ? (
+                <PreferenceRow
+                  label="Pro Plan"
+                  description="Manage your subscription, billing, and payment details."
+                >
+                  <form action="/resource/manage-subscription" method="post">
+                    <input type="hidden" name="uid" value={user?.uid} />
+                    <Button variant="outline" type="submit">
+                      Manage Subscription
+                    </Button>
+                  </form>
+                </PreferenceRow>
+              ) : (
+                <PreferenceRow
+                  label="Free Plan"
+                  description="Unlock Trip Chat, unlimited Trip Members, and Custom Tags."
+                >
+                  <Button variant="outline" asChild>
+                    <a
+                      href={`${PRICING_URL}?uid=${user?.uid}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="size-4" />
+                      Upgrade to Pro
+                    </a>
+                  </Button>
+                </PreferenceRow>
+              )}
+            </div>
+          </section>
+        )}
 
         <section>
           <h2 className="mb-2 text-lg font-bold">Account</h2>

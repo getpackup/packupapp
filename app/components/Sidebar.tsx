@@ -1,6 +1,8 @@
 import { format } from 'date-fns'
 import {
+  CrownIcon,
   EllipsisVertical,
+  ExternalLink,
   Loader2,
   LogOut,
   MapIcon,
@@ -24,6 +26,7 @@ import { useFeedbackModalState, useSidebarState } from '~/contexts/globalState'
 import { firebaseAuth } from '~/firebase/config'
 import useBoop from '~/lib/useBoop'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
+import { usePlan } from '~/lib/usePlan'
 import { cn } from '~/lib/utils'
 import { usePendingFriendRequestsQuery } from '~/services/friends'
 
@@ -42,10 +45,13 @@ interface SidebarProps {
   className?: string
 }
 
+const PRICING_URL = 'https://getpackup.com/pricing'
+
 export function Sidebar({ className }: SidebarProps) {
   const { user, setUser } = useAuth()
   const isAnonymous = useIsAnonymous()
   const { isSidebarCollapsed, setIsSidebarCollapsed } = useSidebarState()
+  const { isPro, isFree } = usePlan()
   const { setIsFeedbackOpen } = useFeedbackModalState()
   const [nextStyle, triggerNext] = useBoop({ x: 2 }) as [any, () => void]
   const [animatingItem, setAnimatingItem] = useState<string | null>(null)
@@ -286,6 +292,36 @@ export function Sidebar({ className }: SidebarProps) {
                   ))}
                 </DropdownMenuGroup>
               )}
+              {!isAnonymous && (
+                <>
+                  <DropdownMenuSeparator />
+                  {isFree && (
+                    <DropdownMenuItem asChild>
+                      <a
+                        href={`${PRICING_URL}?uid=${user?.uid}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <CrownIcon className="size-4" />
+                        <ExternalLink className="size-3" />
+                        Upgrade to Pro
+                      </a>
+                    </DropdownMenuItem>
+                  )}
+                  {isPro && (
+                    <DropdownMenuItem asChild>
+                      <form action="/resource/manage-subscription" method="post">
+                        <input type="hidden" name="uid" value={user?.uid} />
+                        <button type="submit" className="flex w-full items-center gap-2">
+                          <CrownIcon className="size-4" />
+                          Manage Subscription
+                        </button>
+                      </form>
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setIsFeedbackOpen(true)}>
                 <MessageSquareIcon />
                 Feedback
