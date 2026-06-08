@@ -67,16 +67,14 @@ vi.mock('react-router', async () => {
 
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { usePlan } from '~/lib/usePlan'
-import { TripMemberStatus } from '~/types/TripMember'
-import type { TripMember } from '~/types/TripMember'
-import { AddTripMember } from './AddTripMember'
 import { useScreenSize } from '~/lib/use-screen-size'
+import { TripMemberStatus, type TripMember } from '~/types/TripMember'
+import { AddTripMember } from './AddTripMember'
 
 let memberCounter = 0
 function makeMember(status: TripMemberStatus = TripMemberStatus.Accepted): TripMember {
-  memberCounter++
   return {
-    uid: `uid-${memberCounter}`,
+    uid: `uid-${++memberCounter}`,
     invitedAt: { seconds: 0, nanoseconds: 0 } as any,
     status,
   }
@@ -189,7 +187,9 @@ describe('AddTripMember', () => {
 
 describe('AddTripMember — Free Plan member cap', () => {
   beforeEach(() => {
+    memberCounter = 0
     vi.mocked(useIsAnonymous).mockReturnValue(false)
+    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false })
     vi.mocked(useScreenSize).mockReturnValue({
       isXSmallBreakpoint: true,
       isSmallBreakpoint: true,
@@ -201,7 +201,6 @@ describe('AddTripMember — Free Plan member cap', () => {
   })
 
   it('Free plan with 2 active members shows unlocked button', () => {
-    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false })
     const members = [makeMember(TripMemberStatus.Owner), makeMember(TripMemberStatus.Accepted)]
     render(
       <MemoryRouter>
@@ -213,7 +212,6 @@ describe('AddTripMember — Free Plan member cap', () => {
   })
 
   it('Free plan with exactly 3 active members shows locked button', () => {
-    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false })
     const members = [
       makeMember(TripMemberStatus.Owner),
       makeMember(TripMemberStatus.Accepted),
@@ -228,7 +226,6 @@ describe('AddTripMember — Free Plan member cap', () => {
   })
 
   it('Free plan locked state shows padlock icon', () => {
-    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false })
     const members = [
       makeMember(TripMemberStatus.Owner),
       makeMember(TripMemberStatus.Accepted),
@@ -259,7 +256,6 @@ describe('AddTripMember — Free Plan member cap', () => {
   })
 
   it('Declined and removed members do not count toward the cap', () => {
-    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false })
     const members = [
       makeMember(TripMemberStatus.Owner),
       makeMember(TripMemberStatus.Declined),
@@ -274,7 +270,6 @@ describe('AddTripMember — Free Plan member cap', () => {
   })
 
   it('Pending members do count toward the cap', () => {
-    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false })
     const members = [
       makeMember(TripMemberStatus.Owner),
       makeMember(TripMemberStatus.Pending),

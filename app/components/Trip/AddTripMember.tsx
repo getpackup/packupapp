@@ -126,7 +126,7 @@ export function AddTripMember({ trip, tripMembers }: { trip: Trip; tripMembers: 
   const triggerButton = (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button type="button" variant="ghost" size="icon-sm" className="" onClick={() => setOpen(true)}>
+        <Button type="button" variant="ghost" size="icon-sm" onClick={() => setOpen(true)}>
           <Plus className="size-4" />
           <span className="sr-only">Add member</span>
         </Button>
