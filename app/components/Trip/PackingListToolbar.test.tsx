@@ -223,8 +223,8 @@ describe('PackingListToolbar', () => {
     )
     const addGearButton = screen.getByRole('button', { name: /add gear/i })
     const allToggle = screen.getByLabelText('Toggle all')
-    expect(
+    const addGearFollowsToggle =
       allToggle.compareDocumentPosition(addGearButton) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy()
+    expect(addGearFollowsToggle).toBeTruthy()
   })
 })
