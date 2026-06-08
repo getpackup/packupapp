@@ -1,6 +1,7 @@
-import { cn } from '~/lib/utils'
 import { ScrollArea, ScrollBar } from '~/components/ui/scroll-area'
 import { ToggleGroup, ToggleGroupItem } from '~/components/ui/toggle-group'
+import { cn } from '~/lib/utils'
+
 import type { PurchaseState, SortBy } from './useShoppingListFilters'
 
 type ShoppingListFilterBarProps = {

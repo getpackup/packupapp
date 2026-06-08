@@ -13,8 +13,6 @@ import { useDeleteShoppingListItem, useUpdateShoppingListItem } from '~/services
 import type { ShoppingListItemPriority, ShoppingListItemType } from '~/types/ShoppingListItemType'
 import type { Trip } from '~/types/Trip'
 
-import ShoppingListTripPill from './ShoppingListTripPill'
-
 import PriorityIcon from '../PriorityIcon'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
@@ -29,6 +27,7 @@ import {
 } from '../ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import EditShoppingListItem from './EditShoppingListItem'
+import ShoppingListTripPill from './ShoppingListTripPill'
 
 type ShoppingListItemProps = {
   item: ShoppingListItemType
