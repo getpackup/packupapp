@@ -1,16 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { orderBy } from 'firebase/firestore'
-import { ListIcon, Wand2, X } from 'lucide-react'
+import { ListIcon, Wand2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import useAuth from '~/contexts/auth/useAuth'
 import { usePackingListState } from '~/contexts/globalState'
 import { activityKeyToLabel } from '~/lib/gearFilterUtils'
 import { getItemTags } from '~/lib/getItemTags'
-import { getTagDotClass } from '~/lib/tagColors'
 import { useCheckboxSounds } from '~/lib/useCheckboxSounds'
 import { useCustomTagColorMap } from '~/lib/useCustomTagColorMap'
-import { cn } from '~/lib/utils'
 import { tripKeys } from '~/services/tripKeys'
 import { useTripPackingListQuery } from '~/services/trips'
 import type { ActivityTypes } from '~/types/GearItem'
@@ -27,8 +25,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '../ui/empty'
-import { Input } from '../ui/input'
-import { ScrollArea, ScrollBar } from '../ui/scroll-area'
 import AddFromGearClosetDialog from './AddFromGearClosetDialog'
 import AddPackingListDialog from './AddPackingListDialog'
 import PackingListToolbar from './PackingListToolbar'
@@ -276,57 +272,14 @@ const TripPackingList = ({
         showAddGear={(packingList?.length ?? 0) > 0}
         onAddFromGearClosetClick={() => setIsGearClosetOpen(true)}
         onAddItemClick={() => setIsAddItemOpen(true)}
+        searchValue={packingListSearchValue}
+        onSearchChange={setPackingListSearchValue}
+        tags={allTags}
+        selectedTags={selectedTags}
+        onTagToggle={toggleTag}
+        onClearFilters={clearAllFilters}
+        colorMap={colorMap}
       />
-
-      <div className="mb-2 flex items-center gap-2">
-        <Input
-          placeholder="Search items..."
-          className="h-8 w-full md:max-w-xs"
-          value={packingListSearchValue}
-          onChange={(e) => setPackingListSearchValue(e.target.value)}
-        />
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 gap-1 text-xs"
-            onClick={clearAllFilters}
-          >
-            <X className="h-3.5 w-3.5" />
-            Clear
-          </Button>
-        )}
-      </div>
-
-      {allTags.length > 0 && (
-        <ScrollArea className="mb-3 w-full whitespace-nowrap">
-          <div className="flex gap-1.5 pb-2">
-            {allTags.map(({ tag, count }) => {
-              const isSelected = selectedTags.includes(tag)
-              return (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => toggleTag(tag)}
-                  className={cn(
-                    'flex h-6 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-all select-none',
-                    isSelected
-                      ? 'border-foreground/20 bg-foreground/5 text-foreground'
-                      : 'border-border text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  <span
-                    className={cn('h-2 w-2 shrink-0 rounded-full', getTagDotClass(tag, colorMap))}
-                  />
-                  {tag}
-                  <span className="opacity-60">({count})</span>
-                </button>
-              )
-            })}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-      )}
 
       {isLoading ? (
         <FullPageSpinner what="packing list" />
