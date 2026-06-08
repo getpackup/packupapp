@@ -2,11 +2,9 @@ import { useMemo } from 'react'
 
 import type { ShoppingListItemType } from '~/types/ShoppingListItemType'
 import type { Trip } from '~/types/Trip'
+import type { PurchaseState, SortBy } from './useShoppingListFilters'
 
 const PRIORITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2, 'no priority': 3 }
-
-type PurchaseState = 'unpurchased' | 'purchased' | 'all'
-type SortBy = 'trip' | 'priority' | 'store'
 
 export interface ShoppingListViewItem {
   item: ShoppingListItemType

@@ -83,4 +83,26 @@ describe('ShoppingList route', () => {
     renderRoute()
     expect(screen.queryByRole('button', { name: /add item/i })).not.toBeInTheDocument()
   })
+
+  it('shows purchase state toggle group for registered users', () => {
+    vi.mocked(useIsAnonymous).mockReturnValue(false)
+    renderRoute()
+    expect(screen.getByRole('radio', { name: /show unpurchased/i })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /show purchased/i })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /show all/i })).toBeInTheDocument()
+  })
+
+  it('shows sort toggle group for registered users', () => {
+    vi.mocked(useIsAnonymous).mockReturnValue(false)
+    renderRoute()
+    expect(screen.getByRole('radio', { name: /sort by trip/i })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /sort by priority/i })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /sort by store/i })).toBeInTheDocument()
+  })
+
+  it('does not show filter bar for anonymous users', () => {
+    vi.mocked(useIsAnonymous).mockReturnValue(true)
+    renderRoute()
+    expect(screen.queryByRole('radio', { name: /show unpurchased/i })).not.toBeInTheDocument()
+  })
 })
