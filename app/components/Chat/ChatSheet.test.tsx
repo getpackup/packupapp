@@ -17,6 +17,10 @@ vi.mock('~/lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(() => false),
 }))
 
+vi.mock('~/lib/usePlan', () => ({
+  usePlan: vi.fn(() => ({ plan: 'pro', isPro: true, isFree: false, isLoading: false })),
+}))
+
 const { mockUseHasUnreadChat } = vi.hoisted(() => ({
   mockUseHasUnreadChat: vi.fn(() => false),
 }))
@@ -74,6 +78,7 @@ vi.mock('~/lib/pushPermission', () => ({
 
 import { useAuth } from '~/contexts/auth/useAuth'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
+import { usePlan } from '~/lib/usePlan'
 import { useTripChatMessagesQuery } from '~/services/chat'
 import ChatSheet from './ChatSheet'
 
@@ -211,6 +216,58 @@ describe('ChatSheet', () => {
     it('passes tripId to useHasUnreadChat', () => {
       renderComponent()
       expect(mockUseHasUnreadChat).toHaveBeenCalledWith('trip-1')
+    })
+  })
+
+  describe('plan gating', () => {
+    it('Free user sees disabled message input', () => {
+      vi.mocked(usePlan).mockReturnValue({
+        plan: 'free',
+        isPro: false,
+        isFree: true,
+        isLoading: false,
+      })
+      renderComponent(baseTripProps, true)
+
+      const textarea = screen.getByPlaceholderText(/upgrade to pro/i)
+      expect(textarea).toBeDisabled()
+    })
+
+    it('Free user sees upgrade prompt', () => {
+      vi.mocked(usePlan).mockReturnValue({
+        plan: 'free',
+        isPro: false,
+        isFree: true,
+        isLoading: false,
+      })
+      renderComponent(baseTripProps, true)
+
+      expect(screen.getByText(/upgrade to pro/i)).toBeInTheDocument()
+    })
+
+    it('Free user cannot click send (button disabled)', () => {
+      vi.mocked(usePlan).mockReturnValue({
+        plan: 'free',
+        isPro: false,
+        isFree: true,
+        isLoading: false,
+      })
+      renderComponent(baseTripProps, true)
+
+      expect(screen.getByRole('button', { name: /send/i })).toBeDisabled()
+    })
+
+    it('Pro user sees enabled message input', () => {
+      vi.mocked(usePlan).mockReturnValue({
+        plan: 'pro',
+        isPro: true,
+        isFree: false,
+        isLoading: false,
+      })
+      renderComponent(baseTripProps, true)
+
+      const textarea = screen.getByPlaceholderText(/type your message/i)
+      expect(textarea).not.toBeDisabled()
     })
   })
 })

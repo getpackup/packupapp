@@ -1,6 +1,6 @@
 import { formatDistanceToNow, isAfter, subSeconds } from 'date-fns'
 import { orderBy } from 'firebase/firestore'
-import { Dot, MessageCircleIcon, Reply, UserPlus, XIcon } from 'lucide-react'
+import { Dot, Lock, MessageCircleIcon, Reply, Send, UserPlus, XIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
 
@@ -14,12 +14,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '~/components/ui/sheet'
+import { Textarea } from '~/components/ui/textarea'
 import useAuth from '~/contexts/auth/useAuth'
 import { AnalyticsEvent, trackBrowserEvent } from '~/lib/analytics'
 import { createChatMessage } from '~/lib/chat'
 import { requestPushPermission } from '~/lib/pushPermission'
 import { useHasUnreadChat } from '~/lib/useHasUnreadChat'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
+import { usePlan } from '~/lib/usePlan'
 import { cn } from '~/lib/utils'
 import {
   useCreateChatMessage,
@@ -54,6 +56,7 @@ const systemUser: User = {
 function ChatSheet({ trip, users, compact, open, onOpenChange }: ChatSheetProps) {
   const { user } = useAuth()
   const isAnonymous = useIsAnonymous()
+  const { isFree } = usePlan()
   const [userMap] = useState<Map<string, User>>(
     new Map([...(users || []).map((u): [string, User] => [u.id, u]), [systemUser.id, systemUser]])
   )
@@ -302,11 +305,38 @@ function ChatSheet({ trip, users, compact, open, onOpenChange }: ChatSheetProps)
                     )}
                   </div>
                 </div>
-                <MessageInput
-                  onSendMessage={handleSendMessage}
-                  replyToMessageId={replyToMessageId}
-                  onTypingChange={handleTypingChange}
-                />
+                {isFree ? (
+                  <div className="flex flex-col gap-3">
+                    <p className="text-muted-foreground text-sm">
+                      <a
+                        href={`https://getpackup.com/pricing${user?.uid ? `?uid=${user.uid}` : ''}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-foreground font-semibold underline"
+                      >
+                        Upgrade to Pro
+                      </a>{' '}
+                      to send messages and collaborate in real time.
+                    </p>
+                    <div className="flex items-end gap-2">
+                      <Textarea
+                        disabled
+                        className="max-h-24 min-h-8!"
+                        rows={1}
+                        placeholder="Upgrade to Pro to send messages..."
+                      />
+                      <Button variant="accent" disabled size="lg">
+                        <Lock className="size-4" /> Send
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <MessageInput
+                    onSendMessage={handleSendMessage}
+                    replyToMessageId={replyToMessageId}
+                    onTypingChange={handleTypingChange}
+                  />
+                )}
               </div>
             </SheetFooter>
           </>
