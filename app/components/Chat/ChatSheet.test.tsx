@@ -17,6 +17,10 @@ vi.mock('~/lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(() => false),
 }))
 
+vi.mock('~/lib/usePlan', () => ({
+  usePlan: vi.fn(() => ({ plan: 'pro', isPro: true, isFree: false, isLoading: false })),
+}))
+
 const { mockUseHasUnreadChat } = vi.hoisted(() => ({
   mockUseHasUnreadChat: vi.fn(() => false),
 }))
@@ -74,6 +78,7 @@ vi.mock('~/lib/pushPermission', () => ({
 
 import { useAuth } from '~/contexts/auth/useAuth'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
+import { usePlan } from '~/lib/usePlan'
 import { useTripChatMessagesQuery } from '~/services/chat'
 import ChatSheet from './ChatSheet'
 
@@ -114,6 +119,7 @@ describe('ChatSheet', () => {
       user: { uid: 'u1', username: 'testuser', email: 'test@test.com', isAnonymous: false },
     } as any)
     vi.mocked(useIsAnonymous).mockReturnValue(false)
+    vi.mocked(usePlan).mockReturnValue({ plan: 'pro', isPro: true, isFree: false, isLoading: false })
   })
 
   describe('mark chat as read on open', () => {
@@ -211,6 +217,33 @@ describe('ChatSheet', () => {
     it('passes tripId to useHasUnreadChat', () => {
       renderComponent()
       expect(mockUseHasUnreadChat).toHaveBeenCalledWith('trip-1')
+    })
+  })
+
+  describe('plan gating', () => {
+    describe('Free user', () => {
+      beforeEach(() => {
+        vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false })
+        renderComponent(baseTripProps, true)
+      })
+
+      it('sees disabled message input', () => {
+        expect(screen.getByPlaceholderText(/upgrade to pro/i)).toBeDisabled()
+      })
+
+      it('sees upgrade prompt', () => {
+        expect(screen.getByText(/upgrade to pro/i)).toBeInTheDocument()
+      })
+
+      it('cannot click send (button disabled)', () => {
+        expect(screen.getByRole('button', { name: /send/i })).toBeDisabled()
+      })
+    })
+
+    it('Pro user sees enabled message input', () => {
+      renderComponent(baseTripProps, true)
+
+      expect(screen.getByPlaceholderText(/type your message/i)).not.toBeDisabled()
     })
   })
 })
