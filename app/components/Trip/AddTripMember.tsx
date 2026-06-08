@@ -8,6 +8,7 @@ import { useAuth } from '~/contexts/auth/useAuth'
 import { createSystemMessage } from '~/lib/chat'
 import { formattedDateRange } from '~/lib/date'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
+import { usePlan } from '~/lib/usePlan'
 import { useCreateChatMessage } from '~/services/chat'
 import { useFriendsQuery, useSendFriendRequest } from '~/services/friends'
 import { useUpdateTrip } from '~/services/trips'
@@ -16,6 +17,7 @@ import type { Trip } from '~/types/Trip'
 import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 import type { User } from '~/types/User'
 
+import { PlanGate } from '../PlanGate'
 import ResponsiveDialogContainer from '../ResponsiveDialogContainer'
 import { Button } from '../ui/button'
 import { Dialog, DialogContent, DialogTitle } from '../ui/dialog'
@@ -31,6 +33,16 @@ export function AddTripMember({ trip, tripMembers }: { trip: Trip; tripMembers: 
   const isAnonymous = useIsAnonymous()
   const { id } = useParams()
   const fetcher = useFetcher()
+
+  const { isFree } = usePlan()
+
+  const activeMemberCount = tripMembers.filter(
+    (m) =>
+      m.status !== TripMemberStatus.Declined &&
+      m.status !== TripMemberStatus.Removed &&
+      m.status !== TripMemberStatus.Left
+  ).length
+  const atMemberCap = isFree && activeMemberCount >= 3
 
   const { data: friendships = [] } = useFriendsQuery(user?.uid ?? '')
   const { mutateAsync: sendFriendReq } = useSendFriendRequest()
@@ -111,16 +123,22 @@ export function AddTripMember({ trip, tripMembers }: { trip: Trip; tripMembers: 
     }
   }
 
-  const trigger = (
+  const triggerButton = (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button type="button" variant="ghost" size="icon-sm" className="" onClick={() => setOpen(true)}>
+        <Button type="button" variant="ghost" size="icon-sm" onClick={() => setOpen(true)}>
           <Plus className="size-4" />
           <span className="sr-only">Add member</span>
         </Button>
       </TooltipTrigger>
       <TooltipContent>Add Trip Member</TooltipContent>
     </Tooltip>
+  )
+
+  const trigger = atMemberCap ? (
+    <PlanGate feature="Unlimited trip members">{triggerButton}</PlanGate>
+  ) : (
+    triggerButton
   )
 
   if (isAnonymous) {
