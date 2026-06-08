@@ -1,11 +1,15 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Trip } from '~/types/Trip'
 
 vi.mock('~/lib/useIsAnonymous', () => ({
   useIsAnonymous: vi.fn(),
+}))
+
+vi.mock('~/lib/usePlan', () => ({
+  usePlan: vi.fn(() => ({ plan: 'pro', isPro: true, isFree: false, isLoading: false })),
 }))
 
 vi.mock('~/lib/use-screen-size', () => ({
@@ -62,8 +66,21 @@ vi.mock('react-router', async () => {
 })
 
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
+import { usePlan } from '~/lib/usePlan'
+import { TripMemberStatus } from '~/types/TripMember'
+import type { TripMember } from '~/types/TripMember'
 import { AddTripMember } from './AddTripMember'
 import { useScreenSize } from '~/lib/use-screen-size'
+
+let memberCounter = 0
+function makeMember(status: TripMemberStatus = TripMemberStatus.Accepted): TripMember {
+  memberCounter++
+  return {
+    uid: `uid-${memberCounter}`,
+    invitedAt: { seconds: 0, nanoseconds: 0 } as any,
+    status,
+  }
+}
 
 const GATE_MESSAGE = 'Create an account to invite friends and assign gear to your crew.'
 
@@ -167,5 +184,107 @@ describe('AddTripMember', () => {
     renderComponent()
     await userEvent.click(screen.getByRole('button', { name: /add member/i }))
     expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument()
+  })
+})
+
+describe('AddTripMember — Free Plan member cap', () => {
+  beforeEach(() => {
+    vi.mocked(useIsAnonymous).mockReturnValue(false)
+    vi.mocked(useScreenSize).mockReturnValue({
+      isXSmallBreakpoint: true,
+      isSmallBreakpoint: true,
+      isMediumBreakpoint: true,
+      isLargeBreakpoint: true,
+      isXlBreakpoint: true,
+      is2xlBreakpoint: true,
+    })
+  })
+
+  it('Free plan with 2 active members shows unlocked button', () => {
+    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false })
+    const members = [makeMember(TripMemberStatus.Owner), makeMember(TripMemberStatus.Accepted)]
+    render(
+      <MemoryRouter>
+        <AddTripMember trip={{ tripId: 'trip1' } as Trip} tripMembers={members} />
+      </MemoryRouter>
+    )
+    expect(screen.queryByTestId('plan-gate-locked')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /add member/i })).toBeInTheDocument()
+  })
+
+  it('Free plan with exactly 3 active members shows locked button', () => {
+    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false })
+    const members = [
+      makeMember(TripMemberStatus.Owner),
+      makeMember(TripMemberStatus.Accepted),
+      makeMember(TripMemberStatus.Accepted),
+    ]
+    render(
+      <MemoryRouter>
+        <AddTripMember trip={{ tripId: 'trip1' } as Trip} tripMembers={members} />
+      </MemoryRouter>
+    )
+    expect(screen.getByTestId('plan-gate-locked')).toBeInTheDocument()
+  })
+
+  it('Free plan locked state shows padlock icon', () => {
+    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false })
+    const members = [
+      makeMember(TripMemberStatus.Owner),
+      makeMember(TripMemberStatus.Accepted),
+      makeMember(TripMemberStatus.Accepted),
+    ]
+    render(
+      <MemoryRouter>
+        <AddTripMember trip={{ tripId: 'trip1' } as Trip} tripMembers={members} />
+      </MemoryRouter>
+    )
+    expect(screen.getByTestId('plan-gate-lock-icon')).toBeInTheDocument()
+  })
+
+  it('Pro plan with 4 active members shows unlocked button', () => {
+    vi.mocked(usePlan).mockReturnValue({ plan: 'pro', isPro: true, isFree: false, isLoading: false })
+    const members = [
+      makeMember(TripMemberStatus.Owner),
+      makeMember(TripMemberStatus.Accepted),
+      makeMember(TripMemberStatus.Accepted),
+      makeMember(TripMemberStatus.Accepted),
+    ]
+    render(
+      <MemoryRouter>
+        <AddTripMember trip={{ tripId: 'trip1' } as Trip} tripMembers={members} />
+      </MemoryRouter>
+    )
+    expect(screen.queryByTestId('plan-gate-locked')).not.toBeInTheDocument()
+  })
+
+  it('Declined and removed members do not count toward the cap', () => {
+    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false })
+    const members = [
+      makeMember(TripMemberStatus.Owner),
+      makeMember(TripMemberStatus.Declined),
+      makeMember(TripMemberStatus.Removed),
+    ]
+    render(
+      <MemoryRouter>
+        <AddTripMember trip={{ tripId: 'trip1' } as Trip} tripMembers={members} />
+      </MemoryRouter>
+    )
+    expect(screen.queryByTestId('plan-gate-locked')).not.toBeInTheDocument()
+  })
+
+  it('Pending members do count toward the cap', () => {
+    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false })
+    const members = [
+      makeMember(TripMemberStatus.Owner),
+      makeMember(TripMemberStatus.Pending),
+      makeMember(TripMemberStatus.Pending),
+    ]
+    render(
+      <MemoryRouter>
+        <AddTripMember trip={{ tripId: 'trip1' } as Trip} tripMembers={members} />
+      </MemoryRouter>
+    )
+    expect(screen.getByTestId('plan-gate-locked')).toBeInTheDocument()
   })
 })
