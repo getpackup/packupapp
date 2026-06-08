@@ -2,6 +2,7 @@ import { ChevronDown, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
 import { AccountGateDialog } from '~/components/AccountGateDialog'
+import { PlanGate } from '~/components/PlanGate'
 import { Button } from '~/components/ui/button'
 import {
   Dialog,
@@ -292,42 +293,44 @@ function ManageCustomTagsDialog({ userId, children }: ManageCustomTagsDialogProp
           )}
 
           {!editingTag && (
-            <div className="space-y-2 rounded-md border p-3">
-              <div className="flex items-start gap-2">
-                <ColorPickerDropdown value={newColor} onChange={setNewColor} />
-                <div className="w-full">
-                  <Input
-                    value={newName}
-                    onChange={(e) => {
-                      setNewName(e.target.value)
-                      if (e.target.value.trim().length > 25) {
-                        setError('Tag name must be 25 characters or less')
-                      } else {
-                        setError('')
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        handleCreate()
-                      }
-                    }}
-                    placeholder="New tag name..."
-                  />
-                  {error && <p className="text-destructive mt-1 text-xs">{error}</p>}
+            <PlanGate feature="Custom Tags">
+              <div className="space-y-2 rounded-md border p-3">
+                <div className="flex items-start gap-2">
+                  <ColorPickerDropdown value={newColor} onChange={setNewColor} />
+                  <div className="w-full">
+                    <Input
+                      value={newName}
+                      onChange={(e) => {
+                        setNewName(e.target.value)
+                        if (e.target.value.trim().length > 25) {
+                          setError('Tag name must be 25 characters or less')
+                        } else {
+                          setError('')
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          handleCreate()
+                        }
+                      }}
+                      placeholder="New tag name..."
+                    />
+                    {error && <p className="text-destructive mt-1 text-xs">{error}</p>}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <Button
+                    size="sm"
+                    className="ml-auto"
+                    onClick={handleCreate}
+                    disabled={!newName.trim() || error !== ''}
+                  >
+                    Add tag
+                  </Button>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <Button
-                  size="sm"
-                  className="ml-auto"
-                  onClick={handleCreate}
-                  disabled={!newName.trim() || error !== ''}
-                >
-                  Add tag
-                </Button>
-              </div>
-            </div>
+            </PlanGate>
           )}
         </div>
       </DialogContent>
