@@ -27,6 +27,7 @@ export default [
   route('resource/send-signin-email', 'routes/resource.send-signin-email.tsx'),
   route('resource/create-checkout-session', 'routes/resource.create-checkout-session.tsx'),
   route('resource/create-portal-session', 'routes/resource.create-portal-session.tsx'),
+  route('resource/manage-subscription', 'routes/resource.manage-subscription.tsx'),
   route('resource/stripe-webhook', 'routes/resource.stripe-webhook.tsx'),
   // Add catch-all route for unknown URLs
   route('...', 'routes/[...].tsx'),
