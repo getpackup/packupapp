@@ -1,9 +1,8 @@
 import { ChevronDown, Filter, Plus, X } from 'lucide-react'
 import { useState } from 'react'
 
-import { getTagDotClass } from '~/lib/tagColors'
+import { getTagDotClass, type TagColorKey } from '~/lib/tagColors'
 import { cn } from '~/lib/utils'
-import type { TagColorKey } from '~/lib/tagColors'
 
 import { Button } from '../ui/button'
 import {

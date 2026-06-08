@@ -115,7 +115,6 @@ describe('PackingListToolbar', () => {
     expect(onAddItemClick).toHaveBeenCalledOnce()
   })
 
-  // Filters panel tests
   it('filters panel is hidden by default', () => {
     render(<PackingListToolbar {...defaultProps} />)
     expect(screen.queryByPlaceholderText('Search items...')).not.toBeInTheDocument()
