@@ -6,7 +6,9 @@ import FullPageSpinner from '~/components/FullPageSpinner'
 import PageContent from '~/components/PageContent'
 import PageHeader from '~/components/PageHeader'
 import AddShoppingListItemDialog from '~/components/ShoppingList/AddShoppingListItemDialog'
+import ShoppingListFilterBar from '~/components/ShoppingList/ShoppingListFilterBar'
 import ShoppingListItem from '~/components/ShoppingList/ShoppingListItem'
+import { useShoppingListFilters } from '~/components/ShoppingList/useShoppingListFilters'
 import { useShoppingListView } from '~/components/ShoppingList/useShoppingListView'
 import { Button } from '~/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '~/components/ui/empty'
@@ -55,12 +57,15 @@ export default function ShoppingList() {
     },
   })
 
+  const { purchaseState, setPurchaseState, sortBy, setSortBy, activeStores, setActiveStores, storeChips } =
+    useShoppingListFilters(shoppingList ?? [])
+
   const flatList = useShoppingListView({
     items: shoppingList ?? [],
     trips: trips ?? [],
-    purchaseState: 'unpurchased',
-    sortBy: 'trip',
-    activeStores: [],
+    purchaseState,
+    sortBy,
+    activeStores,
   })
 
   return (
@@ -88,8 +93,18 @@ export default function ShoppingList() {
         ) : (
           <div className="mx-auto w-full max-w-4xl">
             {(isLoadingTrips || isLoading) && <FullPageSpinner what="shopping list" />}
-            {!isLoading && !isLoadingTrips &&
-              (flatList.length > 0 ? (
+            {!isLoading && !isLoadingTrips && (
+              <>
+                <ShoppingListFilterBar
+                  purchaseState={purchaseState}
+                  onPurchaseStateChange={setPurchaseState}
+                  sortBy={sortBy}
+                  onSortByChange={setSortBy}
+                  storeChips={storeChips}
+                  activeStores={activeStores}
+                  onActiveStoresChange={setActiveStores}
+                />
+                {flatList.length > 0 ? (
                 <div className="space-y-1">
                   {flatList.map(({ item, trip }) => (
                     <ShoppingListItem
@@ -103,20 +118,21 @@ export default function ShoppingList() {
                     />
                   ))}
                 </div>
-              ) : (
-                <Empty>
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                      <ShoppingCart />
-                    </EmptyMedia>
-                    <EmptyTitle>Your shopping list is empty</EmptyTitle>
-                    <EmptyDescription>
-                      You have no current shopping list items to display
-                    </EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-              ))
-            }
+                ) : (
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon">
+                        <ShoppingCart />
+                      </EmptyMedia>
+                      <EmptyTitle>Your shopping list is empty</EmptyTitle>
+                      <EmptyDescription>
+                        You have no current shopping list items to display
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
+                )}
+              </>
+            )}
           </div>
         )}
       </PageContent>
