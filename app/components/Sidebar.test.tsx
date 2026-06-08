@@ -58,14 +58,6 @@ function renderSidebar() {
   )
 }
 
-async function openDropdown() {
-  const user = userEvent.setup()
-  const trigger = screen.getByRole('img', { hidden: true }).closest('div[role]') ??
-    document.querySelector('[data-radix-collection-item]') ??
-    screen.getByText('Test User').closest('div')!
-  await user.click(trigger)
-}
-
 describe('Sidebar — subscription entry points', () => {
   beforeEach(() => {
     vi.clearAllMocks()

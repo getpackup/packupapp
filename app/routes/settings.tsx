@@ -46,12 +46,69 @@ function PreferenceRow({
 
 const PRICING_URL = 'https://getpackup.com/pricing'
 
+function SubscriptionRow({
+  uid,
+  isPro,
+  isCheckoutReturn,
+  isPlanLoading,
+}: {
+  uid: string | undefined
+  isPro: boolean
+  isCheckoutReturn: boolean
+  isPlanLoading: boolean
+}) {
+  if (isCheckoutReturn && isPlanLoading) {
+    return (
+      <PreferenceRow
+        label="Processing upgrade"
+        description="Your upgrade is processing. This may take a few moments."
+      >
+        <Loader2 className="size-5 animate-spin text-muted-foreground" />
+      </PreferenceRow>
+    )
+  }
+
+  if (isPro) {
+    return (
+      <PreferenceRow
+        label="Pro Plan"
+        description="Manage your subscription, billing, and payment details."
+      >
+        <form action="/resource/manage-subscription" method="post">
+          <input type="hidden" name="uid" value={uid} />
+          <Button variant="outline" type="submit">
+            Manage Subscription
+          </Button>
+        </form>
+      </PreferenceRow>
+    )
+  }
+
+  return (
+    <PreferenceRow
+      label="Free Plan"
+      description="Unlock Trip Chat, unlimited Trip Members, and Custom Tags."
+    >
+      <Button variant="outline" asChild>
+        <a
+          href={`${PRICING_URL}?uid=${uid}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <ExternalLink className="size-4" />
+          Upgrade to Pro
+        </a>
+      </Button>
+    </PreferenceRow>
+  )
+}
+
 export default function Settings() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const isAnonymous = useIsAnonymous()
-  const { isPro, isFree, isLoading: isPlanLoading } = usePlan()
+  const { isPro, isLoading: isPlanLoading } = usePlan()
   const [searchParams] = useSearchParams()
   const isCheckoutReturn = searchParams.get('checkout') === 'success'
 
@@ -126,42 +183,12 @@ export default function Settings() {
           <section>
             <h2 className="mb-2 text-lg font-bold">Subscription</h2>
             <div className="divide-border divide-y">
-              {isCheckoutReturn && isPlanLoading ? (
-                <PreferenceRow
-                  label="Processing upgrade"
-                  description="Your upgrade is processing. This may take a few moments."
-                >
-                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
-                </PreferenceRow>
-              ) : isPro ? (
-                <PreferenceRow
-                  label="Pro Plan"
-                  description="Manage your subscription, billing, and payment details."
-                >
-                  <form action="/resource/manage-subscription" method="post">
-                    <input type="hidden" name="uid" value={user?.uid} />
-                    <Button variant="outline" type="submit">
-                      Manage Subscription
-                    </Button>
-                  </form>
-                </PreferenceRow>
-              ) : (
-                <PreferenceRow
-                  label="Free Plan"
-                  description="Unlock Trip Chat, unlimited Trip Members, and Custom Tags."
-                >
-                  <Button variant="outline" asChild>
-                    <a
-                      href={`${PRICING_URL}?uid=${user?.uid}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalLink className="size-4" />
-                      Upgrade to Pro
-                    </a>
-                  </Button>
-                </PreferenceRow>
-              )}
+              <SubscriptionRow
+                uid={user?.uid}
+                isPro={isPro}
+                isCheckoutReturn={isCheckoutReturn}
+                isPlanLoading={isPlanLoading}
+              />
             </div>
           </section>
         )}
