@@ -40,7 +40,7 @@ export function PlanGate({ feature, children }: PlanGateProps) {
           href="https://getpackup.com/pricing"
           className="underline"
           target="_blank"
-          rel="noreferrer noopener"
+          rel="noopener noreferrer"
         >
           Upgrade to Pro
         </a>
