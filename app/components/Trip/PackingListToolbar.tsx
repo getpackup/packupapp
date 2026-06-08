@@ -80,23 +80,6 @@ const PackingListToolbar = ({
               </span>
             )}
           </Button>
-          {showAddGear && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1.5">
-                  <Plus className="h-3.5 w-3.5" />
-                  Add Gear
-                  <ChevronDown className="h-3.5 w-3.5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={onAddFromGearClosetClick}>
-                  Add from Gear Closet
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={onAddItemClick}>Add item</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
           <ToggleGroup
             type="single"
             variant="outline"
@@ -116,6 +99,23 @@ const PackingListToolbar = ({
               Unpacked
             </ToggleGroupItem>
           </ToggleGroup>
+          {showAddGear && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 gap-1.5">
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Gear
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={onAddFromGearClosetClick}>
+                  Add from Gear Closet
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={onAddItemClick}>Add item</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 

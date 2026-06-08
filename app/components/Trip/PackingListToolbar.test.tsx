@@ -211,4 +211,20 @@ describe('PackingListToolbar', () => {
     await userEvent.type(screen.getByPlaceholderText('Search items...'), 'tent')
     expect(onSearchChange).toHaveBeenCalled()
   })
+
+  it('ToggleGroup renders before Add Gear button in the toolbar row', () => {
+    render(
+      <PackingListToolbar
+        {...defaultProps}
+        showAddGear
+        onAddFromGearClosetClick={vi.fn()}
+        onAddItemClick={vi.fn()}
+      />
+    )
+    const addGearButton = screen.getByRole('button', { name: /add gear/i })
+    const allToggle = screen.getByLabelText('Toggle all')
+    expect(
+      allToggle.compareDocumentPosition(addGearButton) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+  })
 })
