@@ -20,12 +20,12 @@ function ShoppingListTripPill({ tripId, tripName, startDate, isPast }: ShoppingL
   )
 
   return (
-    <div className="shrink-[1.5] hidden max-w-[initial] min-w-fit grow items-center gap-1 overflow-hidden transition-[flex-shrink] duration-300 hover:shrink-[0.3] lg:flex">
+    <div className="hidden max-w-[initial] min-w-fit shrink-[1.5] grow items-center gap-1 overflow-hidden transition-[flex-shrink] duration-300 hover:shrink-[0.3] lg:flex">
       <div className="flex min-w-0 grow" />
       <div className="flex min-w-0">
         <div className={pillClass}>
           <span className={cn('inline-block h-2 w-2 shrink-0 rounded-full', dotClass)} />
-          <span className="max-w-[8rem] truncate text-muted-foreground">{tripName}</span>
+          <span className="text-muted-foreground max-w-32 truncate">{tripName}</span>
         </div>
       </div>
       <div className="flex min-w-0 shrink-[1e-06]">
