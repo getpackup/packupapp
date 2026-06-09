@@ -15,7 +15,7 @@ export function useShoppingListFilters(items: ShoppingListItemType[]) {
     let hasNoStore = false
 
     for (const item of items) {
-      if (item.store === null) {
+      if (!item.store) {
         hasNoStore = true
       } else {
         const lower = item.store.toLowerCase()

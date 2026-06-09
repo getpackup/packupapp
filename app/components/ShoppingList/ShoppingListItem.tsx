@@ -16,7 +16,6 @@ import type { Trip } from '~/types/Trip'
 import PriorityIcon from '../PriorityIcon'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
-import { Checkbox } from '../ui/checkbox'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,21 +30,11 @@ import ShoppingListTripPill from './ShoppingListTripPill'
 
 type ShoppingListItemProps = {
   item: ShoppingListItemType
-  isMultiSelecting: boolean
-  isSelected: boolean
-  onItemSelection: (itemId: string, isShiftClick: boolean, isCommandClick: boolean) => void
   sounds?: ReturnType<typeof useCheckboxSounds>
   trip?: Trip
 }
 
-const ShoppingListItem = ({
-  item,
-  isMultiSelecting,
-  isSelected,
-  onItemSelection,
-  sounds,
-  trip,
-}: ShoppingListItemProps) => {
+const ShoppingListItem = ({ item, sounds, trip }: ShoppingListItemProps) => {
   const { soundsEnabled } = useSoundsState()
 
   const [isEditing, setIsEditing] = useState(false)
@@ -117,91 +106,64 @@ const ShoppingListItem = ({
     deleteShoppingListItemAsync({ id: item.id })
   }
 
-  const handleSelection = (event?: React.MouseEvent) => {
-    if (isMultiSelecting) {
-      const isShiftClick = event?.shiftKey || false
-      const isCommandClick = event?.metaKey || event?.ctrlKey || false
-      onItemSelection(item.id, isShiftClick, isCommandClick)
-    } else {
-      togglePurchased()
-    }
-  }
-
   return (
     <div className="text-sidebar-foreground hover:bg-sidebar-accent/40 rounded-lg px-3 py-2">
       <div className="flex items-center gap-4">
         <div className="flex min-w-0 flex-1 items-center gap-4">
-          {isMultiSelecting ? (
-            <>
-              <Checkbox checked={isSelected} onClick={(e) => handleSelection(e)} id={item.id} />
+          <animated.div
+            style={outlineSpring}
+            onClick={togglePurchased}
+            onMouseDown={() => {
+              setActive(true)
+              if (soundsEnabled) {
+                sounds?.playActive()
+              }
+            }}
+            onMouseUp={() => {
+              setActive(false)
+              if (soundsEnabled) {
+                item.isPurchased ? sounds?.playOff() : sounds?.playOn()
+              }
+            }}
+          >
+            {item.isPurchased ? (
+              <animated.span
+                style={filledSpring}
+                className="bg-success/80 hover:bg-success flex h-6 w-6 items-center justify-center rounded-full transition-colors"
+              >
+                <Check className="text-muted dark:text-foreground h-4 w-4" strokeWidth={3} />
+              </animated.span>
+            ) : (
+              <Circle className="text-muted-foreground/80 hover:text-muted-foreground h-6 w-6 shrink-0" />
+            )}
+          </animated.div>
+          <div className="flex min-w-0 flex-1 flex-col select-none">
+            <div className="flex min-w-0 items-center gap-2">
               <span
-                className="cursor-pointer truncate select-none"
-                onClick={(e) => handleSelection(e)}
+                className={cn('truncate', item.isPurchased && 'text-muted-foreground line-through')}
               >
                 {item.itemName}
               </span>
-            </>
-          ) : (
-            <>
-              <animated.div
-                style={outlineSpring}
-                onClick={togglePurchased}
-                onMouseDown={() => {
-                  setActive(true)
-                  if (soundsEnabled) {
-                    sounds?.playActive()
-                  }
-                }}
-                onMouseUp={() => {
-                  setActive(false)
-                  if (soundsEnabled) {
-                    item.isPurchased ? sounds?.playOff() : sounds?.playOn()
-                  }
-                }}
-              >
-                {item.isPurchased ? (
-                  <animated.span
-                    style={filledSpring}
-                    className="bg-success/80 hover:bg-success flex h-6 w-6 items-center justify-center rounded-full transition-colors"
-                  >
-                    <Check className="text-muted dark:text-foreground h-4 w-4" strokeWidth={3} />
-                  </animated.span>
-                ) : (
-                  <Circle className="text-muted-foreground/80 hover:text-muted-foreground h-6 w-6 shrink-0" />
-                )}
-              </animated.div>
-              <div className="flex min-w-0 flex-1 flex-col select-none">
-                <div className="flex min-w-0 items-center gap-2">
-                  <span
-                    className={cn(
-                      'truncate',
-                      item.isPurchased && 'text-muted-foreground line-through'
-                    )}
-                  >
-                    {item.itemName}
-                  </span>
-                  {item.quantity && item.quantity !== 1 && (
-                    <Badge
-                      className="h-5 min-w-5 shrink-0 rounded-full font-mono tabular-nums"
-                      variant="outline"
-                    >
-                      <X className="h-3 w-3" /> {item.quantity}
-                    </Badge>
-                  )}
-                </div>
-                {(item.store || item.notes) && (
-                  <div className="text-muted-foreground flex items-center truncate text-xs">
-                    {item.store && <span className="font-bold">{item.store}</span>}
-                    {item.store && item.notes && <Dot strokeWidth={3} />}
-                    {item.notes && item.notes}
-                  </div>
-                )}
+              {item.quantity && item.quantity !== 1 && (
+                <Badge
+                  className="h-5 min-w-5 shrink-0 rounded-full font-mono tabular-nums"
+                  variant="outline"
+                >
+                  <X className="h-3 w-3" /> {item.quantity}
+                </Badge>
+              )}
+            </div>
+            {(item.store || item.notes) && (
+              <div className="text-muted-foreground flex items-center truncate text-xs">
+                {item.store && <span className="font-bold">{item.store}</span>}
+                {item.store && item.notes && <Dot strokeWidth={3} />}
+                {item.notes && item.notes}
               </div>
-            </>
-          )}
+            )}
+          </div>
         </div>
 
-        {trip && !isMultiSelecting && (
+        {trip && (
           <ShoppingListTripPill
             tripId={trip.tripId}
             tripName={trip.name}
@@ -217,7 +179,8 @@ const ShoppingListItem = ({
                 <span
                   className={cn(
                     'text-muted-foreground font-mono text-xs tabular-nums',
-                    item.actualPrice && 'line-through'
+                    item.actualPrice && 'line-through',
+                    trip && isBeforeToday(trip.endDate.toMillis()) && 'opacity-50'
                   )}
                 >
                   {formatMoneyWithCommas(item.estimatedPrice)}
@@ -231,7 +194,12 @@ const ShoppingListItem = ({
           {item.actualPrice && (
             <Tooltip>
               <TooltipTrigger>
-                <span className="font-mono text-xs tabular-nums">
+                <span
+                  className={cn(
+                    'font-mono text-xs tabular-nums',
+                    trip && isBeforeToday(trip.endDate.toMillis()) && 'opacity-50'
+                  )}
+                >
                   {formatMoneyWithCommas(item.actualPrice)}
                 </span>
               </TooltipTrigger>
@@ -287,59 +255,55 @@ const ShoppingListItem = ({
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          {!isMultiSelecting && (
-            <>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon-sm">
-                    <Ellipsis className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-48">
-                  <DropdownMenuItem className="flex justify-between p-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={item.quantity === 1}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleQuantityChange(-1)
-                      }}
-                    >
-                      <Minus />
-                    </Button>
-                    {item.quantity}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleQuantityChange(1)
-                      }}
-                    >
-                      <Plus />
-                    </Button>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm">
+                <Ellipsis className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-48">
+              <DropdownMenuItem className="flex justify-between p-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={item.quantity === 1}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleQuantityChange(-1)
+                  }}
+                >
+                  <Minus />
+                </Button>
+                {item.quantity}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleQuantityChange(1)
+                  }}
+                >
+                  <Plus />
+                </Button>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
 
-                  <DropdownMenuItem asChild>
-                    <EditShoppingListItem
-                      item={item}
-                      isEditing={isEditing}
-                      setIsEditing={setIsEditing}
-                    />
-                  </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <EditShoppingListItem
+                  item={item}
+                  isEditing={isEditing}
+                  setIsEditing={setIsEditing}
+                />
+              </DropdownMenuItem>
 
-                  <DropdownMenuSeparator />
+              <DropdownMenuSeparator />
 
-                  <DropdownMenuItem onClick={handleDelete} variant="destructive">
-                    <Trash2 />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
-          )}
+              <DropdownMenuItem onClick={handleDelete} variant="destructive">
+                <Trash2 />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>

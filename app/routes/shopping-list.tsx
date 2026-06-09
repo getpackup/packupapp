@@ -111,9 +111,6 @@ export default function ShoppingList() {
                         key={item.id}
                         item={item}
                         trip={trip}
-                        isMultiSelecting={false}
-                        isSelected={false}
-                        onItemSelection={() => {}}
                         sounds={checkboxSounds}
                       />
                     ))}
