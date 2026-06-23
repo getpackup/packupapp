@@ -49,8 +49,6 @@ Make a git commit. The commit message must:
 4. Files changed
 5. Blockers or notes for next iteration
 
-Keep it concise.
-
 # THE ISSUE
 
 If the task is not complete, leave a comment on the issue with what was done.

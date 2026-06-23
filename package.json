@@ -5,15 +5,16 @@
   "type": "module",
   "packageManager": "pnpm@10.25.0",
   "scripts": {
+    "afk": "pnpm exec tsx .sandcastle/main.ts",
     "build": "react-router build",
     "dev": "react-router dev",
-    "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
-    "test": "vitest run",
     "email:dev": "email dev --dir app/emails",
-    "afk": "pnpm exec tsx .sandcastle/main.ts"
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "prepare": "husky",
+    "start": "react-router-serve ./build/server/index.js",
+    "test": "vitest run",
+    "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
     "@algolia/client-search": "^5.35.0",
@@ -109,7 +110,9 @@
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-unused-imports": "^4.2.0",
+    "husky": "^9.1.7",
     "jsdom": "^29.1.1",
+    "lint-staged": "^17.0.7",
     "prettier-plugin-tailwindcss": "^0.6.14",
     "react-email": "5.2.8",
     "tailwindcss": "^4.1.4",
