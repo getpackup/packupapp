@@ -172,7 +172,11 @@ export const updateAlgoliaOnUserCreate = onDocumentCreated('users/{documentId}',
   const snapshot = event.data
   if (!snapshot) return
 
-  await saveDocumentInAlgolia(snapshot)
+  try {
+    await saveDocumentInAlgolia(snapshot)
+  } catch (err) {
+    console.error('updateAlgoliaOnUserCreate: Algolia save failed', err)
+  }
 
   // Increment the appropriate user counter based on whether the new user is anonymous.
   const userData = snapshot.data()

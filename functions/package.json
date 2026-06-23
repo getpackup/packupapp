@@ -10,7 +10,7 @@
     "test": "vitest run"
   },
   "engines": {
-    "node": "23.11.0"
+    "node": ">=22"
   },
   "dependencies": {
     "@react-email/components": "^1.0.7",

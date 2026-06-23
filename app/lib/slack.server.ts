@@ -1,7 +1,7 @@
 import type { Firestore } from 'firebase-admin/firestore'
 import { getFirestore } from 'firebase-admin/firestore'
 
-import { getFirebaseAdmin } from '~/firebase/admin'
+import { getFirebaseAdmin } from '../firebase/admin'
 
 // --- Config ---
 
