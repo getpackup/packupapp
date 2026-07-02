@@ -1,6 +1,7 @@
 import { format } from 'date-fns'
 import {
   EllipsisVertical,
+  ExternalLink,
   Loader2,
   LogOut,
   MapIcon,
@@ -303,6 +304,7 @@ export function Sidebar({ className }: SidebarProps) {
                       >
                         <MountainSnow className="size-4" />
                         Upgrade to Pro
+                        <ExternalLink className="size-4" />
                       </a>
                     </DropdownMenuItem>
                   )}
