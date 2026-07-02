@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -7,13 +6,18 @@ vi.mock('~/lib/usePlan', () => ({
   usePlan: vi.fn(),
 }))
 
+vi.mock('~/contexts/auth/useAuth', () => {
+  const fn = vi.fn(() => ({ user: { uid: 'u1', username: 'testuser', email: 'test@test.com' } }))
+  return { useAuth: fn, default: fn }
+})
+
 import { usePlan } from '~/lib/usePlan'
 import { PlanGate } from './PlanGate'
 
-function renderGate(props: { feature?: string; children?: React.ReactNode }) {
+function renderGate(props: { featureDescription?: string; children?: React.ReactNode }) {
   return render(
     <MemoryRouter>
-      <PlanGate feature={props.feature ?? 'Custom Tags'}>
+      <PlanGate featureDescription={props.featureDescription ?? 'Custom colored tags for gear.'}>
         {props.children ?? <button>Create Tag</button>}
       </PlanGate>
     </MemoryRouter>
@@ -24,15 +28,19 @@ describe('PlanGate', () => {
   it('renders children unchanged when user is on Pro Plan', () => {
     vi.mocked(usePlan).mockReturnValue({ plan: 'pro', isPro: true, isFree: false, isLoading: false })
     renderGate({})
-    expect(screen.getByRole('button', { name: 'Create Tag' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Create Tag' })).not.toBeDisabled()
     expect(screen.queryByTestId('plan-gate-locked')).not.toBeInTheDocument()
   })
 
-  it('renders locked state with padlock icon when user is on Free Plan', () => {
+  it('shows a persistent upgrade alert and disables the content when user is on Free Plan', () => {
     vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false })
-    renderGate({})
+    renderGate({ featureDescription: 'Custom colored tags for gear.' })
+
     expect(screen.getByTestId('plan-gate-locked')).toBeInTheDocument()
-    expect(screen.getByTestId('plan-gate-lock-icon')).toBeInTheDocument()
+    expect(screen.getByText('Upgrade to Pro')).toBeInTheDocument()
+    expect(screen.getByText('Custom colored tags for gear.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Upgrade' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Create Tag' })).toBeDisabled()
   })
 
   it('locked state is visually disabled', () => {
@@ -41,15 +49,13 @@ describe('PlanGate', () => {
     expect(screen.getByTestId('plan-gate-locked')).toHaveAttribute('aria-disabled', 'true')
   })
 
-  it('tooltip names the gated feature and includes upgrade call-to-action', async () => {
+  it('upgrade link includes the logged-in user uid', () => {
     vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false })
-    const user = userEvent.setup()
-    renderGate({ feature: 'Custom Tags' })
+    renderGate({})
 
-    await user.hover(screen.getByTestId('plan-gate-locked'))
-
-    const tooltip = await screen.findByRole('tooltip')
-    expect(tooltip).toHaveTextContent('Custom Tags')
-    expect(tooltip).toHaveTextContent('Upgrade to Pro')
+    expect(screen.getByRole('link', { name: 'Upgrade' })).toHaveAttribute(
+      'href',
+      'https://getpackup.com/pricing?uid=u1'
+    )
   })
 })

@@ -123,7 +123,7 @@ export function AddTripMember({ trip, tripMembers }: { trip: Trip; tripMembers: 
     }
   }
 
-  const triggerButton = (
+  const trigger = (
     <Tooltip>
       <TooltipTrigger asChild>
         <Button type="button" variant="ghost" size="icon-sm" onClick={() => setOpen(true)}>
@@ -133,12 +133,6 @@ export function AddTripMember({ trip, tripMembers }: { trip: Trip; tripMembers: 
       </TooltipTrigger>
       <TooltipContent>Add Trip Member</TooltipContent>
     </Tooltip>
-  )
-
-  const trigger = atMemberCap ? (
-    <PlanGate feature="Unlimited trip members">{triggerButton}</PlanGate>
-  ) : (
-    triggerButton
   )
 
   if (isAnonymous) {
@@ -155,7 +149,7 @@ export function AddTripMember({ trip, tripMembers }: { trip: Trip; tripMembers: 
     )
   }
 
-  const content = (
+  const searchCombobox = (
     <UserSearchCombobox
       onSelect={handleSelect}
       excludeUids={[user?.uid ?? '']}
@@ -163,6 +157,14 @@ export function AddTripMember({ trip, tripMembers }: { trip: Trip; tripMembers: 
       friends={friends}
       currentUserUid={user?.uid ?? ''}
     />
+  )
+
+  const content = atMemberCap ? (
+    <PlanGate featureDescription="Bring the whole group - no cap on who joins the trip.">
+      {searchCombobox}
+    </PlanGate>
+  ) : (
+    searchCombobox
   )
 
   return (

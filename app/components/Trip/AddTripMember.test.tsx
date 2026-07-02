@@ -200,8 +200,25 @@ describe('AddTripMember — Free Plan member cap', () => {
     })
   })
 
-  it('Free plan with 2 active members shows unlocked button', () => {
+  it('Free plan with 2 active members shows an unlocked, enabled search field', async () => {
     const members = [makeMember(TripMemberStatus.Owner), makeMember(TripMemberStatus.Accepted)]
+    render(
+      <MemoryRouter>
+        <AddTripMember trip={{ tripId: 'trip1' } as Trip} tripMembers={members} />
+      </MemoryRouter>
+    )
+    expect(screen.queryByTestId('plan-gate-locked')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /add member/i }))
+    expect(screen.queryByTestId('plan-gate-locked')).not.toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/search/i)).toBeEnabled()
+  })
+
+  it('Free plan with exactly 3 active members still shows an unlocked trigger button', () => {
+    const members = [
+      makeMember(TripMemberStatus.Owner),
+      makeMember(TripMemberStatus.Accepted),
+      makeMember(TripMemberStatus.Accepted),
+    ]
     render(
       <MemoryRouter>
         <AddTripMember trip={{ tripId: 'trip1' } as Trip} tripMembers={members} />
@@ -211,7 +228,7 @@ describe('AddTripMember — Free Plan member cap', () => {
     expect(screen.getByRole('button', { name: /add member/i })).toBeInTheDocument()
   })
 
-  it('Free plan with exactly 3 active members shows locked button', () => {
+  it('Free plan at member cap shows the inline gate with a disabled search field once the dialog opens', async () => {
     const members = [
       makeMember(TripMemberStatus.Owner),
       makeMember(TripMemberStatus.Accepted),
@@ -222,24 +239,15 @@ describe('AddTripMember — Free Plan member cap', () => {
         <AddTripMember trip={{ tripId: 'trip1' } as Trip} tripMembers={members} />
       </MemoryRouter>
     )
+    await userEvent.click(screen.getByRole('button', { name: /add member/i }))
     expect(screen.getByTestId('plan-gate-locked')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Bring the whole group - no cap on who joins the trip\./)
+    ).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/search/i)).toBeDisabled()
   })
 
-  it('Free plan locked state shows padlock icon', () => {
-    const members = [
-      makeMember(TripMemberStatus.Owner),
-      makeMember(TripMemberStatus.Accepted),
-      makeMember(TripMemberStatus.Accepted),
-    ]
-    render(
-      <MemoryRouter>
-        <AddTripMember trip={{ tripId: 'trip1' } as Trip} tripMembers={members} />
-      </MemoryRouter>
-    )
-    expect(screen.getByTestId('plan-gate-lock-icon')).toBeInTheDocument()
-  })
-
-  it('Pro plan with 4 active members shows unlocked button', () => {
+  it('Pro plan with 4 active members shows an unlocked, enabled search field', async () => {
     vi.mocked(usePlan).mockReturnValue({ plan: 'pro', isPro: true, isFree: false, isLoading: false })
     const members = [
       makeMember(TripMemberStatus.Owner),
@@ -252,10 +260,12 @@ describe('AddTripMember — Free Plan member cap', () => {
         <AddTripMember trip={{ tripId: 'trip1' } as Trip} tripMembers={members} />
       </MemoryRouter>
     )
+    await userEvent.click(screen.getByRole('button', { name: /add member/i }))
     expect(screen.queryByTestId('plan-gate-locked')).not.toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/search/i)).toBeEnabled()
   })
 
-  it('Declined and removed members do not count toward the cap', () => {
+  it('Declined and removed members do not count toward the cap', async () => {
     const members = [
       makeMember(TripMemberStatus.Owner),
       makeMember(TripMemberStatus.Declined),
@@ -266,10 +276,11 @@ describe('AddTripMember — Free Plan member cap', () => {
         <AddTripMember trip={{ tripId: 'trip1' } as Trip} tripMembers={members} />
       </MemoryRouter>
     )
+    await userEvent.click(screen.getByRole('button', { name: /add member/i }))
     expect(screen.queryByTestId('plan-gate-locked')).not.toBeInTheDocument()
   })
 
-  it('Pending members do count toward the cap', () => {
+  it('Pending members do count toward the cap', async () => {
     const members = [
       makeMember(TripMemberStatus.Owner),
       makeMember(TripMemberStatus.Pending),
@@ -280,6 +291,7 @@ describe('AddTripMember — Free Plan member cap', () => {
         <AddTripMember trip={{ tripId: 'trip1' } as Trip} tripMembers={members} />
       </MemoryRouter>
     )
+    await userEvent.click(screen.getByRole('button', { name: /add member/i }))
     expect(screen.getByTestId('plan-gate-locked')).toBeInTheDocument()
   })
 })

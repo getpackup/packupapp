@@ -1,13 +1,12 @@
 import { format } from 'date-fns'
 import {
-  CrownIcon,
   EllipsisVertical,
-  ExternalLink,
   Loader2,
   LogOut,
   MapIcon,
   MenuIcon,
   MessageSquareIcon,
+  MountainSnow,
   PlusCircle,
   Settings,
   ShirtIcon,
@@ -302,8 +301,7 @@ export function Sidebar({ className }: SidebarProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        <CrownIcon className="size-4" />
-                        <ExternalLink className="size-3" />
+                        <MountainSnow className="size-4" />
                         Upgrade to Pro
                       </a>
                     </DropdownMenuItem>
@@ -313,7 +311,7 @@ export function Sidebar({ className }: SidebarProps) {
                       <form action="/resource/manage-subscription" method="post">
                         <input type="hidden" name="uid" value={user?.uid} />
                         <button type="submit" className="flex w-full items-center gap-2">
-                          <CrownIcon className="size-4" />
+                          <MountainSnow className="size-4" />
                           Manage Subscription
                         </button>
                       </form>

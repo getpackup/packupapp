@@ -1,50 +1,47 @@
-import { Lock } from 'lucide-react'
+import { Lock, MountainSnow } from 'lucide-react'
 import type { ReactNode } from 'react'
 
+import useAuth from '~/contexts/auth/useAuth'
 import { usePlan } from '~/lib/usePlan'
 
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
+import { Alert, AlertAction, AlertDescription, AlertTitle } from './ui/alert'
+import { Button } from './ui/button'
 
 interface PlanGateProps {
-  feature: string
+  featureDescription: string
   children: ReactNode
 }
 
-export function PlanGate({ feature, children }: PlanGateProps) {
+export function PlanGate({ featureDescription, children }: PlanGateProps) {
   const { isPro } = usePlan()
+  const { user } = useAuth()
 
   if (isPro) {
     return <>{children}</>
   }
 
   return (
-    <Tooltip delayDuration={0}>
-      <TooltipTrigger asChild>
-        <div
-          data-testid="plan-gate-locked"
-          className="relative inline-block cursor-not-allowed"
-          aria-disabled="true"
-        >
-          <div className="pointer-events-none opacity-50">{children}</div>
-          <div
-            data-testid="plan-gate-lock-icon"
-            className="absolute inset-0 flex items-center justify-center"
-          >
-            <Lock className="size-4" aria-hidden="true" />
-          </div>
-        </div>
-      </TooltipTrigger>
-      <TooltipContent>
-        {feature} is a Pro feature.{' '}
-        <a
-          href="https://getpackup.com/pricing"
-          className="underline"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Upgrade to Pro
-        </a>
-      </TooltipContent>
-    </Tooltip>
+    <div data-testid="plan-gate-locked" className="flex flex-col gap-3" aria-disabled="true">
+      <Alert variant="accent">
+        <Lock aria-hidden="true" />
+        <AlertTitle>Upgrade to Pro</AlertTitle>
+        <AlertDescription>{featureDescription}</AlertDescription>
+        <AlertAction>
+          <Button asChild size="sm" variant="default">
+            <a
+              href={`https://getpackup.com/pricing${user?.uid ? `?uid=${user.uid}` : ''}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <MountainSnow className="size-4" />
+              Upgrade
+            </a>
+          </Button>
+        </AlertAction>
+      </Alert>
+      <fieldset disabled className="contents">
+        {children}
+      </fieldset>
+    </div>
   )
 }

@@ -228,7 +228,7 @@ describe('ChatSheet', () => {
       })
 
       it('sees disabled message input', () => {
-        expect(screen.getByPlaceholderText(/upgrade to pro/i)).toBeDisabled()
+        expect(screen.getByPlaceholderText(/type your message/i)).toBeDisabled()
       })
 
       it('sees upgrade prompt', () => {

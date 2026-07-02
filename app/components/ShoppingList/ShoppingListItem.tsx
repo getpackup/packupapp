@@ -154,10 +154,10 @@ const ShoppingListItem = ({ item, sounds, trip }: ShoppingListItemProps) => {
               )}
             </div>
             {(item.store || item.notes) && (
-              <div className="text-muted-foreground flex items-center truncate text-xs">
-                {item.store && <span className="font-bold">{item.store}</span>}
-                {item.store && item.notes && <Dot strokeWidth={3} />}
-                {item.notes && item.notes}
+              <div className="text-muted-foreground flex min-w-0 items-center text-xs">
+                {item.store && <span className="shrink-0 font-bold">{item.store}</span>}
+                {item.store && item.notes && <Dot strokeWidth={3} className="shrink-0" />}
+                {item.notes && <span className="min-w-0 truncate">{item.notes}</span>}
               </div>
             )}
           </div>

@@ -11,6 +11,11 @@ vi.mock('~/lib/usePlan', () => ({
   usePlan: vi.fn(),
 }))
 
+vi.mock('~/contexts/auth/useAuth', () => {
+  const fn = vi.fn(() => ({ user: { uid: 'u1', username: 'testuser', email: 'test@test.com' } }))
+  return { useAuth: fn, default: fn }
+})
+
 vi.mock('~/services/gear', () => ({
   useGearClosetQuery: vi.fn(() => ({ data: { customTags: [] } })),
   useCreateCustomTag: vi.fn(() => ({ mutateAsync: vi.fn() })),
@@ -73,7 +78,11 @@ describe('ManageCustomTagsDialog', () => {
     renderComponent()
     await userEvent.click(screen.getByRole('button', { name: /custom tags/i }))
     expect(screen.getByTestId('plan-gate-locked')).toBeInTheDocument()
-    expect(screen.getByTestId('plan-gate-lock-icon')).toBeInTheDocument()
+    expect(
+      screen.getByText('Organize gear exactly how you think about it, with tags and colors you create.')
+    ).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('New tag name...')).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Add tag' })).toBeDisabled()
   })
 
   it('Free Plan user can still see existing custom tags listed', async () => {

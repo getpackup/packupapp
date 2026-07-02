@@ -293,7 +293,7 @@ function ManageCustomTagsDialog({ userId, children }: ManageCustomTagsDialogProp
           )}
 
           {!editingTag && (
-            <PlanGate feature="Custom Tags">
+            <PlanGate featureDescription="Organize gear exactly how you think about it, with tags and colors you create.">
               <div className="space-y-2 rounded-md border p-3">
                 <div className="flex items-start gap-2">
                   <ColorPickerDropdown value={newColor} onChange={setNewColor} />
