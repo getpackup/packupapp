@@ -1,7 +1,7 @@
 import { format } from 'date-fns'
 import { ExternalLink, Loader2, LogOut, UserMinus } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { useNavigate } from 'react-router'
 
 import { ChatNotificationsToggle } from '~/components/ChatNotificationsToggle'
 import { EmergencyContacts } from '~/components/EmergencyContacts'
@@ -15,6 +15,8 @@ import { Button } from '~/components/ui/button'
 import WeightUnitPreference from '~/components/WeightUnitPreference'
 import { useAuth } from '~/contexts/auth/useAuth'
 import { firebaseAuth } from '~/firebase/config'
+import type { CheckoutUpgradeStatus } from '~/lib/useCheckoutUpgradeStatus'
+import { useCheckoutUpgradeStatus } from '~/lib/useCheckoutUpgradeStatus'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { usePlan } from '~/lib/usePlan'
 
@@ -49,21 +51,30 @@ const PRICING_URL = 'https://getpackup.com/pricing'
 function SubscriptionRow({
   uid,
   isPro,
-  isCheckoutReturn,
-  isPlanLoading,
+  checkoutUpgradeStatus,
 }: {
   uid: string | undefined
   isPro: boolean
-  isCheckoutReturn: boolean
-  isPlanLoading: boolean
+  checkoutUpgradeStatus: CheckoutUpgradeStatus
 }) {
-  if (isCheckoutReturn && isPlanLoading) {
+  if (!isPro && checkoutUpgradeStatus === 'processing') {
     return (
       <PreferenceRow
         label="Processing upgrade"
         description="Your upgrade is processing. This may take a few moments."
       >
         <Loader2 className="size-5 animate-spin text-muted-foreground" />
+      </PreferenceRow>
+    )
+  }
+
+  if (!isPro && checkoutUpgradeStatus === 'timeout') {
+    return (
+      <PreferenceRow
+        label="Still processing"
+        description="This is taking longer than expected. Refresh this page, or contact support if your plan doesn't update shortly."
+      >
+        <Loader2 className="size-5 text-muted-foreground" />
       </PreferenceRow>
     )
   }
@@ -108,9 +119,8 @@ export default function Settings() {
   const navigate = useNavigate()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const isAnonymous = useIsAnonymous()
-  const { isPro, isLoading: isPlanLoading } = usePlan()
-  const [searchParams] = useSearchParams()
-  const isCheckoutReturn = searchParams.get('checkout') === 'success'
+  const { isPro } = usePlan()
+  const checkoutUpgradeStatus = useCheckoutUpgradeStatus()
 
   async function handleLogoutAll() {
     if (!user?.uid) return
@@ -186,8 +196,7 @@ export default function Settings() {
               <SubscriptionRow
                 uid={user?.uid}
                 isPro={isPro}
-                isCheckoutReturn={isCheckoutReturn}
-                isPlanLoading={isPlanLoading}
+                checkoutUpgradeStatus={checkoutUpgradeStatus}
               />
             </div>
           </section>
