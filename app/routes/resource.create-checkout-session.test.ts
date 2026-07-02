@@ -111,6 +111,13 @@ describe('resource.create-checkout-session', () => {
       const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
       expect(res.status).toBe(404)
     })
+
+    it('returns 500 when session has no url', async () => {
+      mockSessionsCreate.mockResolvedValue({ url: null })
+      const req = buildRequest(buildFormData({ lookup_key: 'pro_monthly', uid: 'user-abc' }))
+      const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+      expect(res.status).toBe(500)
+    })
   })
 
   describe('loader', () => {
