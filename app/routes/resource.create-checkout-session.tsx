@@ -5,6 +5,7 @@ import getObjectFromFormData from '~/lib/getObjectFromFormData'
 
 interface CreateCheckoutSessionBody {
   lookup_key: string
+  uid: string
 }
 
 export const action: ActionFunction = async ({ request }) => {
@@ -24,10 +25,17 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   const formData = await request.formData()
-  const { lookup_key } = getObjectFromFormData<CreateCheckoutSessionBody>(formData)
+  const { lookup_key, uid } = getObjectFromFormData<CreateCheckoutSessionBody>(formData)
 
   if (!lookup_key) {
     return new Response(JSON.stringify({ error: 'Missing lookup_key' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  if (!uid) {
+    return new Response(JSON.stringify({ error: 'Missing uid' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     })
@@ -58,7 +66,9 @@ export const action: ActionFunction = async ({ request }) => {
       },
     ],
     mode: 'subscription',
-    success_url: `${origin}/test?success=true&session_id={CHECKOUT_SESSION_ID}`,
+    client_reference_id: uid,
+    success_url: `${origin}/settings?checkout=success`,
+    cancel_url: 'https://getpackup.com/pricing',
   })
 
   if (!session.url) {
