@@ -20,3 +20,7 @@ Create a GitHub issue.
 ## When a skill says "fetch the relevant ticket"
 
 Run `gh issue view <number> --comments`.
+
+## External PRs as a triage surface
+
+Off. `/triage` does not pull external PRs into the issue queue — only issues go through triage. Collaborators' in-flight PRs are left alone regardless.
