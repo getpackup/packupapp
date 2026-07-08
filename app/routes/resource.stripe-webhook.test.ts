@@ -57,14 +57,25 @@ function makeSubscriptionEvent({
   type,
   status,
   customerId = 'cus_test',
+  currentPeriodEnd = 9999999999,
+  cancelAtPeriodEnd = false,
 }: {
   type: string
   status: string
   customerId?: string
+  currentPeriodEnd?: number
+  cancelAtPeriodEnd?: boolean
 }) {
   return {
     type,
-    data: { object: { status, customer: customerId } },
+    data: {
+      object: {
+        status,
+        customer: customerId,
+        cancel_at_period_end: cancelAtPeriodEnd,
+        items: { data: [{ current_period_end: currentPeriodEnd }] },
+      },
+    },
   }
 }
 
@@ -172,38 +183,132 @@ describe('resource.stripe-webhook', () => {
       })
     })
 
-    describe('customer.subscription.updated', () => {
-      it('writes plan: pro when status is active', async () => {
-        mockConstructEvent.mockReturnValue(makeSubscriptionEvent({ type: 'customer.subscription.updated', status: 'active' }))
+    describe('customer.subscription.created', () => {
+      it('writes plan: pro and period fields when status is active', async () => {
+        mockConstructEvent.mockReturnValue(
+          makeSubscriptionEvent({
+            type: 'customer.subscription.created',
+            status: 'active',
+            currentPeriodEnd: 9999999999,
+            cancelAtPeriodEnd: false,
+          })
+        )
         const req = buildRequest()
         const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
         expect(res.status).toBe(200)
         expect(mockDoc).toHaveBeenCalledWith('user-uid-from-meta')
-        expect(mockUpdate).toHaveBeenCalledWith({ plan: 'pro' })
+        expect(mockUpdate).toHaveBeenCalledWith({
+          plan: 'pro',
+          subscriptionCurrentPeriodEnd: 9999999999,
+          subscriptionCancelAtPeriodEnd: false,
+        })
       })
 
-      it('writes plan: free when status is canceled', async () => {
-        mockConstructEvent.mockReturnValue(makeSubscriptionEvent({ type: 'customer.subscription.updated', status: 'canceled' }))
+      it('writes only period fields when status is trialing (no plan change)', async () => {
+        mockConstructEvent.mockReturnValue(
+          makeSubscriptionEvent({
+            type: 'customer.subscription.created',
+            status: 'trialing',
+            currentPeriodEnd: 9999999999,
+            cancelAtPeriodEnd: true,
+          })
+        )
         const req = buildRequest()
         const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
         expect(res.status).toBe(200)
-        expect(mockUpdate).toHaveBeenCalledWith({ plan: 'free' })
+        expect(mockUpdate).toHaveBeenCalledWith({
+          subscriptionCurrentPeriodEnd: 9999999999,
+          subscriptionCancelAtPeriodEnd: true,
+        })
       })
 
-      it('writes plan: free when status is unpaid', async () => {
-        mockConstructEvent.mockReturnValue(makeSubscriptionEvent({ type: 'customer.subscription.updated', status: 'unpaid' }))
-        const req = buildRequest()
-        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
-        expect(res.status).toBe(200)
-        expect(mockUpdate).toHaveBeenCalledWith({ plan: 'free' })
-      })
-
-      it('skips Firestore write for other statuses', async () => {
-        mockConstructEvent.mockReturnValue(makeSubscriptionEvent({ type: 'customer.subscription.updated', status: 'trialing' }))
+      it('skips Firestore write and returns 200 when uid not in customer metadata', async () => {
+        mockCustomersRetrieve.mockResolvedValue({ metadata: {} })
+        mockConstructEvent.mockReturnValue(
+          makeSubscriptionEvent({ type: 'customer.subscription.created', status: 'active' })
+        )
         const req = buildRequest()
         const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
         expect(res.status).toBe(200)
         expect(mockUpdate).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('customer.subscription.updated', () => {
+      it('writes plan: pro and period fields when status is active', async () => {
+        mockConstructEvent.mockReturnValue(
+          makeSubscriptionEvent({
+            type: 'customer.subscription.updated',
+            status: 'active',
+            currentPeriodEnd: 9999999999,
+            cancelAtPeriodEnd: false,
+          })
+        )
+        const req = buildRequest()
+        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+        expect(res.status).toBe(200)
+        expect(mockDoc).toHaveBeenCalledWith('user-uid-from-meta')
+        expect(mockUpdate).toHaveBeenCalledWith({
+          plan: 'pro',
+          subscriptionCurrentPeriodEnd: 9999999999,
+          subscriptionCancelAtPeriodEnd: false,
+        })
+      })
+
+      it('writes plan: free and period fields when status is canceled', async () => {
+        mockConstructEvent.mockReturnValue(
+          makeSubscriptionEvent({
+            type: 'customer.subscription.updated',
+            status: 'canceled',
+            currentPeriodEnd: 1234567890,
+            cancelAtPeriodEnd: true,
+          })
+        )
+        const req = buildRequest()
+        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+        expect(res.status).toBe(200)
+        expect(mockUpdate).toHaveBeenCalledWith({
+          plan: 'free',
+          subscriptionCurrentPeriodEnd: 1234567890,
+          subscriptionCancelAtPeriodEnd: true,
+        })
+      })
+
+      it('writes plan: free and period fields when status is unpaid', async () => {
+        mockConstructEvent.mockReturnValue(
+          makeSubscriptionEvent({
+            type: 'customer.subscription.updated',
+            status: 'unpaid',
+            currentPeriodEnd: 1234567890,
+            cancelAtPeriodEnd: false,
+          })
+        )
+        const req = buildRequest()
+        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+        expect(res.status).toBe(200)
+        expect(mockUpdate).toHaveBeenCalledWith({
+          plan: 'free',
+          subscriptionCurrentPeriodEnd: 1234567890,
+          subscriptionCancelAtPeriodEnd: false,
+        })
+      })
+
+      it('writes only period fields for other statuses (e.g. trialing)', async () => {
+        mockConstructEvent.mockReturnValue(
+          makeSubscriptionEvent({
+            type: 'customer.subscription.updated',
+            status: 'trialing',
+            currentPeriodEnd: 9999999999,
+            cancelAtPeriodEnd: false,
+          })
+        )
+        const req = buildRequest()
+        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+        expect(res.status).toBe(200)
+        expect(mockUpdate).toHaveBeenCalledWith({
+          subscriptionCurrentPeriodEnd: 9999999999,
+          subscriptionCancelAtPeriodEnd: false,
+        })
       })
     })
 

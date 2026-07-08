@@ -12,6 +12,15 @@ async function writeUserPlan(uid: string, plan: Plan) {
   await db.collection('users').doc(uid).update({ plan })
 }
 
+async function writeUserSubscriptionState(
+  uid: string,
+  updates: Record<string, unknown>
+) {
+  const app = getFirebaseAdmin()
+  const db = getFirestore(app)
+  await db.collection('users').doc(uid).update(updates)
+}
+
 async function getUidFromCustomer(stripe: Stripe, customerId: string): Promise<string | null> {
   const customer = await stripe.customers.retrieve(customerId)
   if ('deleted' in customer && customer.deleted) return null
@@ -95,23 +104,24 @@ export const action: ActionFunction = async ({ request }) => {
       await writeUserPlan(uid, 'free')
       break
     }
-    case 'customer.subscription.created': {
-      const subscription = event.data.object as Stripe.Subscription
-      console.log('Subscription created:', subscription.status)
-      break
-    }
+    case 'customer.subscription.created':
     case 'customer.subscription.updated': {
       const subscription = event.data.object as Stripe.Subscription
       const uid = await getUidFromCustomer(stripe, subscription.customer as string)
       if (!uid) {
-        console.warn('customer.subscription.updated: no uid in customer metadata, skipping plan write')
+        console.warn(`${event.type}: no uid in customer metadata, skipping`)
         break
       }
-      if (subscription.status === 'active') {
-        await writeUserPlan(uid, 'pro')
-      } else if (subscription.status === 'canceled' || subscription.status === 'unpaid') {
-        await writeUserPlan(uid, 'free')
+      const updates: Record<string, unknown> = {
+        subscriptionCurrentPeriodEnd: subscription.items.data[0]?.current_period_end ?? null,
+        subscriptionCancelAtPeriodEnd: subscription.cancel_at_period_end,
       }
+      if (subscription.status === 'active') {
+        updates.plan = 'pro'
+      } else if (subscription.status === 'canceled' || subscription.status === 'unpaid') {
+        updates.plan = 'free'
+      }
+      await writeUserSubscriptionState(uid, updates)
       break
     }
     case 'entitlements.active_entitlement_summary.updated': {

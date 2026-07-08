@@ -12,6 +12,8 @@ export type User = {
   email: string
   isAnonymous?: boolean
   plan?: Plan
+  subscriptionCurrentPeriodEnd?: number
+  subscriptionCancelAtPeriodEnd?: boolean
   stripeCustomerId?: string
   emergencyContacts?: EmergencyContact[]
   isAdmin?: boolean
