@@ -105,6 +105,7 @@ export const action: ActionFunction = async ({ request }) => {
       const updates: Record<string, unknown> = {
         subscriptionCurrentPeriodEnd: subscription.items.data[0]?.current_period_end ?? null,
         subscriptionCancelAtPeriodEnd: subscription.cancel_at_period_end,
+        subscriptionStatus: subscription.status,
       }
       if (subscription.status === 'active') {
         updates.plan = 'pro'
@@ -112,6 +113,16 @@ export const action: ActionFunction = async ({ request }) => {
         updates.plan = 'free'
       }
       await updateUserDoc(uid, updates)
+      break
+    }
+    case 'invoice.payment_failed': {
+      const invoice = event.data.object as Stripe.Invoice
+      const uid = await getUidFromCustomer(stripe, invoice.customer as string)
+      if (!uid) {
+        console.warn('invoice.payment_failed: no uid in customer metadata, skipping')
+        break
+      }
+      await updateUserDoc(uid, { subscriptionStatus: 'past_due' })
       break
     }
     case 'entitlements.active_entitlement_summary.updated': {
