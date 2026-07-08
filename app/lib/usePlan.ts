@@ -22,7 +22,10 @@ export function usePlan(): UsePlanResult {
     const userRef = doc(firestoreDb, 'users', user.uid)
     const unsub = onSnapshot(userRef, (snap) => {
       const data = snap.exists() ? (snap.data() as Partial<User>) : {}
-      setPlan(data.plan ?? 'free')
+      const storedPlan = data.plan ?? 'free'
+      const periodEnd = data.subscriptionCurrentPeriodEnd
+      const isExpired = typeof periodEnd === 'number' && periodEnd * 1000 < Date.now()
+      setPlan(storedPlan === 'pro' && isExpired ? 'free' : storedPlan)
     })
 
     return unsub

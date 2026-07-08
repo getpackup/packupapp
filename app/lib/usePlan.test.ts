@@ -130,4 +130,49 @@ describe('usePlan', () => {
 
     expect(unsub).toHaveBeenCalled()
   })
+
+  describe('subscription period end resilience', () => {
+    it('treats pro user as pro when subscriptionCurrentPeriodEnd is in the future', () => {
+      const { result } = renderHook(() => usePlan())
+
+      act(() => {
+        snapshotCallback({
+          exists: () => true,
+          data: () => ({ plan: 'pro', subscriptionCurrentPeriodEnd: 9999999999 }),
+        })
+      })
+
+      expect(result.current.isPro).toBe(true)
+      expect(result.current.isFree).toBe(false)
+    })
+
+    it('treats pro user as free when subscriptionCurrentPeriodEnd is in the past (missed webhook)', () => {
+      const { result } = renderHook(() => usePlan())
+
+      act(() => {
+        snapshotCallback({
+          exists: () => true,
+          data: () => ({ plan: 'pro', subscriptionCurrentPeriodEnd: 1000000000 }),
+        })
+      })
+
+      expect(result.current.isPro).toBe(false)
+      expect(result.current.isFree).toBe(true)
+      expect(result.current.plan).toBe('free')
+    })
+
+    it('treats pro user as pro when subscriptionCurrentPeriodEnd is absent (backwards compatibility)', () => {
+      const { result } = renderHook(() => usePlan())
+
+      act(() => {
+        snapshotCallback({
+          exists: () => true,
+          data: () => ({ plan: 'pro' }),
+        })
+      })
+
+      expect(result.current.isPro).toBe(true)
+      expect(result.current.isFree).toBe(false)
+    })
+  })
 })
