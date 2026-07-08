@@ -14,7 +14,11 @@ import { configureTeamNotifications, notifyTeam } from '../../app/lib/slack.serv
 import { renderSafetyItineraryHtml } from './render-safety-itinerary-email'
 import { renderInviteToTripHtml } from './render-invite-to-trip-email'
 import { buildFirestoreDeps, processSafetyItineraries } from './safety-itinerary'
-import { buildEmailToUidDeps, createInMemoryRateLimitStore, processEmailToUidRequest } from './email-to-uid'
+import {
+  buildEmailToUidDeps,
+  createInMemoryRateLimitStore,
+  processEmailToUidRequest,
+} from './email-to-uid'
 import type { SafetyItineraryEmailPayload } from '../../app/types/SafetyItinerary'
 import type { User } from '../../app/types/User'
 import { formattedDateRange } from '../../app/lib/date'
@@ -443,11 +447,13 @@ const emailToUidRateLimitStore = createInMemoryRateLimitStore()
 export const lookupUidByEmail = onRequest(
   {
     cors: [
+      'http://localhost:1391',
       'http://localhost:3000',
       'http://localhost:5173',
       'https://getpackup.com',
       'https://www.getpackup.com',
     ],
+    invoker: 'public',
   },
   async (req, res) => {
     if (req.method !== 'POST') {
