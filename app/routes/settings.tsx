@@ -52,10 +52,14 @@ function SubscriptionRow({
   uid,
   isPro,
   checkoutUpgradeStatus,
+  cancelAtPeriodEnd,
+  periodEnd,
 }: {
   uid: string | undefined
   isPro: boolean
   checkoutUpgradeStatus: CheckoutUpgradeStatus
+  cancelAtPeriodEnd: boolean
+  periodEnd: number | null | undefined
 }) {
   if (!isPro && checkoutUpgradeStatus === 'processing') {
     return (
@@ -80,11 +84,13 @@ function SubscriptionRow({
   }
 
   if (isPro) {
+    const description =
+      cancelAtPeriodEnd && periodEnd
+        ? `Cancels on ${format(new Date(periodEnd * 1000), 'MMMM do, yyyy')}. You'll have Pro access until then.`
+        : 'Manage your subscription, billing, and payment details.'
+
     return (
-      <PreferenceRow
-        label="Pro Plan"
-        description="Manage your subscription, billing, and payment details."
-      >
+      <PreferenceRow label="Pro Plan" description={description}>
         <form action="/resource/manage-subscription" method="post">
           <input type="hidden" name="uid" value={uid} />
           <Button variant="outline" type="submit">
@@ -119,7 +125,7 @@ export default function Settings() {
   const navigate = useNavigate()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const isAnonymous = useIsAnonymous()
-  const { isPro } = usePlan()
+  const { isPro, cancelAtPeriodEnd, periodEnd } = usePlan()
   const checkoutUpgradeStatus = useCheckoutUpgradeStatus()
 
   async function handleLogoutAll() {
@@ -197,6 +203,8 @@ export default function Settings() {
                 uid={user?.uid}
                 isPro={isPro}
                 checkoutUpgradeStatus={checkoutUpgradeStatus}
+                cancelAtPeriodEnd={cancelAtPeriodEnd}
+                periodEnd={periodEnd}
               />
             </div>
           </section>

@@ -29,8 +29,8 @@ import { useGearClosetQuery } from '~/services/gear'
 import ManageCustomTagsDialog from './ManageCustomTagsDialog'
 
 const GATE_MESSAGE = 'Create an account to add custom categories to your gear closet.'
-const PRO_PLAN = { plan: 'pro' as const, isPro: true, isFree: false, isLoading: false }
-const FREE_PLAN = { plan: 'free' as const, isPro: false, isFree: true, isLoading: false }
+const PRO_PLAN = { plan: 'pro' as const, isPro: true, isFree: false, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined }
+const FREE_PLAN = { plan: 'free' as const, isPro: false, isFree: true, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined }
 
 function renderComponent() {
   return render(

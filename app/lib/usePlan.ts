@@ -10,11 +10,19 @@ type UsePlanResult = {
   isPro: boolean
   isFree: boolean
   isLoading: boolean
+  cancelAtPeriodEnd: boolean
+  periodEnd: number | null | undefined
+}
+
+type PlanState = {
+  plan: Plan
+  cancelAtPeriodEnd: boolean
+  periodEnd: number | null | undefined
 }
 
 export function usePlan(): UsePlanResult {
   const { user } = useAuth()
-  const [plan, setPlan] = useState<Plan | undefined>(undefined)
+  const [state, setState] = useState<PlanState | undefined>(undefined)
 
   useEffect(() => {
     if (!user?.uid) return
@@ -25,24 +33,30 @@ export function usePlan(): UsePlanResult {
       const storedPlan = data.plan ?? 'free'
       const periodEnd = data.subscriptionCurrentPeriodEnd
       const isExpired = typeof periodEnd === 'number' && periodEnd * 1000 < Date.now()
-      setPlan(storedPlan === 'pro' && isExpired ? 'free' : storedPlan)
+      setState({
+        plan: storedPlan === 'pro' && isExpired ? 'free' : storedPlan,
+        cancelAtPeriodEnd: data.subscriptionCancelAtPeriodEnd ?? false,
+        periodEnd,
+      })
     })
 
     return unsub
   }, [user?.uid])
 
   if (!user?.uid) {
-    return { plan: 'free', isPro: false, isFree: true, isLoading: false }
+    return { plan: 'free', isPro: false, isFree: true, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined }
   }
 
-  if (plan === undefined) {
-    return { plan: 'free', isPro: false, isFree: true, isLoading: true }
+  if (state === undefined) {
+    return { plan: 'free', isPro: false, isFree: true, isLoading: true, cancelAtPeriodEnd: false, periodEnd: undefined }
   }
 
   return {
-    plan,
-    isPro: plan === 'pro',
-    isFree: plan === 'free',
+    plan: state.plan,
+    isPro: state.plan === 'pro',
+    isFree: state.plan === 'free',
     isLoading: false,
+    cancelAtPeriodEnd: state.cancelAtPeriodEnd,
+    periodEnd: state.periodEnd,
   }
 }

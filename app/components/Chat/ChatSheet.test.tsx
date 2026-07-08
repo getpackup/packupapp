@@ -18,7 +18,7 @@ vi.mock('~/lib/useIsAnonymous', () => ({
 }))
 
 vi.mock('~/lib/usePlan', () => ({
-  usePlan: vi.fn(() => ({ plan: 'pro', isPro: true, isFree: false, isLoading: false })),
+  usePlan: vi.fn(() => ({ plan: 'pro', isPro: true, isFree: false, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined })),
 }))
 
 const { mockUseHasUnreadChat } = vi.hoisted(() => ({
@@ -119,7 +119,7 @@ describe('ChatSheet', () => {
       user: { uid: 'u1', username: 'testuser', email: 'test@test.com', isAnonymous: false },
     } as any)
     vi.mocked(useIsAnonymous).mockReturnValue(false)
-    vi.mocked(usePlan).mockReturnValue({ plan: 'pro', isPro: true, isFree: false, isLoading: false })
+    vi.mocked(usePlan).mockReturnValue({ plan: 'pro', isPro: true, isFree: false, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined })
   })
 
   describe('mark chat as read on open', () => {
@@ -223,7 +223,7 @@ describe('ChatSheet', () => {
   describe('plan gating', () => {
     describe('Free user', () => {
       beforeEach(() => {
-        vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false })
+        vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined })
         renderComponent(baseTripProps, true)
       })
 

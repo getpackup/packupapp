@@ -131,6 +131,36 @@ describe('usePlan', () => {
     expect(unsub).toHaveBeenCalled()
   })
 
+  describe('cancelAtPeriodEnd and periodEnd exposure', () => {
+    it('returns cancelAtPeriodEnd true and periodEnd when subscription is set to cancel', () => {
+      const { result } = renderHook(() => usePlan())
+
+      act(() => {
+        snapshotCallback({
+          exists: () => true,
+          data: () => ({ plan: 'pro', subscriptionCancelAtPeriodEnd: true, subscriptionCurrentPeriodEnd: 9999999999 }),
+        })
+      })
+
+      expect(result.current.cancelAtPeriodEnd).toBe(true)
+      expect(result.current.periodEnd).toBe(9999999999)
+    })
+
+    it('returns cancelAtPeriodEnd false when field is absent', () => {
+      const { result } = renderHook(() => usePlan())
+
+      act(() => {
+        snapshotCallback({
+          exists: () => true,
+          data: () => ({ plan: 'pro' }),
+        })
+      })
+
+      expect(result.current.cancelAtPeriodEnd).toBe(false)
+      expect(result.current.periodEnd).toBeUndefined()
+    })
+  })
+
   describe('subscription period end resilience', () => {
     it('treats pro user as pro when subscriptionCurrentPeriodEnd is in the future', () => {
       const { result } = renderHook(() => usePlan())
