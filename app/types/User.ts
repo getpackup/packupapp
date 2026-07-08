@@ -12,7 +12,7 @@ export type User = {
   email: string
   isAnonymous?: boolean
   plan?: Plan
-  subscriptionCurrentPeriodEnd?: number
+  subscriptionCurrentPeriodEnd?: number | null
   subscriptionCancelAtPeriodEnd?: boolean
   stripeCustomerId?: string
   emergencyContacts?: EmergencyContact[]

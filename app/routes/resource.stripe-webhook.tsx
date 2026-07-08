@@ -4,18 +4,8 @@ import Stripe from 'stripe'
 
 import { getFirebaseAdmin } from '~/firebase/admin'
 import { notifyTeam } from '~/lib/slack.server'
-import type { Plan } from '~/types/User'
 
-async function writeUserPlan(uid: string, plan: Plan) {
-  const app = getFirebaseAdmin()
-  const db = getFirestore(app)
-  await db.collection('users').doc(uid).update({ plan })
-}
-
-async function writeUserSubscriptionState(
-  uid: string,
-  updates: Record<string, unknown>
-) {
+async function updateUserDoc(uid: string, updates: Record<string, unknown>) {
   const app = getFirebaseAdmin()
   const db = getFirestore(app)
   await db.collection('users').doc(uid).update(updates)
@@ -85,7 +75,7 @@ export const action: ActionFunction = async ({ request }) => {
           console.warn('checkout.session.completed: missing client_reference_id, skipping plan write')
           break
         }
-        await writeUserPlan(uid, 'pro')
+        await updateUserDoc(uid, { plan: 'pro' })
       }
       break
     }
@@ -101,7 +91,7 @@ export const action: ActionFunction = async ({ request }) => {
         console.warn('customer.subscription.deleted: no uid in customer metadata, skipping plan write')
         break
       }
-      await writeUserPlan(uid, 'free')
+      await updateUserDoc(uid, { plan: 'free' })
       break
     }
     case 'customer.subscription.created':
@@ -121,7 +111,7 @@ export const action: ActionFunction = async ({ request }) => {
       } else if (subscription.status === 'canceled' || subscription.status === 'unpaid') {
         updates.plan = 'free'
       }
-      await writeUserSubscriptionState(uid, updates)
+      await updateUserDoc(uid, updates)
       break
     }
     case 'entitlements.active_entitlement_summary.updated': {
