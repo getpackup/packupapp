@@ -6,6 +6,16 @@ export type WeightUnitPreferenceType = 'g' | 'kg' | 'oz' | 'lb'
 
 export type Plan = 'free' | 'pro'
 
+export type SubscriptionStatus =
+  | 'active'
+  | 'canceled'
+  | 'incomplete'
+  | 'incomplete_expired'
+  | 'past_due'
+  | 'paused'
+  | 'trialing'
+  | 'unpaid'
+
 export type User = {
   bio?: string
   displayName: string
@@ -14,7 +24,7 @@ export type User = {
   plan?: Plan
   subscriptionCurrentPeriodEnd?: number | null
   subscriptionCancelAtPeriodEnd?: boolean
-  subscriptionStatus?: string
+  subscriptionStatus?: SubscriptionStatus
   stripeCustomerId?: string
   emergencyContacts?: EmergencyContact[]
   isAdmin?: boolean
