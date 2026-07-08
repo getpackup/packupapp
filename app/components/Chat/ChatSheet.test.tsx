@@ -112,6 +112,9 @@ function renderComponent(
   )
 }
 
+const PRO_PLAN = { plan: 'pro' as const, isPro: true, isFree: false, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined }
+const FREE_PLAN = { plan: 'free' as const, isPro: false, isFree: true, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined }
+
 describe('ChatSheet', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -119,7 +122,7 @@ describe('ChatSheet', () => {
       user: { uid: 'u1', username: 'testuser', email: 'test@test.com', isAnonymous: false },
     } as any)
     vi.mocked(useIsAnonymous).mockReturnValue(false)
-    vi.mocked(usePlan).mockReturnValue({ plan: 'pro', isPro: true, isFree: false, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined })
+    vi.mocked(usePlan).mockReturnValue(PRO_PLAN)
   })
 
   describe('mark chat as read on open', () => {
@@ -223,7 +226,7 @@ describe('ChatSheet', () => {
   describe('plan gating', () => {
     describe('Free user', () => {
       beforeEach(() => {
-        vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined })
+        vi.mocked(usePlan).mockReturnValue(FREE_PLAN)
         renderComponent(baseTripProps, true)
       })
 

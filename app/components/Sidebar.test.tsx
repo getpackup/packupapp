@@ -50,6 +50,9 @@ import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { usePlan } from '~/lib/usePlan'
 import { Sidebar } from './Sidebar'
 
+const PRO_PLAN = { plan: 'pro' as const, isPro: true, isFree: false, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined }
+const FREE_PLAN = { plan: 'free' as const, isPro: false, isFree: true, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined }
+
 function renderSidebar() {
   return render(
     <MemoryRouter>
@@ -66,7 +69,7 @@ describe('Sidebar — subscription entry points', () => {
 
   it('shows "Upgrade to Pro" in dropdown for free users', async () => {
     const user = userEvent.setup()
-    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined })
+    vi.mocked(usePlan).mockReturnValue(FREE_PLAN)
     renderSidebar()
     await user.click(screen.getByText('Test User'))
     expect(screen.getByRole('menuitem', { name: /upgrade to pro/i })).toBeInTheDocument()
@@ -74,7 +77,7 @@ describe('Sidebar — subscription entry points', () => {
 
   it('"Upgrade to Pro" menu item has correct href with uid', async () => {
     const user = userEvent.setup()
-    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined })
+    vi.mocked(usePlan).mockReturnValue(FREE_PLAN)
     renderSidebar()
     await user.click(screen.getByText('Test User'))
     const item = screen.getByRole('menuitem', { name: /upgrade to pro/i })
@@ -83,7 +86,7 @@ describe('Sidebar — subscription entry points', () => {
 
   it('shows "Manage Subscription" in dropdown for pro users', async () => {
     const user = userEvent.setup()
-    vi.mocked(usePlan).mockReturnValue({ plan: 'pro', isPro: true, isFree: false, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined })
+    vi.mocked(usePlan).mockReturnValue(PRO_PLAN)
     renderSidebar()
     await user.click(screen.getByText('Test User'))
     expect(screen.getByRole('menuitem', { name: /manage subscription/i })).toBeInTheDocument()
@@ -91,7 +94,7 @@ describe('Sidebar — subscription entry points', () => {
 
   it('does not show subscription items for anonymous users', () => {
     vi.mocked(useIsAnonymous).mockReturnValue(true)
-    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined })
+    vi.mocked(usePlan).mockReturnValue(FREE_PLAN)
     renderSidebar()
     expect(screen.queryByText(/upgrade to pro/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/manage subscription/i)).not.toBeInTheDocument()

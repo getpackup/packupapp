@@ -82,6 +82,9 @@ function makeMember(status: TripMemberStatus = TripMemberStatus.Accepted): TripM
 
 const GATE_MESSAGE = 'Create an account to invite friends and assign gear to your crew.'
 
+const PRO_PLAN = { plan: 'pro' as const, isPro: true, isFree: false, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined }
+const FREE_PLAN = { plan: 'free' as const, isPro: false, isFree: true, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined }
+
 function renderComponent() {
   return render(
     <MemoryRouter>
@@ -189,7 +192,7 @@ describe('AddTripMember — Free Plan member cap', () => {
   beforeEach(() => {
     memberCounter = 0
     vi.mocked(useIsAnonymous).mockReturnValue(false)
-    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined })
+    vi.mocked(usePlan).mockReturnValue(FREE_PLAN)
     vi.mocked(useScreenSize).mockReturnValue({
       isXSmallBreakpoint: true,
       isSmallBreakpoint: true,
@@ -248,7 +251,7 @@ describe('AddTripMember — Free Plan member cap', () => {
   })
 
   it('Pro plan with 4 active members shows an unlocked, enabled search field', async () => {
-    vi.mocked(usePlan).mockReturnValue({ plan: 'pro', isPro: true, isFree: false, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined })
+    vi.mocked(usePlan).mockReturnValue(PRO_PLAN)
     const members = [
       makeMember(TripMemberStatus.Owner),
       makeMember(TripMemberStatus.Accepted),

@@ -24,16 +24,19 @@ function renderGate(props: { featureDescription?: string; children?: React.React
   )
 }
 
+const PRO_PLAN = { plan: 'pro' as const, isPro: true, isFree: false, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined }
+const FREE_PLAN = { plan: 'free' as const, isPro: false, isFree: true, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined }
+
 describe('PlanGate', () => {
   it('renders children unchanged when user is on Pro Plan', () => {
-    vi.mocked(usePlan).mockReturnValue({ plan: 'pro', isPro: true, isFree: false, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined })
+    vi.mocked(usePlan).mockReturnValue(PRO_PLAN)
     renderGate({})
     expect(screen.getByRole('button', { name: 'Create Tag' })).not.toBeDisabled()
     expect(screen.queryByTestId('plan-gate-locked')).not.toBeInTheDocument()
   })
 
   it('shows a persistent upgrade alert and disables the content when user is on Free Plan', () => {
-    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined })
+    vi.mocked(usePlan).mockReturnValue(FREE_PLAN)
     renderGate({ featureDescription: 'Custom colored tags for gear.' })
 
     expect(screen.getByTestId('plan-gate-locked')).toBeInTheDocument()
@@ -44,13 +47,13 @@ describe('PlanGate', () => {
   })
 
   it('locked state is visually disabled', () => {
-    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined })
+    vi.mocked(usePlan).mockReturnValue(FREE_PLAN)
     renderGate({})
     expect(screen.getByTestId('plan-gate-locked')).toHaveAttribute('aria-disabled', 'true')
   })
 
   it('upgrade link includes the logged-in user uid', () => {
-    vi.mocked(usePlan).mockReturnValue({ plan: 'free', isPro: false, isFree: true, isLoading: false, cancelAtPeriodEnd: false, periodEnd: undefined })
+    vi.mocked(usePlan).mockReturnValue(FREE_PLAN)
     renderGate({})
 
     expect(screen.getByRole('link', { name: 'Upgrade' })).toHaveAttribute(
