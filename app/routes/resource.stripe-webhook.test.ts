@@ -79,6 +79,23 @@ function makeSubscriptionEvent({
   }
 }
 
+function makeInvoiceEvent({
+  type = 'invoice.payment_failed',
+  customerId = 'cus_test',
+}: {
+  type?: string
+  customerId?: string
+} = {}) {
+  return {
+    type,
+    data: {
+      object: {
+        customer: customerId,
+      },
+    },
+  }
+}
+
 describe('resource.stripe-webhook', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -184,7 +201,7 @@ describe('resource.stripe-webhook', () => {
     })
 
     describe('customer.subscription.created', () => {
-      it('writes plan: pro and period fields when status is active', async () => {
+      it('writes plan: pro, period fields, and subscriptionStatus when status is active', async () => {
         mockConstructEvent.mockReturnValue(
           makeSubscriptionEvent({
             type: 'customer.subscription.created',
@@ -201,10 +218,11 @@ describe('resource.stripe-webhook', () => {
           plan: 'pro',
           subscriptionCurrentPeriodEnd: 9999999999,
           subscriptionCancelAtPeriodEnd: false,
+          subscriptionStatus: 'active',
         })
       })
 
-      it('writes only period fields when status is trialing (no plan change)', async () => {
+      it('writes only period fields and subscriptionStatus when status is trialing (no plan change)', async () => {
         mockConstructEvent.mockReturnValue(
           makeSubscriptionEvent({
             type: 'customer.subscription.created',
@@ -219,6 +237,7 @@ describe('resource.stripe-webhook', () => {
         expect(mockUpdate).toHaveBeenCalledWith({
           subscriptionCurrentPeriodEnd: 9999999999,
           subscriptionCancelAtPeriodEnd: true,
+          subscriptionStatus: 'trialing',
         })
       })
 
@@ -235,7 +254,7 @@ describe('resource.stripe-webhook', () => {
     })
 
     describe('customer.subscription.updated', () => {
-      it('writes plan: pro and period fields when status is active', async () => {
+      it('writes plan: pro, period fields, and subscriptionStatus when status is active', async () => {
         mockConstructEvent.mockReturnValue(
           makeSubscriptionEvent({
             type: 'customer.subscription.updated',
@@ -252,10 +271,11 @@ describe('resource.stripe-webhook', () => {
           plan: 'pro',
           subscriptionCurrentPeriodEnd: 9999999999,
           subscriptionCancelAtPeriodEnd: false,
+          subscriptionStatus: 'active',
         })
       })
 
-      it('writes plan: free and period fields when status is canceled', async () => {
+      it('writes plan: free, period fields, and subscriptionStatus when status is canceled', async () => {
         mockConstructEvent.mockReturnValue(
           makeSubscriptionEvent({
             type: 'customer.subscription.updated',
@@ -271,10 +291,11 @@ describe('resource.stripe-webhook', () => {
           plan: 'free',
           subscriptionCurrentPeriodEnd: 1234567890,
           subscriptionCancelAtPeriodEnd: true,
+          subscriptionStatus: 'canceled',
         })
       })
 
-      it('writes plan: free and period fields when status is unpaid', async () => {
+      it('writes plan: free, period fields, and subscriptionStatus when status is unpaid', async () => {
         mockConstructEvent.mockReturnValue(
           makeSubscriptionEvent({
             type: 'customer.subscription.updated',
@@ -290,10 +311,11 @@ describe('resource.stripe-webhook', () => {
           plan: 'free',
           subscriptionCurrentPeriodEnd: 1234567890,
           subscriptionCancelAtPeriodEnd: false,
+          subscriptionStatus: 'unpaid',
         })
       })
 
-      it('writes only period fields for other statuses (e.g. trialing)', async () => {
+      it('writes only period fields and subscriptionStatus for other statuses (e.g. trialing)', async () => {
         mockConstructEvent.mockReturnValue(
           makeSubscriptionEvent({
             type: 'customer.subscription.updated',
@@ -308,7 +330,49 @@ describe('resource.stripe-webhook', () => {
         expect(mockUpdate).toHaveBeenCalledWith({
           subscriptionCurrentPeriodEnd: 9999999999,
           subscriptionCancelAtPeriodEnd: false,
+          subscriptionStatus: 'trialing',
         })
+      })
+
+      it('writes period fields and subscriptionStatus: past_due without changing plan when status is past_due', async () => {
+        mockConstructEvent.mockReturnValue(
+          makeSubscriptionEvent({
+            type: 'customer.subscription.updated',
+            status: 'past_due',
+            currentPeriodEnd: 9999999999,
+            cancelAtPeriodEnd: false,
+          })
+        )
+        const req = buildRequest()
+        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+        expect(res.status).toBe(200)
+        expect(mockDoc).toHaveBeenCalledWith('user-uid-from-meta')
+        expect(mockUpdate).toHaveBeenCalledWith({
+          subscriptionCurrentPeriodEnd: 9999999999,
+          subscriptionCancelAtPeriodEnd: false,
+          subscriptionStatus: 'past_due',
+        })
+      })
+    })
+
+    describe('invoice.payment_failed', () => {
+      it('writes subscriptionStatus: past_due to the correct user document', async () => {
+        mockConstructEvent.mockReturnValue(makeInvoiceEvent())
+        const req = buildRequest()
+        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+        expect(res.status).toBe(200)
+        expect(mockCustomersRetrieve).toHaveBeenCalledWith('cus_test')
+        expect(mockDoc).toHaveBeenCalledWith('user-uid-from-meta')
+        expect(mockUpdate).toHaveBeenCalledWith({ subscriptionStatus: 'past_due' })
+      })
+
+      it('skips Firestore write and returns 200 when uid not in customer metadata', async () => {
+        mockCustomersRetrieve.mockResolvedValue({ metadata: {} })
+        mockConstructEvent.mockReturnValue(makeInvoiceEvent())
+        const req = buildRequest()
+        const res = (await action({ request: req, params: {}, context: {} } as any)) as Response
+        expect(res.status).toBe(200)
+        expect(mockUpdate).not.toHaveBeenCalled()
       })
     })
 

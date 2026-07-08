@@ -14,6 +14,7 @@ export type User = {
   plan?: Plan
   subscriptionCurrentPeriodEnd?: number | null
   subscriptionCancelAtPeriodEnd?: boolean
+  subscriptionStatus?: string
   stripeCustomerId?: string
   emergencyContacts?: EmergencyContact[]
   isAdmin?: boolean
