@@ -30,10 +30,10 @@ export function TripSettings({ trip }: { trip: Trip }) {
   const { mutateAsync: updateTrip } = useUpdateTrip(trip.tripId)
 
   const isOwner = user?.uid === trip.owner
-  const currentMember = user?.uid ? trip.tripMembers[user.uid] : undefined
+  const currentMember = user?.uid ? trip.tripMembers?.[user.uid] : undefined
   const globalOptOut = user?.preferences?.safetyItineraryEnabled === false
   const isOptedOut = currentMember?.safetyItineraryOptedOut ?? false
-  const activeMemberCount = Object.values(trip.tripMembers).filter(
+  const activeMemberCount = Object.values(trip.tripMembers ?? {}).filter(
     (m) =>
       m.status !== TripMemberStatus.Left &&
       m.status !== TripMemberStatus.Declined &&

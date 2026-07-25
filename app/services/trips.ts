@@ -19,6 +19,7 @@ import {
   writeBatch,
 } from 'firebase/firestore'
 import { toast } from 'sonner'
+import { z } from 'zod'
 
 import { firestoreDb } from '~/firebase/config'
 import { assemblePackingListItems } from '~/lib/packingList'
@@ -27,6 +28,11 @@ import type { PackingListItem } from '~/types/PackingListItem'
 import type { Trip } from '~/types/Trip'
 import type { TripMember } from '~/types/TripMember'
 import type { User } from '~/types/User'
+
+// Firestore docs are read as `any`; tripMembers is required on Trip but a doc can
+// transiently lack it (e.g. reading a just-created trip). Normalize here so every
+// consumer can trust the required type instead of guarding at each call site.
+const tripMembersSchema = z.record(z.string(), z.custom<TripMember>()).catch({})
 
 export { tripKeys } from './tripKeys'
 
@@ -70,7 +76,12 @@ export function useTripByIdQuery({ tripId }: { tripId: string }) {
         throw new Error('Trip does not exist')
       }
 
-      return { tripId: docSnap.id, ...docSnap.data() } as Trip
+      const data = docSnap.data()
+      return {
+        tripId: docSnap.id,
+        ...data,
+        tripMembers: tripMembersSchema.parse(data.tripMembers),
+      } as Trip
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 5 * 60 * 1000,

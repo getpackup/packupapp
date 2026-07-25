@@ -92,8 +92,8 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
   const { user } = useAuth()
   const [showAllMembers, setShowAllMembers] = useState(false)
   const tripMembers = showAllMembers
-    ? Object.values(trip.tripMembers)
-    : acceptedTripMembersOnly(Object.values(trip.tripMembers))
+    ? Object.values(trip.tripMembers ?? {})
+    : acceptedTripMembersOnly(Object.values(trip.tripMembers ?? {}))
 
   const userId = user?.uid ?? ''
   const { data: closet } = useGearClosetQuery({ userId, queryOptions: { enabled: !!userId } })
@@ -109,7 +109,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
   }
 
   const ocKeySet = new Set<string>(gearListOtherConsiderations.map((o) => o.name))
-  const currentPersonalTags = trip.tripMembers[userId]?.personalTags ?? []
+  const currentPersonalTags = trip.tripMembers?.[userId]?.personalTags ?? []
 
   const onlyOtherConsiderationsTags = currentPersonalTags
     .filter((tag) => ocKeySet.has(tag))
@@ -141,7 +141,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
     const previousOcKeys = currentPersonalTags.filter((t) => ocKeySet.has(t))
     const newlyAdded = newOcKeys.filter((k) => !previousOcKeys.includes(k))
     const updatedPersonalTags = [...nonOcPersonalTags, ...newOcKeys]
-    const currentMember = trip.tripMembers[userId]
+    const currentMember = trip.tripMembers?.[userId]
     await updateTripAsync({
       data: { [`tripMembers.${userId}`]: { ...currentMember, personalTags: updatedPersonalTags } } as any,
     })
@@ -161,7 +161,7 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
     const previousCustom = currentPersonalTags.filter((t) => customTagNames.has(t))
     const newlyAdded = selectedLabels.filter((t) => !previousCustom.includes(t))
     const updatedPersonalTags = [...nonCustomPersonalTags, ...selectedLabels]
-    const currentMember = trip.tripMembers[userId]
+    const currentMember = trip.tripMembers?.[userId]
     await updateTripAsync({
       data: { [`tripMembers.${userId}`]: { ...currentMember, personalTags: updatedPersonalTags } } as any,
     })
@@ -196,8 +196,8 @@ const TripDetailsSidebar = ({ trip, users }: TripDetailsSidebarProps) => {
           <SubHeading>
             <span>Trip Members</span>
             <div className="flex items-center gap-2">
-              <AddTripMember tripMembers={Object.values(trip.tripMembers)} trip={trip} />
-              {Object.values(trip.tripMembers)?.some(
+              <AddTripMember tripMembers={Object.values(trip.tripMembers ?? {})} trip={trip} />
+              {Object.values(trip.tripMembers ?? {}).some(
                 (member) =>
                   member.status === TripMemberStatus.Declined ||
                   member.status === TripMemberStatus.Removed

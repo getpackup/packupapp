@@ -185,7 +185,7 @@ const TripCard = ({ trip, showCountdown, showRemaining, isPending, refetch }: Tr
               </Link>
             )}
 
-            <StackedAvatars tripMembers={Object.values(trip.tripMembers)} users={users} />
+            <StackedAvatars tripMembers={Object.values(trip.tripMembers ?? {})} users={users} />
           </div>
           <div className="flex items-center gap-2 text-base">
             <CalendarIcon className="h-4 w-4 shrink-0" />
