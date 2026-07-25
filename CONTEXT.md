@@ -37,7 +37,7 @@ A personal inventory of gear a user owns, seeded from a default list and fully c
 _Avoid_: Gear library, gear templates, inventory
 
 **Add from Gear Closet**:
-The action of batch-adding packing list items by selecting tags that filter against the user's Gear Closet. Items tagged with multiple selected tags are deduplicated. Repeatable — can be used at any time to add more items, not just on initial setup. Pre-selects the trip's shared tags plus the member's Personal Tags on open.
+The action of batch-adding packing list items by selecting tags that filter against the user's Gear Closet. Items tagged with multiple selected tags are deduplicated. Repeatable — can be used at any time to add more items, not just on initial setup. Pre-selects the trip's shared tags plus the member's Personal Tags on open. Deduplication is scoped to the acting Trip Member's own Personal Items only: a gear item is skipped only if that member already has a Personal Item for it. Other members' Personal Items, and Group Items the acting member is Assigned to or has Claimed, never suppress generation — each Trip Member gets their own Personal Items regardless of what already exists elsewhere on the trip.
 _Avoid_: Generate packing list, generate gear list (implies one-shot; this is repeatable)
 
 **Packing List Item Tags**:

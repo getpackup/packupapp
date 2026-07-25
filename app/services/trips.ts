@@ -409,6 +409,10 @@ export function useGeneratePackingList() {
       )
       const existingGearItemIds = new Set<string>(
         existingSnap.docs
+          .filter((d) => {
+            const packedBy = d.data().packedBy as PackingListItem['packedBy'] | undefined
+            return packedBy?.some((p) => p.uid === userId && !p.isShared)
+          })
           .map((d) => d.data().gearItemId as string | undefined)
           .filter((id): id is string => !!id)
       )
