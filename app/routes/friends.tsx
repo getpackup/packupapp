@@ -5,17 +5,9 @@ import { useCallback, useEffect, useState } from 'react'
 
 import PageContent from '~/components/PageContent'
 import PageHeader from '~/components/PageHeader'
+import ResponsiveDialogContainer from '~/components/ResponsiveDialogContainer'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '~/components/ui/dialog'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '~/components/ui/empty'
 import { Input } from '~/components/ui/input'
 import { UpgradeAccountGate } from '~/components/UpgradeAccountGate'
@@ -101,39 +93,33 @@ function FriendCard({ friendship, currentUid }: { friendship: Friendship; curren
           </span>
         )}
 
-        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-          <DialogTrigger asChild>
+        <ResponsiveDialogContainer
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          trigger={
             <Button variant="destructive" size="sm">
               <UserX className="size-4" />
               Unfriend
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Unfriend {friend.displayName}?</DialogTitle>
-              <DialogDescription>
-                This will remove {friend.displayName} from your friends list. They will not be
-                notified.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setConfirmOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                disabled={isPending}
-                onClick={async () => {
-                  await removeFriend({ friendshipId: friendship.id })
-                  setConfirmOpen(false)
-                }}
-              >
-                {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-                Unfriend
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          }
+          title={`Unfriend ${friend.displayName}?`}
+          description={`This will remove ${friend.displayName} from your friends list. They will not be notified.`}
+          footerAction={
+            <Button
+              variant="destructive"
+              disabled={isPending}
+              onClick={async () => {
+                await removeFriend({ friendshipId: friendship.id })
+                setConfirmOpen(false)
+              }}
+            >
+              {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+              Unfriend
+            </Button>
+          }
+        >
+          <div />
+        </ResponsiveDialogContainer>
       </div>
     </div>
   )

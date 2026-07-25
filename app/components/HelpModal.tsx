@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { DialogDescription } from '@radix-ui/react-dialog'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useFetcher } from 'react-router'
@@ -9,8 +8,8 @@ import { useAuth } from '~/contexts/auth/useAuth'
 import { useHelpModalState } from '~/contexts/globalState'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 
+import ResponsiveDialogContainer from './ResponsiveDialogContainer'
 import { Button } from './ui/button'
-import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form'
 import { Textarea } from './ui/textarea'
 
@@ -63,78 +62,82 @@ export function HelpModal() {
   }
 
   return (
-    <Dialog open={isHelpOpen} onOpenChange={setIsHelpOpen}>
-      <DialogContent showCloseButton={!isSuccess} aria-describedby={undefined}>
-        <DialogHeader>
-          <DialogTitle>Help / Support</DialogTitle>
-          <DialogDescription>
-            Sorry to hear you are having trouble. Please describe your issue below. We will review
-            your message and follow up if necessary.
-          </DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialogContainer
+      open={isHelpOpen}
+      onOpenChange={setIsHelpOpen}
+      title="Help / Support"
+      description={
+        isSuccess
+          ? undefined
+          : 'Sorry to hear you are having trouble. Please describe your issue below. We will review your message and follow up if necessary.'
+      }
+      contentProps={{ 'aria-describedby': undefined }}
+      footerAction={
+        !isSuccess && (
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            onClick={() => form.handleSubmit(onSubmit)()}
+          >
+            {isSubmitting ? 'Sending...' : 'Send Message'}
+          </Button>
+        )
+      }
+    >
+      {isSuccess ? (
+        <div className="flex flex-col gap-4">
+          <p>Thanks for reaching out! We'll get back to you as soon as we can.</p>
+          <p className="text-muted-foreground text-sm">
+            We will review your message and follow up if necessary.
+          </p>
+        </div>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <FormField
+              control={form.control}
+              name="message"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Message</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="What do you need help with?"
+                      rows={4}
+                      autoFocus
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        {isSuccess ? (
-          <div className="flex flex-col gap-4">
-            <p>Thanks for reaching out! We'll get back to you as soon as we can.</p>
-            <p className="text-muted-foreground text-sm">
-              We will review your message and follow up if necessary.
-            </p>
-            <DialogClose asChild>
-              <Button>Close</Button>
-            </DialogClose>
-          </div>
-        ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            {isAnonymous && (
               <FormField
                 control={form.control}
-                name="message"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Message</FormLabel>
+                    <FormLabel>
+                      Email <span className="text-muted-foreground font-normal">(optional)</span>
+                    </FormLabel>
                     <FormControl>
-                      <Textarea
+                      <input
+                        type="email"
                         {...field}
-                        placeholder="What do you need help with?"
-                        rows={4}
-                        autoFocus
+                        placeholder="Email (optional)"
+                        className={inputClassName}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              {isAnonymous && (
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Email <span className="text-muted-foreground font-normal">(optional)</span>
-                      </FormLabel>
-                      <FormControl>
-                        <input
-                          type="email"
-                          {...field}
-                          placeholder="Email (optional)"
-                          className={inputClassName}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Sending...' : 'Send Message'}
-              </Button>
-            </form>
-          </Form>
-        )}
-      </DialogContent>
-    </Dialog>
+            )}
+          </form>
+        </Form>
+      )}
+    </ResponsiveDialogContainer>
   )
 }

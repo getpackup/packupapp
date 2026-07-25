@@ -7,15 +7,8 @@ import { useDeleteTrip, useUpdateTrip } from '~/services/trips'
 import type { Trip } from '~/types/Trip'
 import { type TripMember, TripMemberStatus } from '~/types/TripMember'
 
+import ResponsiveDialogContainer from '../ResponsiveDialogContainer'
 import { Button } from '../ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../ui/dialog'
 import { Input } from '../ui/input'
 import { Separator } from '../ui/separator'
 import { Switch } from '../ui/switch'
@@ -65,15 +58,14 @@ export function TripSettings({ trip }: { trip: Trip }) {
   }
 
   return (
-    <Dialog
+    <ResponsiveDialogContainer
       open={open}
       onOpenChange={(v) => {
         setOpen(v)
         setDeleteConfirm('')
         setLeaveConfirm('')
       }}
-    >
-      <DialogTrigger asChild>
+      trigger={
         <Button
           variant="ghost"
           size="sm"
@@ -83,92 +75,88 @@ export function TripSettings({ trip }: { trip: Trip }) {
           <Settings className="h-4 w-4" />
           Trip Settings
         </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Trip Settings</DialogTitle>
-          <DialogDescription>Manage your settings for this trip.</DialogDescription>
-        </DialogHeader>
+      }
+      title="Trip Settings"
+      description="Manage your settings for this trip."
+    >
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-4 py-3">
+          <div className="flex flex-col gap-1">
+            <span className="text-base font-medium">Safety Itinerary Email</span>
+            <span className="text-muted-foreground text-sm">
+              {globalOptOut ? (
+                <>
+                  Safety Itinerary is globally disabled. Go to{' '}
+                  <Link to="/settings" className="underline">
+                    Settings
+                  </Link>{' '}
+                  to enable it.
+                </>
+              ) : (
+                'When enabled, an email with trip details, members, and emergency contacts will be sent the day before your trip starts.'
+              )}
+            </span>
+          </div>
+          <div className="shrink-0">
+            <Switch
+              aria-label="Safety Itinerary Email"
+              checked={!isOptedOut && !globalOptOut}
+              disabled={globalOptOut}
+              onCheckedChange={handleToggleSafetyItinerary}
+            />
+          </div>
+        </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between gap-4 py-3">
-            <div className="flex flex-col gap-1">
-              <span className="text-base font-medium">Safety Itinerary Email</span>
-              <span className="text-muted-foreground text-sm">
-                {globalOptOut ? (
-                  <>
-                    Safety Itinerary is globally disabled. Go to{' '}
-                    <Link to="/settings" className="underline">
-                      Settings
-                    </Link>{' '}
-                    to enable it.
-                  </>
-                ) : (
-                  'When enabled, an email with trip details, members, and emergency contacts will be sent the day before your trip starts.'
-                )}
-              </span>
-            </div>
-            <div className="shrink-0">
-              <Switch
-                aria-label="Safety Itinerary Email"
-                checked={!isOptedOut && !globalOptOut}
-                disabled={globalOptOut}
-                onCheckedChange={handleToggleSafetyItinerary}
+        <Separator />
+
+        {isOwner ? (
+          <div className="flex flex-col gap-1">
+            <h4 className="text-destructive font-base">Delete Trip</h4>
+            <p className="text-muted-foreground text-sm">
+              This will permanently delete <strong>{trip.name}</strong>.{' '}
+              {hasOtherMembers && 'This will delete the trip for all members. '}
+              This action cannot be undone.
+            </p>
+            <div className="mt-3 space-y-3">
+              <Input
+                placeholder="Type DELETE to confirm"
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
               />
+              <Button
+                variant="destructive"
+                disabled={deleteConfirm !== 'DELETE' || isDeleting}
+                onClick={handleDelete}
+                aria-label="Confirm delete"
+              >
+                {isDeleting ? 'Deleting...' : 'Confirm Delete'}
+              </Button>
             </div>
           </div>
-
-          <Separator />
-
-          {isOwner ? (
-            <div className="flex flex-col gap-1">
-              <h4 className="text-destructive font-base">Delete Trip</h4>
-              <p className="text-muted-foreground text-sm">
-                This will permanently delete <strong>{trip.name}</strong>.{' '}
-                {hasOtherMembers && 'This will delete the trip for all members. '}
-                This action cannot be undone.
-              </p>
-              <div className="mt-3 space-y-3">
-                <Input
-                  placeholder="Type DELETE to confirm"
-                  value={deleteConfirm}
-                  onChange={(e) => setDeleteConfirm(e.target.value)}
-                />
-                <Button
-                  variant="destructive"
-                  disabled={deleteConfirm !== 'DELETE' || isDeleting}
-                  onClick={handleDelete}
-                  aria-label="Confirm delete"
-                >
-                  {isDeleting ? 'Deleting...' : 'Confirm Delete'}
-                </Button>
-              </div>
+        ) : (
+          <div className="flex flex-col gap-1">
+            <h4 className="text-base font-medium">Leave Trip</h4>
+            <p className="text-muted-foreground text-sm">
+              You will be removed from this trip. Other members will still see that you left.
+            </p>
+            <div className="mt-3 space-y-3">
+              <Input
+                placeholder="Type LEAVE to confirm"
+                value={leaveConfirm}
+                onChange={(e) => setLeaveConfirm(e.target.value)}
+              />
+              <Button
+                variant="destructive"
+                disabled={leaveConfirm !== 'LEAVE'}
+                onClick={handleLeave}
+                aria-label="Confirm leave"
+              >
+                Confirm Leave
+              </Button>
             </div>
-          ) : (
-            <div className="flex flex-col gap-1">
-              <h4 className="text-base font-medium">Leave Trip</h4>
-              <p className="text-muted-foreground text-sm">
-                You will be removed from this trip. Other members will still see that you left.
-              </p>
-              <div className="mt-3 space-y-3">
-                <Input
-                  placeholder="Type LEAVE to confirm"
-                  value={leaveConfirm}
-                  onChange={(e) => setLeaveConfirm(e.target.value)}
-                />
-                <Button
-                  variant="destructive"
-                  disabled={leaveConfirm !== 'LEAVE'}
-                  onClick={handleLeave}
-                  aria-label="Confirm leave"
-                >
-                  Confirm Leave
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+          </div>
+        )}
+      </div>
+    </ResponsiveDialogContainer>
   )
 }

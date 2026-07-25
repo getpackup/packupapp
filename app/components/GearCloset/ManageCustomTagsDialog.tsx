@@ -3,15 +3,8 @@ import { useState } from 'react'
 
 import { AccountGateDialog } from '~/components/AccountGateDialog'
 import { PlanGate } from '~/components/PlanGate'
+import ResponsiveDialogContainer from '~/components/ResponsiveDialogContainer'
 import { Button } from '~/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { allPredefinedTags } from '~/lib/gearListItemEnum'
@@ -200,141 +193,133 @@ function ManageCustomTagsDialog({ userId, children }: ManageCustomTagsDialogProp
   }
 
   return (
-    <Dialog
+    <ResponsiveDialogContainer
       onOpenChange={() => {
         setEditingTag(null)
         setError('')
       }}
+      trigger={children}
+      title="Custom tags"
+      description="Create your own tags with custom colors. These appear alongside predefined tags in tag pickers."
     >
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-125">
-        <DialogHeader>
-          <DialogTitle>Custom tags</DialogTitle>
-          <DialogDescription>
-            Create your own tags with custom colors. These appear alongside predefined tags in tag
-            pickers.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          {customTags.length > 0 && (
-            <div className="space-y-2">
-              {customTags.map((tag) =>
-                editingTag === tag.name ? (
-                  <div key={tag.name} className="space-y-2 rounded-md border p-3">
-                    <div className="flex items-center gap-2">
-                      <ColorPickerDropdown value={editColor} onChange={setEditColor} />
-                      <Input
-                        value={editName}
-                        onChange={(e) => {
-                          setEditName(e.target.value)
-                          setError('')
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault()
-                            handleUpdate()
-                          }
-                        }}
-                        placeholder="Tag name"
-                        autoFocus
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      {error && <p className="text-destructive text-xs">{error}</p>}
-                      <div className="ml-auto flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingTag(null)
-                            setError('')
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button size="sm" onClick={handleUpdate}>
-                          Save
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    key={tag.name}
-                    className="flex items-center justify-between rounded-md border px-3 py-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className={cn('h-3 w-3 rounded-full', colorClasses[tag.color])} />
-                      <span className="text-sm font-medium">{tag.name}</span>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => startEditing(tag.name, tag.color)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive h-7 w-7"
-                        onClick={() => handleDelete(tag.name)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                )
-              )}
-            </div>
-          )}
-
-          {!editingTag && (
-            <PlanGate featureDescription="Organize gear exactly how you think about it, with tags and colors you create.">
-              <div className="space-y-2 rounded-md border p-3">
-                <div className="flex items-start gap-2">
-                  <ColorPickerDropdown value={newColor} onChange={setNewColor} />
-                  <div className="w-full">
+      <div className="space-y-4">
+        {customTags.length > 0 && (
+          <div className="space-y-2">
+            {customTags.map((tag) =>
+              editingTag === tag.name ? (
+                <div key={tag.name} className="space-y-2 rounded-md border p-3">
+                  <div className="flex items-center gap-2">
+                    <ColorPickerDropdown value={editColor} onChange={setEditColor} />
                     <Input
-                      value={newName}
+                      value={editName}
                       onChange={(e) => {
-                        setNewName(e.target.value)
-                        if (e.target.value.trim().length > 25) {
-                          setError('Tag name must be 25 characters or less')
-                        } else {
-                          setError('')
-                        }
+                        setEditName(e.target.value)
+                        setError('')
                       }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault()
-                          handleCreate()
+                          handleUpdate()
                         }
                       }}
-                      placeholder="New tag name..."
+                      placeholder="Tag name"
+                      autoFocus
                     />
-                    {error && <p className="text-destructive mt-1 text-xs">{error}</p>}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    {error && <p className="text-destructive text-xs">{error}</p>}
+                    <div className="ml-auto flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditingTag(null)
+                          setError('')
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button size="sm" onClick={handleUpdate}>
+                        Save
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <Button
-                    size="sm"
-                    className="ml-auto"
-                    onClick={handleCreate}
-                    disabled={!newName.trim() || error !== ''}
-                  >
-                    Add tag
-                  </Button>
+              ) : (
+                <div
+                  key={tag.name}
+                  className="flex items-center justify-between rounded-md border px-3 py-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={cn('h-3 w-3 rounded-full', colorClasses[tag.color])} />
+                    <span className="text-sm font-medium">{tag.name}</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => startEditing(tag.name, tag.color)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive h-7 w-7"
+                      onClick={() => handleDelete(tag.name)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        )}
+
+        {!editingTag && (
+          <PlanGate featureDescription="Organize gear exactly how you think about it, with tags and colors you create.">
+            <div className="space-y-2 rounded-md border p-3">
+              <div className="flex items-start gap-2">
+                <ColorPickerDropdown value={newColor} onChange={setNewColor} />
+                <div className="w-full">
+                  <Input
+                    value={newName}
+                    onChange={(e) => {
+                      setNewName(e.target.value)
+                      if (e.target.value.trim().length > 25) {
+                        setError('Tag name must be 25 characters or less')
+                      } else {
+                        setError('')
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleCreate()
+                      }
+                    }}
+                    placeholder="New tag name..."
+                  />
+                  {error && <p className="text-destructive mt-1 text-xs">{error}</p>}
                 </div>
               </div>
-            </PlanGate>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+              <div className="flex items-center justify-between">
+                <Button
+                  size="sm"
+                  className="ml-auto"
+                  onClick={handleCreate}
+                  disabled={!newName.trim() || error !== ''}
+                >
+                  Add tag
+                </Button>
+              </div>
+            </div>
+          </PlanGate>
+        )}
+      </div>
+    </ResponsiveDialogContainer>
   )
 }
 

@@ -6,15 +6,6 @@ import { useParams } from 'react-router'
 import { toast } from 'sonner'
 import z from 'zod'
 
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '~/components/ui/dialog'
 import { Form } from '~/components/ui/form'
 import useAuth from '~/contexts/auth/useAuth'
 import { activityLabelToKey } from '~/lib/gearFilterUtils'
@@ -23,6 +14,7 @@ import { useGeneratePackingList, useUpdateTrip } from '~/services/trips'
 import type { ActivityTypes } from '~/types/GearItem'
 import type { Trip } from '~/types/Trip'
 
+import ResponsiveDialogContainer from '../ResponsiveDialogContainer'
 import { Button } from '../ui/button'
 import {
   MultiSelect,
@@ -84,14 +76,10 @@ export function EditTripTags({
 
     const previousTripData = queryClient.getQueryData<Trip>(tripKeys.byId(id))
     const previousTags = previousTripData?.tags ?? []
-    const tagsFromOtherGroups = previousTags.filter(
-      (tag) => !formKeys.includes(tag)
-    )
+    const tagsFromOtherGroups = previousTags.filter((tag) => !formKeys.includes(tag))
     const updatedTags = [...tagsFromOtherGroups, ...updatedTagsFromThisGroup]
 
-    const newlyAddedTags = updatedTagsFromThisGroup.filter(
-      (tag) => !previousTags.includes(tag)
-    )
+    const newlyAddedTags = updatedTagsFromThisGroup.filter((tag) => !previousTags.includes(tag))
 
     try {
       await updateTripAsync({
@@ -104,9 +92,7 @@ export function EditTripTags({
         const newActivityKeys = newlyAddedTags
           .map((label) => activityLabelToKey(label))
           .filter((key): key is keyof ActivityTypes => !!key)
-        const newCustomTagNames = newlyAddedTags.filter(
-          (label) => !activityLabelToKey(label)
-        )
+        const newCustomTagNames = newlyAddedTags.filter((label) => !activityLabelToKey(label))
 
         if (newActivityKeys.length > 0 || newCustomTagNames.length > 0) {
           const result = await generatePackingList({
@@ -129,52 +115,54 @@ export function EditTripTags({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="w-full">{children}</DialogTrigger>
-      <DialogContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <DialogHeader>
-              <DialogTitle>Update {name} tags</DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <MultiSelect defaultValues={tags}>
-                <MultiSelectTrigger className="w-full">
-                  <MultiSelectValue
-                    placeholder={`Select ${name}...`}
-                    onDeselect={(item) => form.setValue(item, false, { shouldDirty: true })}
-                  />
-                </MultiSelectTrigger>
-                <MultiSelectContent search={false}>
-                  <MultiSelectGroup>
-                    {options
-                      .sort((a, b) => a.label.localeCompare(b.label))
-                      .map((option) => (
-                        <MultiSelectItem
-                          key={option.label}
-                          value={option.label}
-                          onSelect={() => form.setValue(option.label, true, { shouldDirty: true })}
-                        >
-                          {option.label}
-                        </MultiSelectItem>
-                      ))}
-                  </MultiSelectGroup>
-                </MultiSelectContent>
-              </MultiSelect>
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="outline">
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button type="submit" disabled={!form.formState.isDirty}>
-                Save changes
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+    <ResponsiveDialogContainer
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
+        <button type="button" className="w-full text-left">
+          {children}
+        </button>
+      }
+      title={`Update ${name} tags`}
+      footerAction={
+        <Button
+          type="submit"
+          disabled={!form.formState.isDirty}
+          onClick={() => form.handleSubmit(onSubmit)()}
+        >
+          Save changes
+        </Button>
+      }
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="py-4">
+            <MultiSelect defaultValues={tags}>
+              <MultiSelectTrigger className="w-full">
+                <MultiSelectValue
+                  placeholder={`Select ${name}...`}
+                  onDeselect={(item) => form.setValue(item, false, { shouldDirty: true })}
+                />
+              </MultiSelectTrigger>
+              <MultiSelectContent search={false}>
+                <MultiSelectGroup>
+                  {options
+                    .sort((a, b) => a.label.localeCompare(b.label))
+                    .map((option) => (
+                      <MultiSelectItem
+                        key={option.label}
+                        value={option.label}
+                        onSelect={() => form.setValue(option.label, true, { shouldDirty: true })}
+                      >
+                        {option.label}
+                      </MultiSelectItem>
+                    ))}
+                </MultiSelectGroup>
+              </MultiSelectContent>
+            </MultiSelect>
+          </div>
+        </form>
+      </Form>
+    </ResponsiveDialogContainer>
   )
 }

@@ -9,8 +9,8 @@ import { useFeedbackModalState } from '~/contexts/globalState'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
 
+import ResponsiveDialogContainer from './ResponsiveDialogContainer'
 import { Button } from './ui/button'
-import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form'
 import { Textarea } from './ui/textarea'
 
@@ -70,129 +70,132 @@ export function FeedbackModal() {
   }
 
   return (
-    <Dialog open={isFeedbackOpen} onOpenChange={setIsFeedbackOpen}>
-      <DialogContent showCloseButton={!isSuccess} aria-describedby={undefined}>
-        <DialogHeader>
-          <DialogTitle>Share Feedback</DialogTitle>
-        </DialogHeader>
+    <ResponsiveDialogContainer
+      open={isFeedbackOpen}
+      onOpenChange={setIsFeedbackOpen}
+      title="Share Feedback"
+      contentProps={{ 'aria-describedby': undefined }}
+      footerAction={
+        !isSuccess && (
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            onClick={() => form.handleSubmit(onSubmit)()}
+          >
+            {isSubmitting ? 'Sending...' : 'Send Feedback'}
+          </Button>
+        )
+      }
+    >
+      {isSuccess ? (
+        <div className="flex flex-col gap-4">
+          <p>Thanks for your feedback! We appreciate you taking the time to share.</p>
+          <p className="text-muted-foreground text-sm">
+            We will review your feedback and get back to you if necessary.
+          </p>
+        </div>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <FormField
+              control={form.control}
+              name="message"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Message</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} placeholder="What's on your mind?" rows={4} autoFocus />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        {isSuccess ? (
-          <div className="flex flex-col gap-4">
-            <p>Thanks for your feedback! We appreciate you taking the time to share.</p>
-            <p className="text-muted-foreground text-sm">
-              We will review your feedback and get back to you if necessary.
-            </p>
-            <DialogClose asChild>
-              <Button>Close</Button>
-            </DialogClose>
-          </div>
-        ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <FormField
+              control={form.control}
+              name="emotion"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>How are you feeling?</FormLabel>
+                  <div className="flex gap-2">
+                    {EMOTIONS.map((e) => (
+                      <button
+                        key={e}
+                        type="button"
+                        aria-label={e}
+                        aria-pressed={field.value === e}
+                        onClick={() => field.onChange(e)}
+                        className={cn(
+                          'flex h-10 w-10 items-center justify-center rounded-lg border text-lg transition-colors',
+                          field.value === e
+                            ? 'border-primary bg-primary/10'
+                            : 'border-input hover:bg-muted'
+                        )}
+                      >
+                        {e}
+                      </button>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORIES.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        aria-label={c}
+                        aria-pressed={field.value === c}
+                        onClick={() => field.onChange(c)}
+                        className={cn(
+                          'rounded-lg border px-3 py-1.5 text-sm transition-colors',
+                          field.value === c
+                            ? 'border-primary bg-primary/10 font-medium'
+                            : 'border-input hover:bg-muted'
+                        )}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {isAnonymous && (
               <FormField
                 control={form.control}
-                name="message"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Message</FormLabel>
+                    <FormLabel>
+                      Email <span className="text-muted-foreground font-normal">(optional)</span>
+                    </FormLabel>
                     <FormControl>
-                      <Textarea {...field} placeholder="What's on your mind?" rows={4} autoFocus />
+                      <input
+                        type="email"
+                        {...field}
+                        placeholder="Email (optional)"
+                        className={inputClassName}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              <FormField
-                control={form.control}
-                name="emotion"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>How are you feeling?</FormLabel>
-                    <div className="flex gap-2">
-                      {EMOTIONS.map((e) => (
-                        <button
-                          key={e}
-                          type="button"
-                          aria-label={e}
-                          aria-pressed={field.value === e}
-                          onClick={() => field.onChange(e)}
-                          className={cn(
-                            'flex h-10 w-10 items-center justify-center rounded-lg border text-lg transition-colors',
-                            field.value === e
-                              ? 'border-primary bg-primary/10'
-                              : 'border-input hover:bg-muted'
-                          )}
-                        >
-                          {e}
-                        </button>
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <div className="flex flex-wrap gap-2">
-                      {CATEGORIES.map((c) => (
-                        <button
-                          key={c}
-                          type="button"
-                          aria-label={c}
-                          aria-pressed={field.value === c}
-                          onClick={() => field.onChange(c)}
-                          className={cn(
-                            'rounded-lg border px-3 py-1.5 text-sm transition-colors',
-                            field.value === c
-                              ? 'border-primary bg-primary/10 font-medium'
-                              : 'border-input hover:bg-muted'
-                          )}
-                        >
-                          {c}
-                        </button>
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {isAnonymous && (
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Email <span className="text-muted-foreground font-normal">(optional)</span>
-                      </FormLabel>
-                      <FormControl>
-                        <input
-                          type="email"
-                          {...field}
-                          placeholder="Email (optional)"
-                          className={inputClassName}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Sending...' : 'Send Feedback'}
-              </Button>
-            </form>
-          </Form>
-        )}
-      </DialogContent>
-    </Dialog>
+            )}
+          </form>
+        </Form>
+      )}
+    </ResponsiveDialogContainer>
   )
 }

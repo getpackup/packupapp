@@ -6,27 +6,11 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { useAuth } from '~/contexts/auth/useAuth'
-import { useScreenSize } from '~/lib/use-screen-size'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { useUpdateUser } from '~/services/users'
 
+import ResponsiveDialogContainer from './ResponsiveDialogContainer'
 import { Button } from './ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from './ui/dialog'
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from './ui/drawer'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { UpgradeAccountGate } from './UpgradeAccountGate'
@@ -79,7 +63,6 @@ export function EmergencyContacts() {
   const isAnonymous = useIsAnonymous()
   const { user } = useAuth()
   const { mutateAsync: updateUserAsync } = useUpdateUser(user?.uid ?? '')
-  const { isMediumBreakpoint } = useScreenSize()
   const [formOpen, setFormOpen] = useState(false)
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [deletingIndex, setDeletingIndex] = useState<number | null>(null)
@@ -185,106 +168,38 @@ export function EmergencyContacts() {
               Add emergency contact
             </Button>
           )}
-          {isMediumBreakpoint ? (
-            <Dialog open={formOpen} onOpenChange={(open) => !open && closeForm()}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{formTitle}</DialogTitle>
-                  <DialogDescription></DialogDescription>
-                </DialogHeader>
-                <form
-                  id="ec-form"
-                  noValidate
-                  onSubmit={handleSubmit(onSubmit)}
-                  className="space-y-3"
-                >
-                  <ContactFormFields register={register} errors={errors} />
-                </form>
-                <DialogFooter>
-                  <Button variant="outline" onClick={closeForm}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" form="ec-form">
-                    Save
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          ) : (
-            <Drawer open={formOpen} onOpenChange={(open) => !open && closeForm()}>
-              <DrawerContent>
-                <DrawerHeader>
-                  <DrawerTitle>{formTitle}</DrawerTitle>
-                  <DrawerDescription></DrawerDescription>
-                </DrawerHeader>
-                <form
-                  id="ec-form"
-                  noValidate
-                  onSubmit={handleSubmit(onSubmit)}
-                  className="space-y-3 px-4"
-                >
-                  <ContactFormFields register={register} errors={errors} />
-                </form>
-                <DrawerFooter>
-                  <Button type="submit" form="ec-form">
-                    Save
-                  </Button>
-                  <Button variant="outline" onClick={closeForm}>
-                    Cancel
-                  </Button>
-                </DrawerFooter>
-              </DrawerContent>
-            </Drawer>
-          )}
+          <ResponsiveDialogContainer
+            open={formOpen}
+            onOpenChange={(open) => !open && closeForm()}
+            title={formTitle}
+            footerAction={
+              <Button type="submit" form="ec-form">
+                Save
+              </Button>
+            }
+          >
+            <form id="ec-form" noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+              <ContactFormFields register={register} errors={errors} />
+            </form>
+          </ResponsiveDialogContainer>
 
-          {isMediumBreakpoint ? (
-            <Dialog
-              open={deletingIndex !== null}
-              onOpenChange={(open) => !open && setDeletingIndex(null)}
-            >
-              <DialogContent aria-describedby={undefined}>
-                <DialogHeader>
-                  <DialogTitle>Delete contact</DialogTitle>
-                </DialogHeader>
-                <p className="text-muted-foreground text-sm">
-                  Are you sure you want to delete
-                  {deleteContactName ? ` ${deleteContactName}` : ' this contact'} as an Emergency
-                  Contact? This action cannot be undone.
-                </p>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setDeletingIndex(null)}>
-                    Cancel
-                  </Button>
-                  <Button variant="destructive" onClick={handleConfirmDelete}>
-                    Delete
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          ) : (
-            <Drawer
-              open={deletingIndex !== null}
-              onOpenChange={(open) => !open && setDeletingIndex(null)}
-            >
-              <DrawerContent>
-                <DrawerHeader>
-                  <DrawerTitle>Delete contact</DrawerTitle>
-                </DrawerHeader>
-                <p className="text-muted-foreground px-4 text-sm">
-                  Are you sure you want to delete
-                  {deleteContactName ? ` ${deleteContactName}` : ' this contact'}?
-                </p>
-                <DrawerFooter>
-                  <Button variant="destructive" onClick={handleConfirmDelete}>
-                    Delete
-                  </Button>
-                  <Button variant="outline" onClick={() => setDeletingIndex(null)}>
-                    Cancel
-                  </Button>
-                </DrawerFooter>
-              </DrawerContent>
-            </Drawer>
-          )}
+          <ResponsiveDialogContainer
+            open={deletingIndex !== null}
+            onOpenChange={(open) => !open && setDeletingIndex(null)}
+            title="Delete contact"
+            contentProps={{ 'aria-describedby': undefined }}
+            footerAction={
+              <Button variant="destructive" onClick={handleConfirmDelete}>
+                Delete
+              </Button>
+            }
+          >
+            <p className="text-muted-foreground text-sm">
+              Are you sure you want to delete
+              {deleteContactName ? ` ${deleteContactName}` : ' this contact'} as an Emergency
+              Contact? This action cannot be undone.
+            </p>
+          </ResponsiveDialogContainer>
         </>
       )}
     </div>
