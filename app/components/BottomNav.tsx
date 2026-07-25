@@ -1,5 +1,6 @@
 import { format } from 'date-fns'
 import {
+  CircleQuestionMark,
   Loader2,
   LogOut,
   MapIcon,
@@ -18,7 +19,7 @@ import { Link, useLocation, useNavigate } from 'react-router'
 
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { useAuth } from '~/contexts/auth/useAuth'
-import { useFeedbackModalState } from '~/contexts/globalState'
+import { useFeedbackModalState, useHelpModalState } from '~/contexts/globalState'
 import { firebaseAuth } from '~/firebase/config'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { cn } from '~/lib/utils'
@@ -59,6 +60,7 @@ export function BottomNav({ className }: BottomNavProps) {
   const navigate = useNavigate()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const { setIsFeedbackOpen } = useFeedbackModalState()
+  const { setIsHelpOpen } = useHelpModalState()
   const { data: pendingRequests } = usePendingFriendRequestsQuery(user?.uid ?? '')
 
   const isActive = (href: string) => {
@@ -141,7 +143,7 @@ export function BottomNav({ className }: BottomNavProps) {
               <span className="font-medium">More</span>
             </button>
           </DrawerTrigger>
-          <DrawerContent>
+          <DrawerContent aria-describedby={undefined}>
             <DrawerHeader>
               <DrawerTitle>
                 <div className="flex items-center gap-3">
@@ -229,6 +231,16 @@ export function BottomNav({ className }: BottomNavProps) {
               >
                 <MessageSquareIcon className="size-5" />
                 Feedback
+              </button>
+              <button
+                onClick={() => {
+                  setDrawerOpen(false)
+                  setIsHelpOpen(true)
+                }}
+                className="text-foreground hover:bg-sidebar-accent flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors"
+              >
+                <CircleQuestionMark className="size-5" />
+                Help / Support
               </button>
             </div>
             <Separator />
