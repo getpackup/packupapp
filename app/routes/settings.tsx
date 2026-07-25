@@ -1,4 +1,5 @@
 import { format } from 'date-fns'
+import { formatInTimeZone } from 'date-fns-tz'
 import { ExternalLink, Loader2, LogOut, UserMinus } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -86,7 +87,7 @@ function SubscriptionRow({
   if (isPro) {
     const description =
       cancelAtPeriodEnd && periodEnd
-        ? `Cancels on ${format(new Date(periodEnd * 1000), 'MMMM do, yyyy')}. You'll have Pro access until then.`
+        ? `Cancels on ${formatInTimeZone(new Date(periodEnd * 1000), 'UTC', 'MMMM do, yyyy')}. You'll have Pro access until then.`
         : 'Manage your subscription, billing, and payment details.'
 
     return (
