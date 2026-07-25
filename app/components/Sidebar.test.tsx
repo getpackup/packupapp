@@ -26,6 +26,7 @@ vi.mock('~/lib/usePlan', () => ({
 vi.mock('~/contexts/globalState', () => ({
   useSidebarState: vi.fn(() => ({ isSidebarCollapsed: false, setIsSidebarCollapsed: vi.fn() })),
   useFeedbackModalState: vi.fn(() => ({ setIsFeedbackOpen: vi.fn() })),
+  useHelpModalState: vi.fn(() => ({ setIsHelpOpen: vi.fn() })),
 }))
 
 vi.mock('~/services/friends', () => ({

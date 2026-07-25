@@ -30,6 +30,15 @@ export type NotifyTeamPayloads = {
     userEmail?: string
     url?: string
   }
+  'help-submitted': {
+    message: string
+    isAnonymous: boolean
+    anonymousEmail?: string
+    displayName?: string
+    username?: string
+    userEmail?: string
+    url?: string
+  }
   'account-deleted': {
     displayName?: string
     username?: string
@@ -63,6 +72,7 @@ export type NotifyTeamEvent = keyof NotifyTeamPayloads
 
 const CHANNELS: Record<NotifyTeamEvent, string> = {
   'feedback-submitted': '#user-feedback',
+  'help-submitted': '#user-feedback',
   'account-deleted': '#user-feedback',
   'payment-completed': '#stripe',
   'user-signed-up': '#subscriptions',
@@ -96,6 +106,26 @@ function feedbackBlocks(p: NotifyTeamPayloads['feedback-submitted']): unknown[] 
       fields: [
         { type: 'mrkdwn', text: `*Emotion*\n${esc(p.emotion)}` },
         { type: 'mrkdwn', text: `*Category*\n${esc(p.category)}` },
+        { type: 'mrkdwn', text: `*From*\n${identity}` },
+        ...(p.url ? [{ type: 'mrkdwn', text: `*Page*\n${escapeMrkdwn(p.url)}` }] : []),
+      ],
+    },
+  ]
+}
+
+function helpBlocks(p: NotifyTeamPayloads['help-submitted']): unknown[] {
+  const identity = p.isAnonymous
+    ? p.anonymousEmail
+      ? `Anonymous User\nEmail: ${p.anonymousEmail}`
+      : 'Anonymous User'
+    : `${esc(p.displayName)} (@${esc(p.username)})\nEmail: ${esc(p.userEmail)}`
+
+  return [
+    { type: 'header', text: { type: 'plain_text', text: 'New Help Request', emoji: true } },
+    { type: 'section', text: { type: 'mrkdwn', text: `*Message*\n${escapeMrkdwn(p.message)}` } },
+    {
+      type: 'section',
+      fields: [
         { type: 'mrkdwn', text: `*From*\n${identity}` },
         ...(p.url ? [{ type: 'mrkdwn', text: `*Page*\n${escapeMrkdwn(p.url)}` }] : []),
       ],
@@ -183,6 +213,7 @@ function tripCreatedBlocks(p: NotifyTeamPayloads['trip-created']): unknown[] {
 
 const BLOCK_BUILDERS: { [E in NotifyTeamEvent]: (p: NotifyTeamPayloads[E]) => unknown[] } = {
   'feedback-submitted': feedbackBlocks,
+  'help-submitted': helpBlocks,
   'account-deleted': accountDeletedBlocks,
   'payment-completed': paymentCompletedBlocks,
   'user-signed-up': userSignedUpBlocks,
@@ -191,6 +222,10 @@ const BLOCK_BUILDERS: { [E in NotifyTeamEvent]: (p: NotifyTeamPayloads[E]) => un
 
 const FALLBACK_TEXT_BUILDERS: { [E in NotifyTeamEvent]: (p: NotifyTeamPayloads[E]) => string } = {
   'feedback-submitted': (p) => `${p.emotion} ${p.category} feedback`,
+  'help-submitted': (p) =>
+    p.isAnonymous
+      ? 'New help request from Anonymous User'
+      : `New help request from ${p.displayName ?? p.username ?? 'Unknown user'}`,
   'account-deleted': (p) =>
     `Account deletion request from ${p.displayName ?? p.email ?? 'Unknown user'}`,
   'payment-completed': (p) => `One-time payment completed: ${p.amount} ${p.currency}`,

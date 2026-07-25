@@ -22,6 +22,7 @@ export default [
   route('resource/send-trip-invitation', 'routes/resource.send-trip-invitation.tsx'),
   route('resource/send-friend-request', 'routes/resource.send-friend-request.tsx'),
   route('resource/send-feedback', 'routes/resource.send-feedback.tsx'),
+  route('resource/send-help', 'routes/resource.send-help.tsx'),
   route('resource/delete-account', 'routes/resource.delete-account.tsx'),
   route('resource/logout-all', 'routes/resource.logout-all.tsx'),
   route('resource/send-signin-email', 'routes/resource.send-signin-email.tsx'),

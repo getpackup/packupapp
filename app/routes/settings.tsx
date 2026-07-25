@@ -20,6 +20,7 @@ import type { CheckoutUpgradeStatus } from '~/lib/useCheckoutUpgradeStatus'
 import { useCheckoutUpgradeStatus } from '~/lib/useCheckoutUpgradeStatus'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
 import { usePlan } from '~/lib/usePlan'
+import { useSubscriptionErrorToast } from '~/lib/useSubscriptionErrorToast'
 
 import type { Route } from './+types/home'
 
@@ -128,6 +129,7 @@ export default function Settings() {
   const isAnonymous = useIsAnonymous()
   const { isPro, cancelAtPeriodEnd, periodEnd } = usePlan()
   const checkoutUpgradeStatus = useCheckoutUpgradeStatus()
+  useSubscriptionErrorToast()
 
   async function handleLogoutAll() {
     if (!user?.uid) return

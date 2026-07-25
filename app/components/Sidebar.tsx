@@ -1,5 +1,6 @@
 import { format } from 'date-fns'
 import {
+  CircleQuestionMark,
   EllipsisVertical,
   ExternalLink,
   Loader2,
@@ -22,7 +23,7 @@ import { animated } from 'react-spring'
 
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
 import { useAuth } from '~/contexts/auth/useAuth'
-import { useFeedbackModalState, useSidebarState } from '~/contexts/globalState'
+import { useFeedbackModalState, useHelpModalState, useSidebarState } from '~/contexts/globalState'
 import { firebaseAuth } from '~/firebase/config'
 import useBoop from '~/lib/useBoop'
 import { useIsAnonymous } from '~/lib/useIsAnonymous'
@@ -53,6 +54,7 @@ export function Sidebar({ className }: SidebarProps) {
   const { isSidebarCollapsed, setIsSidebarCollapsed } = useSidebarState()
   const { isPro, isFree } = usePlan()
   const { setIsFeedbackOpen } = useFeedbackModalState()
+  const { setIsHelpOpen } = useHelpModalState()
   const [nextStyle, triggerNext] = useBoop({ x: 2 }) as [any, () => void]
   const [animatingItem, setAnimatingItem] = useState<string | null>(null)
   const { data: pendingRequests } = usePendingFriendRequestsQuery(user?.uid ?? '')
@@ -325,6 +327,10 @@ export function Sidebar({ className }: SidebarProps) {
               <DropdownMenuItem onClick={() => setIsFeedbackOpen(true)}>
                 <MessageSquareIcon />
                 Feedback
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsHelpOpen(true)}>
+                <CircleQuestionMark />
+                Help / Support
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} variant="destructive">

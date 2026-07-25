@@ -9,6 +9,7 @@ import { isAuth } from '~/services/auth'
 
 import { BottomNav } from './BottomNav'
 import { FeedbackModal } from './FeedbackModal'
+import { HelpModal } from './HelpModal'
 import { Sidebar } from './Sidebar'
 
 const pageNameMap = (id?: string) => ({
@@ -66,6 +67,7 @@ export default function AuthWrapper() {
         </main>
         <BottomNav className="md:hidden" />
         <FeedbackModal />
+        <HelpModal />
       </div>
     </AuthProvider>
   )

@@ -14,6 +14,8 @@ type GlobalState = {
   toggleSounds: () => void
   isFeedbackOpen: boolean
   setIsFeedbackOpen: (isFeedbackOpen: boolean) => void
+  isHelpOpen: boolean
+  setIsHelpOpen: (isHelpOpen: boolean) => void
 }
 
 const createMemoryStorage = () => {
@@ -52,6 +54,8 @@ const useGlobalState = create<GlobalState>()(
       toggleSounds: () => set({ soundsEnabled: !get().soundsEnabled }),
       isFeedbackOpen: false,
       setIsFeedbackOpen: (isFeedbackOpen) => set({ isFeedbackOpen }),
+      isHelpOpen: false,
+      setIsHelpOpen: (isHelpOpen) => set({ isHelpOpen }),
     }),
     {
       name: 'packup-global-state',
@@ -108,6 +112,15 @@ export const useFeedbackModalState = () => {
     useShallow((state) => ({
       isFeedbackOpen: state.isFeedbackOpen,
       setIsFeedbackOpen: state.setIsFeedbackOpen,
+    }))
+  )
+}
+
+export const useHelpModalState = () => {
+  return useGlobalState(
+    useShallow((state) => ({
+      isHelpOpen: state.isHelpOpen,
+      setIsHelpOpen: state.setIsHelpOpen,
     }))
   )
 }

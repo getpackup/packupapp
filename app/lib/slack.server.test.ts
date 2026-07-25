@@ -43,6 +43,17 @@ describe('notifyTeam', () => {
       expect(JSON.parse(mockFetch.mock.calls[0][1].body).channel).toBe('#user-feedback')
     })
 
+    it('routes help-submitted to #user-feedback', async () => {
+      await notifyTeam('help-submitted', {
+        message: 'How do I invite a trip member?',
+        isAnonymous: false,
+        displayName: 'Alice',
+        username: 'alice',
+        userEmail: 'alice@test.com',
+      })
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body).channel).toBe('#user-feedback')
+    })
+
     it('routes account-deleted to #user-feedback', async () => {
       await notifyTeam('account-deleted', {
         displayName: 'Bob',
@@ -95,6 +106,29 @@ describe('notifyTeam', () => {
         userEmail: 'alice@test.com',
       })
       expect(JSON.parse(mockFetch.mock.calls[0][1].body).text).toBe('😀 Bug feedback')
+    })
+
+    it('builds correct text for help-submitted', async () => {
+      await notifyTeam('help-submitted', {
+        message: 'Need help',
+        isAnonymous: false,
+        displayName: 'Alice',
+        username: 'alice',
+        userEmail: 'alice@test.com',
+      })
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body).text).toBe(
+        'New help request from Alice'
+      )
+    })
+
+    it('builds correct text for help-submitted when anonymous', async () => {
+      await notifyTeam('help-submitted', {
+        message: 'Need help',
+        isAnonymous: true,
+      })
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body).text).toBe(
+        'New help request from Anonymous User'
+      )
     })
 
     it('builds correct text for account-deleted', async () => {
@@ -211,6 +245,44 @@ describe('notifyTeam', () => {
       })
       const { blocks } = JSON.parse(mockFetch.mock.calls[0][1].body)
       expect(blocks[2].fields[2].text).toContain('anon@test.com')
+    })
+
+    it('help-submitted: header + message section + fields section', async () => {
+      await notifyTeam('help-submitted', {
+        message: 'Where do I manage billing?',
+        isAnonymous: false,
+        displayName: 'Alice',
+        username: 'alice',
+        userEmail: 'alice@test.com',
+      })
+      const { blocks } = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(blocks[0].type).toBe('header')
+      expect(blocks[0].text.text).toBe('New Help Request')
+      expect(blocks[1].text.text).toContain('Where do I manage billing?')
+      expect(blocks[2].fields).toHaveLength(1)
+    })
+
+    it('help-submitted: includes url field when provided', async () => {
+      await notifyTeam('help-submitted', {
+        message: 'Stuck on this page',
+        isAnonymous: false,
+        displayName: 'Alice',
+        username: 'alice',
+        userEmail: 'alice@test.com',
+        url: '/settings',
+      })
+      const { blocks } = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(blocks[2].fields).toHaveLength(2)
+      expect(blocks[2].fields[1].text).toContain('/settings')
+    })
+
+    it('help-submitted: anonymous identity without email', async () => {
+      await notifyTeam('help-submitted', {
+        message: 'Hi',
+        isAnonymous: true,
+      })
+      const { blocks } = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(blocks[2].fields[0].text).toContain('Anonymous User')
     })
 
     it('account-deleted: shows reasons list', async () => {
