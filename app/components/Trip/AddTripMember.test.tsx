@@ -61,7 +61,6 @@ vi.mock('react-router', async () => {
   return {
     ...actual,
     useParams: vi.fn(() => ({ id: 'trip1' })),
-    useFetcher: vi.fn(() => ({ submit: vi.fn() })),
   }
 })
 

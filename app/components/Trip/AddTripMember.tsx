@@ -1,7 +1,7 @@
 import { useQueries } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
-import { useFetcher, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { toast } from 'sonner'
 
 import { useAuth } from '~/contexts/auth/useAuth'
@@ -32,7 +32,6 @@ export function AddTripMember({ trip, tripMembers }: { trip: Trip; tripMembers: 
   const { user } = useAuth()
   const isAnonymous = useIsAnonymous()
   const { id } = useParams()
-  const fetcher = useFetcher()
 
   const { isFree } = usePlan()
 
@@ -81,26 +80,34 @@ export function AddTripMember({ trip, tripMembers }: { trip: Trip; tripMembers: 
       )
       await sendMessage({ tripId: trip.tripId, data: newMessage })
 
-      fetcher.submit(
-        {
-          invitedBy: user.username,
-          inviterUid: user.uid,
-          inviteeUid: selectedUser.uid,
-          tripId: trip.tripId,
-          isFriend: String(friendUids.includes(selectedUser.uid)),
-          email: selectedUser.email,
-          greetingName: selectedUser.username || '',
-          tripName: trip.name,
-          where: trip.startingPoint,
-          why: trip.description,
-          when: formattedDateRange(trip.startDate.seconds * 1000, trip.endDate.seconds * 1000),
-          tags: trip.tags,
-        },
-        {
-          method: 'POST',
-          action: '/resource/send-trip-invitation',
-        }
+      const invitationFormData = new FormData()
+      invitationFormData.append('invitedBy', user.username)
+      invitationFormData.append('inviterUid', user.uid)
+      invitationFormData.append('inviteeUid', selectedUser.uid)
+      invitationFormData.append('tripId', trip.tripId)
+      invitationFormData.append('isFriend', String(friendUids.includes(selectedUser.uid)))
+      invitationFormData.append('email', selectedUser.email)
+      invitationFormData.append('greetingName', selectedUser.username || '')
+      invitationFormData.append('tripName', trip.name)
+      invitationFormData.append('where', trip.startingPoint)
+      invitationFormData.append('why', trip.description ?? '')
+      invitationFormData.append(
+        'when',
+        formattedDateRange(trip.startDate.seconds * 1000, trip.endDate.seconds * 1000)
       )
+      invitationFormData.append('tags', trip.tags.join(', '))
+
+      fetch('/resource/send-trip-invitation', { method: 'POST', body: invitationFormData })
+        .then((res) => {
+          if (!res.ok) {
+            console.error(`Failed to send trip invitation email to ${selectedUser.email}`)
+            toast.error(`Failed to send invitation email to ${selectedUser.username}`)
+          }
+        })
+        .catch(() => {
+          console.error(`Failed to send trip invitation email to ${selectedUser.email}`)
+          toast.error(`Failed to send invitation email to ${selectedUser.username}`)
+        })
 
       toast.success(`${selectedUser.username} has been invited to the trip`)
 

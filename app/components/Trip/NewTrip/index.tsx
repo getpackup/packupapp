@@ -12,6 +12,7 @@ import { z } from 'zod'
 import { Button } from '~/components/ui/button'
 import useAuth from '~/contexts/auth/useAuth'
 import { AnalyticsEvent, trackBrowserEvent } from '~/lib/analytics'
+import { formattedDateRange } from '~/lib/date'
 import { activityKeyToLabel } from '~/lib/gearFilterUtils'
 import { allGearListItems } from '~/lib/gearListItemEnum'
 import { useSendFriendRequest } from '~/services/friends'
@@ -153,6 +154,27 @@ const NewTripForm = ({}: NewTripFormProps) => {
           invitee_user_id: member.uid,
           is_friend: !member.sendFriendRequest,
         })
+
+        const formData = new FormData()
+        formData.append('invitedBy', user.username)
+        formData.append('inviterUid', user.uid)
+        formData.append('inviteeUid', member.uid)
+        formData.append('tripId', trip.tripId)
+        formData.append('isFriend', String(!member.sendFriendRequest))
+        formData.append('email', member.email)
+        formData.append('greetingName', member.username || '')
+        formData.append('tripName', trip.name)
+        formData.append('where', trip.startingPoint)
+        formData.append('why', trip.description ?? '')
+        formData.append(
+          'when',
+          formattedDateRange(trip.startDate.seconds * 1000, trip.endDate.seconds * 1000)
+        )
+        formData.append('tags', trip.tags.join(', '))
+
+        fetch('/resource/send-trip-invitation', { method: 'POST', body: formData }).catch(() => {
+          console.error(`Failed to send trip invitation email to ${member.email}`)
+        })
       }
 
       if (allTagValues.length > 0) {
@@ -182,10 +204,10 @@ const NewTripForm = ({}: NewTripFormProps) => {
         toast.success('Trip created')
       }
 
-      if (tripMembers.filter((m) => m.sendFriendRequest).length > 0) {
-        tripMembers
-          .filter((m) => m.sendFriendRequest)
-          .forEach(async (member) => {
+      const membersToFriendRequest = tripMembers.filter((m) => m.sendFriendRequest)
+      if (membersToFriendRequest.length > 0) {
+        await Promise.all(
+          membersToFriendRequest.map(async (member) => {
             if (!member.uid) return
             try {
               await sendFriendReq({ senderUid: user.uid, recipientUid: member.uid })
@@ -203,8 +225,9 @@ const NewTripForm = ({}: NewTripFormProps) => {
             } catch {
               toast.error(`Failed to send friend request to ${member.username}`)
             }
-            toast.success('Trip created (friend requests will be sent upon trip creation)')
           })
+        )
+        toast.success('Trip created (friend requests will be sent upon trip creation)')
       }
 
       navigate(`/trips/${trip.tripId}`)
